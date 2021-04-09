@@ -1,15 +1,21 @@
 (ns reverse-string)
 
-(defn reverse-string [s] ;; <- arglist goes here
-  (let [v (vec (seq s))]
-    (loop [pos (dec (count v))]
-      (if-not
-       (= pos 0) (recur (dec pos))
-       ))))
+(defn reverse-string [s]
+  (if (= 1 (count s))
+    s
+    (let [vector-of-chars (vec (seq s))]
+      (reduce str
+              (for [pos (range (dec (count vector-of-chars)) -1 -1)]
+                (get vector-of-chars pos))))))
+
 
 
 (comment
-  (reverse-string "abc")
+  (for [x (range 1 5)]
+    x)
+  (char-array "123 4")
+  (reverse-string "ab ! cdef")
+  (reverse-string "a")
   (list "abc")
   (subs  "abc" 2)
   (let [s "abcd"]
