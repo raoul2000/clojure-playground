@@ -9,7 +9,7 @@
               (for [pos (range (dec (count vector-of-chars)) -1 -1)]
                 (get vector-of-chars pos))))))
 
-(defn reverse-string [s]
+(defn reverse-string-1 [s]
   (reduce
    str
    (into () (vec (seq s)))))
@@ -17,9 +17,14 @@
 (defn reverse-string-oveflow [[first-char & rest]]
   (if (empty? rest)
     (str first-char)
-    (str (reverse-string rest) first-char)))
+    (str (reverse-string-oveflow rest) first-char)))
 
-
+(defn reverse-string [s]
+  (loop [s s
+         result ""]
+    (if (empty? s)
+      result
+      (recur (rest s) (str (first s) result)))))
 
 (comment
   (string/split "abc" #"")
