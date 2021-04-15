@@ -26,15 +26,41 @@
       result
       (recur (rest s) (str (first s) result)))))
 
+
+
+  (def trans
+    (comp
+     (map #(% 2))
+     (filter #(> % 3))
+     (take 4)))
+
+(map trans [1 2 3])
+(into []  '(1 2 3 4 5))
+
+
 (comment
+  ({:name "bob"} :name)
   (string/split "abc" #"")
   (into []  [1 2 3])
+
   (into () [1 2])
   (into () (string/split "hello world" #""))
   (reduce
    str
    (into () (vec (seq "h"))))
   (into () (vec (seq "hello world")))
+  (map / [1 2 3])
+
+  (->>
+   (range 5)
+   (map #(* 2 %))
+   (filter #(> % 2))
+   (filter even?))
+
+
+
+
+
 
   (def str1 "hello world")
   (let [[c & rest] "hello"]
