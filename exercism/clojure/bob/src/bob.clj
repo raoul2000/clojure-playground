@@ -2,22 +2,18 @@
   (:require [clojure.string :as str]))
 
 (defn yelling?
-  "true if contains alphabetic characters and they are all upper case"
+  "true if contains alpha chars and they are all upper case"
   [s]
-  (let [letter-only (apply str (re-seq #"[a-zA-Z]" s))]
-    (if (= 0 (count letter-only))
-      false
-      (= letter-only (str/upper-case letter-only)))))
+  (and
+   (re-matches #".*[a-zA-Z]+.*" s)
+   (= s (str/upper-case s))))
 
 (defn asking?
   "true if ends with '?"
   [s]
   (str/ends-with? (str/trim s) "?"))
 
-(defn say-nothing?
-  "true if blank"
-  [s]
-  (str/blank? s))
+(def say-nothing? str/blank?)
 
 (defn response-for [s]
   (cond

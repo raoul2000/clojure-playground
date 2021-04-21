@@ -2,6 +2,12 @@
   (:require [clojure.string :as str]))
 
 (defn yelling? [s]
+  (and 
+   (re-matches #".*[a-zA-Z]+.*" s)
+   (= s (str/upper-case s)))
+  )
+
+(defn yelling-1? [s]
   (let [letter-only (apply str (re-seq #"[a-zA-Z]" s))]
     (if (= 0 (count letter-only))
       false
@@ -10,8 +16,7 @@
 (defn asking? [s]
   (str/ends-with? (str/trim s) "?"))
 
-(defn say-nothing? [s]
-  (str/blank? s))
+(def say-nothing? str/blank?)
 
 (defn response-for [s] ;; <- arglist goes here
   (cond
@@ -28,6 +33,6 @@
   (response-for "hello")
   (yelling? "1")
   (response-for "hello ? sdf")
-  (response-for "WHAT ?")
+  (response-for "WHAT dd 3 ?")
   (response-for "")
   (bob/response-for "Ending with ? means a question."))
