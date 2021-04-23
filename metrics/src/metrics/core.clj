@@ -36,13 +36,17 @@
 
 (defn distrib-download-count
   [rec-seq]
-  (let [download-count (map #(dissoc % :execCount
+  (let [download-count (map #(dissoc % 
+                                     :execCount
                                      :date
                                      :latestExecDurationMs
                                      :totalExecDurationMs
                                      :avgExecDurationMs
                                      :downloadTotalCount) rec-seq)]
-    (frequencies download-count)))
+    ;(group-by :task-id (frequencies download-count)))
+    (group-by :task-id  download-count))
+  
+  )
 
 (defn -main
   "I don't do a whole lot ... yet."
@@ -71,4 +75,5 @@
           (filter #(= "T1" (:task-id %1)) s))
 
 
-  (time (distrib-download-count (parse "./test/fixtures/metrics-2.csv"))))
+  (time (distrib-download-count (parse "./test/fixtures/metrics-1.csv")))
+  )
