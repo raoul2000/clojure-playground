@@ -40,7 +40,6 @@
 (defn parse-file
   "parse a file given its path"
   [file row-def]
-  (printf "file : %s\n" file)
   (parse-str (slurp file) row-def))
 
 
@@ -83,18 +82,55 @@
       (printf "total-run = %d\n" total-run)
       (printf "total-dowload = %d\n\n" total-download))))
 
+(defn print-footer
+  [args]
+  (printf "files:\n")
+  (doseq [filename args] (println filename)))
+
 (defn -main
   [& args]
   (if  (zero? (count args))
     (println "no argument")
-    (do
-      (->>  (apply concat (map #(parse-file %1 csv-row-def) args))
+    (let [rows (apply concat (map #(parse-file %1 csv-row-def) args))]
+      (->>  rows
             distrib-download-count
             freq-download-count
             print-dwn-count)
+      (print-footer  args)
       (flush))))
 
 (comment
+  (defn iso8806-str->date-inst [s]
+    (.parse (java.text.SimpleDateFormat. "yyyy-MM-dd'T'HH:mm:ss") s))
+
+  (.getTime (iso8806-str->date-inst "2021-04-02T09:37:24.616Z"))
+
+  (->> ["2021-04-02T09:37:24.616Z"
+        "2021-04-02T09:38:24.616Z"
+        "2021-04-02T09:40:24.616Z"
+        "2021-04-02T10:00:24.616Z"
+        "2021-04-01T10:00:24.616Z"]
+       (map clojure.instant/read-instant-date)
+       sort
+       last)
+
+  (def d1 #inst "2021-04-02T09:37:24.616-00:00")
+  (def d2 #inst "2021-04-02T10:00:24.616-00:00")
+
+  (println (.between java.time.Duration d1 d2))
+  (clojure.instant/read-instant-date "2021-04-02T09:37:24.616Z")
+
+
+
+  (map iso8806-str->date-inst  ["2021-04-02T09:37:24.616Z"
+                                "2021-04-02T09:38:24.616Z"
+                                "2021-04-02T09:40:24.616Z"
+                                "2021-04-02T10:00:24.616Z"])
+
+  (-main
+   "C:/tmp/log-afpapi/metrics/afpapi-gateway_metrics.2021-04-02.0.log")
+
+
   (-main
    "C:/tmp/log-afpapi/metrics/afpapi-gateway_metrics.2021-04-02.0.log"
    "C:/tmp/log-afpapi/metrics/afpapi-gateway_metrics.2021-04-03.0.log"
