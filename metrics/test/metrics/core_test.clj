@@ -24,19 +24,44 @@
     (is (= {:a "42"} (metrics.core/add-entry {:a "x"} [:a 42]  {:a str}))))
 
   (testing "add entry with conv not found"
-    (is (= {:a 1}    (metrics.core/add-entry {} [:a 1]  {:b str})))
-    (is (= {:a 42}   (metrics.core/add-entry {} [:a 42] {:b str})))
-    (is (= {:a nil}  (metrics.core/add-entry {} [:a]    {:b str})))))
+    (is (= {:a 1}    (metrics.core/add-entry {} [:a 1]    {:b str})))
+    (is (= {:a "42"} (metrics.core/add-entry {} [:a "42"] {:b str})))
+    (is (= {:a nil}  (metrics.core/add-entry {} [:a]      {:b str})))))
 
 (def conv-identity {:a identity :b identity})
+(def conv-int      {:a identity :b metrics.core/str->int})
 
 (deftest mapify-line
   (testing "success"
     (is (= {:a "a", :b "b"} (metrics.core/mapify-line "a,b" conv-identity)))
     (is (= {:a "ab"}        (metrics.core/mapify-line "ab"  conv-identity)))
-    (is (= {:a ""}          (metrics.core/mapify-line ""    conv-identity)))))
+    (is (= {:a ""}          (metrics.core/mapify-line ""    conv-identity))))
 
-(deftest test-2
-  (testing "are"
-    (are [x y] (= x y)
-      1 (metrics.core/str->int "1"))))
+  (testing "int conversion"
+    (is (= {:a "a", :b 1}   (metrics.core/mapify-line "a,1" conv-int)))
+    (is (= {:a "ab"}        (metrics.core/mapify-line "ab"  conv-int)))
+    (is (= {:a ""}          (metrics.core/mapify-line ""    conv-int))))
+
+  (testing "conversion fails"
+    (is (thrown? NumberFormatException (metrics.core/mapify-line "a,b"   conv-int)))))
+
+(def serie1 {0 1 2 2})
+(def serie2 {1 1 2 5})
+(def serie3 {0 1 2 5})
+
+(deftest complete-serie
+  (testing "completing missing keys"
+    (is (= {0 1 1 0 2 2} (metrics.core/complete-serie serie1)))
+    (is (= {0 0 1 1 2 5} (metrics.core/complete-serie serie2)))
+    (is (= {0 1 1 0 2 5} (metrics.core/complete-serie serie3)))))
+
+(deftest parse-str
+  (testing "success"
+    (is (= '({:a "id1" :b 2} {:a "id2" :b 3})
+           (metrics.core/parse-str "id1,2\nid2,3" conv-int))))
+
+  (testing "invalid input"
+    (is (= '({:a ""})
+           (metrics.core/parse-str "" conv-int)))))
+
+
