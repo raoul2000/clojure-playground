@@ -72,40 +72,27 @@
   [rec]
   (doseq [i (seq rec)]
     (printf "task : %s\n" (first i))
-    (print i)
-    
-    ))
-
-(defn print-dwn-count-orig
-  [rec]
-  (doseq [i (seq rec)]
-    (printf "task : %s\n" (first i))
-    (print i)
-    (let [total-run (reduce + (map second (second i)))]
+    (let [total-run (reduce + (map second (second i)))
+          total-download (reduce + (map #(* (first %1) (second %1)) (second i)))]
       (println "dwn/run;tot. run;percent run")
       (doseq [cnt (reverse (sort-by second (seq (second i))))]
         (printf "%02d;%02d;%02.2f\n"
                 (first cnt)
                 (second cnt)
                 (float (/ (* 100 (second cnt)) total-run))))
-      (printf "total-run = %d\n\n" total-run))))
-
-
-; (printf "total-download = %d\n" (reduce + (map #(* (first %1) (second %1)) (second i))))
-(comment
-  (print-dwn-count {"news" {0 4, 7 3, 1 11, 4 1, 6 2, 3 10, 2 13, 9 3, 5 6, 10 8}}))
-
-;total-downloads (reduce + (map #(* (first %1) (second %1)) (second i)))
-; (printf "total-download = %d\n\n"  total-downloads)
+      (printf "total-run = %d\n" total-run)
+      (printf "total-dowload = %d\n\n" total-download))))
 
 (defn -main
   [& args]
   (if  (zero? (count args))
     (println "no argument")
-    (->>  (apply concat (map #(parse-file %1 csv-row-def) args))
-          distrib-download-count
-          freq-download-count
-          print-dwn-count)))
+    (do
+      (->>  (apply concat (map #(parse-file %1 csv-row-def) args))
+            distrib-download-count
+            freq-download-count
+            print-dwn-count)
+      (flush))))
 
 (comment
   (-main
