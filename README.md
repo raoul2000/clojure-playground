@@ -1,3 +1,5 @@
+<h1>Clojure Cheatsheet</h1>
+
 - [Data Structure](#data-structure)
   - [vector](#vector)
   - [map](#map)
@@ -13,9 +15,9 @@
 - [Function Functions](#function-functions)
   - [apply](#apply)
 
-# Data Structure
+## Data Structure
 
-## vector
+### vector
 - create a vector from elements with **vector**
 ```clojure
 (vector a b c)
@@ -29,7 +31,7 @@
 => nil
 ```
 
-## map
+### map
 - create a map from elements with **hash-map**
 ```clojure
 (hash-map :name "bob" :age 12)
@@ -53,7 +55,7 @@
 => 88798
 ```
 
-## list
+### list
 - create a list from elements with **list**
 ```clojure
 (list 1 "a" 2/3)
@@ -67,7 +69,7 @@
 => "not found"
 ```
 
-## set
+### set
 - create set from elements with **hash-set**
 ```clojure
 (hash-set 1 2 3)
@@ -93,7 +95,7 @@
 => false
 ```
 
-# Sequence
+## Sequence
 > sequence (*seq*) is an abstraction over data structures. Whenever Clojure expects a sequence—for example, when you call map, first, rest, or cons—it calls the seq function on the data structure in question to obtain a data structure that allows for first, rest, and cons
 >  [ref](https://www.braveclojure.com/core-functions-in-depth/#Abstraction_Through_Indirection)
 
@@ -120,7 +122,7 @@
 (into {} (seq {:planet "mars" :color "red"} ))
 => {:planet "mars", :color "red"}
 ```
-## first, rest
+### first, rest
 - access : **first** and **rest**
 ```clojure
 ; data structure is first converted to a seq
@@ -131,7 +133,7 @@
 (rest [\x \y \z])
 => (\y \z)
 ```
-## take, drop
+### take, drop
 - access with **take** 
 ```clojure
 (take 3 [ 1 2 3 4])
@@ -152,7 +154,7 @@
 (drop 4 [1 2 3])
 => ()
 ```
-## cons
+### cons
 - add element to begining of sequence **cons**
 ```clojure
 ; same as explicit call of *seq* (cons 1 (seq [1 2]) )
@@ -160,12 +162,12 @@
 => (1 1 2)
 ```
 
-# Collections
+## Collections
 > The collection abstraction is closely related to the sequence abstraction
 
 The sequence abstraction is about operating on members individually, whereas the collection abstraction is about the data structure as a whole. For example, the collection functions count, empty?, and every? aren’t about any individual element; they’re about the whole:
 
-## into
+### into
 - copy a collection **into** another
 ```clojure
 (into ["first"] [1 2])
@@ -176,13 +178,15 @@ The sequence abstraction is about operating on members individually, whereas the
 (into {:first "a"} [[:a 1]])
 => {:first "a", :a 1}
 (into {:first "a"} [[:a 1 :first "b"]])
-=> {:first "a", :a 1}
+; Execution error (IllegalArgumentException) at clock/eval7391 (form-init4833341512224151523.clj:163).
+; Vector arg to map conj must be a pair
+
 ; key/value is updated
 (into {:first "a"} [[:a 1]  [:first "updated"]])
 {:first "updated", :a 1}
 ```
 
-## conj
+### conj
 - add element to end of collection **conj**
 ```clojure
 (conj [1 2] 3)
@@ -197,8 +201,8 @@ The sequence abstraction is about operating on members individually, whereas the
 =>{:a "A", :b 2, :c "color"}
 ```
 
-# Function Functions
-## apply
+## Function Functions
+### apply
 - explode args
 ```clojure
 ; same as (max 12 2 44 5)
