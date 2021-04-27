@@ -14,6 +14,7 @@
   - [into](#into)
   - [conj](#conj)
 - [Function Functions](#function-functions)
+  - [create](#create)
   - [apply](#apply)
 
 ## Data Structure
@@ -22,6 +23,11 @@
 - create a vector from elements with **vector**
 ```clojure
 (vector a b c)
+=> [a b c]
+```
+- create a vector from collection with **vec**
+```clojure
+(vec '(a b c))
 => [a b c]
 ```
 - get element from vector with **get**
@@ -83,6 +89,16 @@
 
 (hash-set 1 2 3 1 2 3)
 => #{1 3 2}
+```
+- create set from collection with **set**
+```clojure
+(set '(1 2 3))
+=> #{1 3 2}
+```
+- merge 2 sets using **clojure.set/union**
+```clojure
+(clojure.set/union #{1 2 3} #{3 4 5})
+=> #{1 4 3 2 5}
 ```
 - get value with **get** (and via *keywords*)
 ```clojure
@@ -261,6 +277,16 @@ The sequence abstraction is about operating on members individually, whereas the
 ```
 
 ## Function Functions
+### create
+- various ways to create a function
+```clojure
+; named function
+(fn add-five [x] (+ x 5))
+; anonymous functions
+(fn [x] (+ x 5))
+#(+ % 5)
+(partial + 5)
+```
 ### apply
 - explode args
 ```clojure
