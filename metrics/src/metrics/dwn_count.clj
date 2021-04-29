@@ -21,7 +21,7 @@
        complete-serie
        (sort-by key)))
 
-(defn download-count-freq-per-task
+(defn dwn-count-by-task
   "given a seq of rows, returns a map  where the key is the task id
    and the value is a seq of [download-count freq]"
   [rec-seq]
@@ -37,9 +37,9 @@
     (doseq [f freqs]
       (printf "%d;%d;%02.2f\n" (first f) (second f) (float (/ (* 100 (second f)) tot-run))))
     (printf "total run = %d\n" tot-run)
-    (printf "total download = %d\n" tot-dwn)))
+    (printf "total download = %d\n\n" tot-dwn)))
 
-(defn print-dwn-freq
+(defn print-csv
   [freq-by-task]
   (doseq [entry freq-by-task]
     (printf "task : %s\n" (first entry))
@@ -48,8 +48,8 @@
 (defn report
   [rows]
   (->> rows
-       download-count-freq-per-task
-       print-dwn-freq))
+       dwn-count-by-task
+       print-csv))
 
 (comment
   (def map-seq1 [{:date "date-1" :task-id "task-id-1" :latestDownloadCount 1 :execCount 11}
@@ -58,7 +58,7 @@
                  {:date "date-3" :task-id "task-id-2" :latestDownloadCount 2 :execCount 22}
                  {:date "date-3" :task-id "task-id-1" :latestDownloadCount 1 :execCount 22}])
 
-  (print-dwn-freq (download-count-freq-per-task map-seq1))
+  (print-csv (dwn-count-by-task map-seq1))
   (download-count-freq map-seq1)
   (select-download-count-col map-seq1)
-  (download-count-freq-per-task map-seq1))
+  (dwn-count-by-task map-seq1))
