@@ -30,7 +30,7 @@ Download from http://example.com/FIXME.
 
 FIXME: explanation
 
-    $ java -jar metrics-0.1.0-standalone.jar [args]
+    $ java -jar metrics-0.1.0-standalone.jar [file1 file2 ...]
 
 ## Options
 
@@ -38,7 +38,9 @@ FIXME: listing of options this app accepts.
 
 ## Examples
 
-...
+    $ java -jar metrics-0.1.0-standalone.jar file1.log
+    $ java -jar metrics-0.1.0-standalone.jar file1.log file2.log
+    $ java -jar metrics-0.1.0-standalone.jar ../logs/*.logs
 
 ### Bugs
 

@@ -1,6 +1,7 @@
 (ns metrics.core-test
-  (:require [clojure.test :refer [deftest is are testing]]
-            [metrics.core]))
+  (:require [clojure.test :refer [deftest is testing]]
+            [metrics.core]
+            [metrics.parse]))
 
 (deftest str->int-test
   (testing "string to int"
@@ -14,37 +15,6 @@
     (is (thrown? NumberFormatException (metrics.core/str->int "ab")))
     (is (thrown? NumberFormatException (metrics.core/str->int "1.2")))))
 
-(deftest add-entry
-  (testing "add entry with conv"
-    (is (= {:a 1}    (metrics.core/add-entry {}       [:a 1]   {:a identity})))
-    (is (= {:a "42"} (metrics.core/add-entry {}       [:a 42]  {:a str})))
-    (is (= {:a "42"} (metrics.core/add-entry {}       [:a 42]  {:a str})))
-    (is (= {:a nil}  (metrics.core/add-entry {}       [:a]     {:a identity})))
-    (is (= {:a ""}   (metrics.core/add-entry {}       [:a]     {:a str})))
-    (is (= {:a "42"} (metrics.core/add-entry {:a "x"} [:a 42]  {:a str}))))
-
-  (testing "add entry with conv not found"
-    (is (= {:a 1}    (metrics.core/add-entry {} [:a 1]    {:b str})))
-    (is (= {:a "42"} (metrics.core/add-entry {} [:a "42"] {:b str})))
-    (is (= {:a nil}  (metrics.core/add-entry {} [:a]      {:b str})))))
-
-(def conv-identity {:a identity :b identity})
-(def conv-int      {:a identity :b metrics.core/str->int})
-
-(deftest mapify-line
-  (testing "success"
-    (is (= {:a "a", :b "b"} (metrics.core/mapify-line "a,b" conv-identity)))
-    (is (= {:a "ab"}        (metrics.core/mapify-line "ab"  conv-identity)))
-    (is (= {:a ""}          (metrics.core/mapify-line ""    conv-identity))))
-
-  (testing "int conversion"
-    (is (= {:a "a", :b 1}   (metrics.core/mapify-line "a,1" conv-int)))
-    (is (= {:a "ab"}        (metrics.core/mapify-line "ab"  conv-int)))
-    (is (= {:a ""}          (metrics.core/mapify-line ""    conv-int))))
-
-  (testing "conversion fails"
-    (is (thrown? NumberFormatException (metrics.core/mapify-line "a,b"   conv-int)))))
-
 (def serie1 {0 1 2 2})
 (def serie2 {1 1 2 5})
 (def serie3 {0 1 2 5})
@@ -55,13 +25,16 @@
     (is (= {0 0 1 1 2 5} (metrics.core/complete-serie serie2)))
     (is (= {0 1 1 0 2 5} (metrics.core/complete-serie serie3)))))
 
-(deftest parse-str
-  (testing "success"
-    (is (= '({:a "id1" :b 2} {:a "id2" :b 3})
-           (metrics.core/parse-str "id1,2\nid2,3" conv-int))))
+(def map-seq1 [{:date "date-1" :task-id "task-id-1" :latestDownloadCount 1 :execCount 11}
+               {:date "date-2" :task-id "task-id-1" :latestDownloadCount 23 :execCount 11}
+               {:date "date-3" :task-id "task-id-2" :latestDownloadCount 2 :execCount 22}])
 
-  (testing "invalid input"
-    (is (= '({:a ""})
-           (metrics.core/parse-str "" conv-int)))))
+(def map-result1 {"task-id-1" [{:task-id "task-id-1" :latestDownloadCount 1}
+                               {:task-id "task-id-1" :latestDownloadCount 23}]
+                  "task-id-2" [{:task-id "task-id-2" :latestDownloadCount 2}]})
+
+(deftest distrib-download-count
+  (testing "distrib-download-count"
+    (is (= map-result1 (metrics.core/distrib-download-count map-seq1)))))
 
 
