@@ -1,18 +1,16 @@
 (ns rna-transcription)
 
 (defn nucleotide-dna-to-rna
-  "convert DNA nucleotide n to RNA nucleotide or throws 
-  when not possible"
   [n]
-  (or
-   (get {\G \C
-         \C \G
-         \T \A
-         \A \U} n)
-   (throw (AssertionError. (str "invalid nucleotide : " n)))))
+  (get {\G \C
+        \C \G
+        \T \A
+        \A \U} n))
 
 (defn to-rna
-  "convert DNA strand to RNA strand"
+  "convert DNA strand to RNA strand and returns or 
+   throws AssertionError on failure"
   [dna-strand]
-  (->> (map nucleotide-dna-to-rna  dna-strand)
-       (apply str)))
+  (let [rna (map nucleotide-dna-to-rna  dna-strand)]
+    (assert (not (some nil? rna)))
+    (apply str rna)))
