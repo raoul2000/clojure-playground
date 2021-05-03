@@ -11,6 +11,7 @@
 - [Collections](#collections)
   - [take, take-while, take-last, take-nth](#take-take-while-take-last-take-nth)
   - [drop, drop-while, drop-last](#drop-drop-while-drop-last)
+  - [some](#some)
   - [into](#into)
   - [conj](#conj)
 - [Function Functions](#function-functions)
@@ -236,6 +237,7 @@ The sequence abstraction is about operating on members individually, whereas the
 => (1)
 ```
 
+
 ### into
 - copy a collection **into** another
 ```clojure
@@ -275,6 +277,32 @@ The sequence abstraction is about operating on members individually, whereas the
 (conj {:a 1} [:b 2] [:c "color"] [:a "A"])
 =>{:a "A", :b 2, :c "color"}
 ```
+### some
+- explore coll with **some**
+```clojure
+; (some pred coll)
+; stops after first true predicate (here 2)
+(some even? '(1 2 3 4))
+=> true
+
+(some #(= 5 %) [1 2 3 4 5])
+=> true
+
+; would return nil if coll doesn't contain even number
+(some #(when (even? %) %) '(1 2 3 4))
+=> 2
+
+; returns the first value for the key present in the coll
+; and in the map
+(some {:a 1 :b 2} '(:c :b))
+=> 2
+
+; here we see sets being used as a predicate
+; the first member of the collection that appears in the set is returned
+(some #{2} (range 0 10))
+=> 2
+```
+### dedupe
 
 ## Function Functions
 ### create
