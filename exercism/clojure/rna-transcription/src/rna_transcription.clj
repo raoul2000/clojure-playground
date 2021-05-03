@@ -11,6 +11,6 @@
   "convert DNA strand to RNA strand and returns or 
    throws AssertionError on failure"
   [dna-strand]
-  (let [rna (map nucleotide-dna-to-rna  dna-strand)]
-    (assert (not (some nil? rna)))
+  (let [rna (keep nucleotide-dna-to-rna  dna-strand)]
+    (assert (= (count dna-strand) (count rna)))
     (apply str rna)))
