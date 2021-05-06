@@ -1,4 +1,4 @@
-(ns phone-number)
+(ns phone-number-wip)
 
 (defn number [num-string] ;; <- arglist goes here
   (let [num (apply str (filter #(Character/isDigit %) num-string))
@@ -24,20 +24,19 @@
   (nth "abc" 2)
   (apply str (filter #(Character/isDigit %) "ab3c")))
 
-(defn area-code [num-string]
-  (subs (number num-string) 0 3))
+(defn area-code [num-string] ;; <- arglist goes here
+  (apply str (take 3 (number num-string))))
 
 (comment
-  (subs (number "19876543210") 0 3)
   (phone-number/area-code "12234567890"))
 
 (defn pretty-print [num-string] ;; <- arglist goes here
   (let [num (number num-string)
-        area-c (area-code num-string)
+        area-code (apply str (take 3 num))
         ex-code (subs num 3 6)
         subs-num (subs num 6)]
     (str
-     "(" area-c ") " ex-code "-" subs-num)))
+     "(" area-code ") " ex-code "-" subs-num )))
 
 (comment
   (pretty-print "2234567890")
