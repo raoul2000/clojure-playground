@@ -1,8 +1,8 @@
 (ns game.core
-  (:require [play-clj.core :refer :all]
-            [play-clj.g2d :refer :all]))
+  (:require [play-clj.core :as core]
+            [play-clj.g2d :as g2d ]))
 
-(defscreen main-screen
+(g2d/defscreen main-screen
   :on-show
   (fn [screen entities]
     (update! screen :renderer (stage))
