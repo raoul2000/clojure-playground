@@ -16,20 +16,8 @@
       (= 9 len) error
       :else num)))
 
-(comment
-  (= "9876543210" (phone-number/number "19876543210"))
-  (Character/isLetter \.)
-  (Character/isDigit \1)
-  (first "abc")
-  (nth "abc" 2)
-  (apply str (filter #(Character/isDigit %) "ab3c")))
-
 (defn area-code [num-string]
   (subs (number num-string) 0 3))
-
-(comment
-  (subs (number "19876543210") 0 3)
-  (phone-number/area-code "12234567890"))
 
 (defn pretty-print [num-string] ;; <- arglist goes here
   (let [num (number num-string)
@@ -39,6 +27,3 @@
     (str
      "(" area-c ") " ex-code "-" subs-num)))
 
-(comment
-  (pretty-print "2234567890")
-  )
