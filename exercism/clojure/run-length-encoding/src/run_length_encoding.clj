@@ -16,6 +16,12 @@
                  result
                  (str result (if (= 1 cnt) nil cnt) cur-char)))))))
 
+(defn create-char-segment
+  "create a string of len character c, where len is a string representing
+   the length of the result string"
+  [c len]
+  (apply str (repeat (if (= len "0") 1 (Integer/parseInt len)) c)))
+
 (defn run-length-decode
   "decodes a run-length-encoded string"
   [cipher-text]
@@ -24,20 +30,10 @@
          result ""]
     (if (empty? c-txt)
       result
-      (let [cur-char (first c-txt)]
-        (recur
-         (rest c-txt)
-         (if (Character/isDigit cur-char)
-           (str cnt cur-char)
-           "0")
-         (if (Character/isDigit cur-char)
-           result
-           (let [str-segment (apply str (repeat (if (= cnt "0") 1 (Integer/parseInt cnt)) cur-char))]
-             (format "%s%s" result str-segment))
-           ))))))
-
-(comment
-  (run-length-encode "zzz ZZ  zZ")
-  (run-length-decode "3z 2Z2 zZ")
-  (run-length-decode "2 a")
-  (run-length-encode "a  a"))
+      (let [cur-char           (first c-txt)
+            cur-char-is-digit? (Character/isDigit cur-char)]
+        (recur (rest c-txt)
+               (if cur-char-is-digit? (str cnt cur-char) "0")
+               (if cur-char-is-digit?
+                 result
+                 (format "%s%s" result (create-char-segment cur-char cnt))))))))
