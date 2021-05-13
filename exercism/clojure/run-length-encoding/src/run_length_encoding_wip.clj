@@ -1,6 +1,6 @@
 (ns run-length-encoding-wip)
 
-(defn run-length-encode
+(defn run-length-encode-1
   "encodes a string with run-length-encoding"
   [plain-text]
   (loop [p-txt plain-text
@@ -16,10 +16,18 @@
                  result
                  (str result (if (= 1 cnt) nil cnt) cur-char)))))))
 
+(defn run-length-encode
+  "encodes a string with run-length-encoding"
+  [plain-text]
+  (reduce #(str %1 (if (= 1 (count %2))
+                     (str (first %2))
+                     (str (count %2) (first %2))))
+          ""
+          (partition-by identity plain-text)))
+
 (comment
   (run-length-encode "zzz ZZ  zZ")
-  (run-length-encode "a  a")
-  )
+  (run-length-encode "a  a"))
 
 (defn red
   [s]
@@ -65,7 +73,7 @@
 
 
 
-(defn run-length-decode
+(defn run-length-decode-1
   "decodes a run-length-encoded string"
   [cipher-text]
   (loop [c-txt cipher-text
@@ -83,6 +91,30 @@
            (let [str-segment (apply str (repeat (if (= cnt "0") 1 (Integer/parseInt cnt)) cur-char))]
              (format "%s%s" result str-segment))
            result))))))
+
+(defn run-length-decode-2
+  "decodes a run-length-encoded string"
+  [cipher-text]
+  (reduce #(if (= 1 (count %2))
+             (str %1 %2)
+             (let [match (first (re-seq #"(\d+)\D" %2))
+                   cnt (Integer/parseInt (last match))
+                   letter (last %2)]
+               (str %1 (apply str (repeat cnt letter)))))
+          ""
+          (re-seq #"\d+\D|\D" cipher-text)))
+
+(defn run-length-decode
+  "decodes a run-length-encoded string"
+  [cipher-text]
+  (reduce #(str %1 (if (= 1 (count %2))
+                     %2
+                     (let [match (first (re-seq #"(\d+)\D" %2))
+                           count (Integer/parseInt (last match))
+                           lettr (last %2)]
+                       (apply str (repeat count lettr)))))
+          ""
+          (re-seq #"\d+\D|\D" cipher-text)))
 
 (comment
   (run-length-decode "x2a2b10c")
