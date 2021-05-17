@@ -80,16 +80,12 @@
   (let [{:keys [status headers body error]} @(http/get url)]
     (if error
       (println "error : " error)
-      (println headers))))
+      (println status))))
 
 (comment
-  
   (download "http://placekitten.com/200/300" "c:/tmp/img.gif")
   (download "https://images.pexels.com/photos/1680140/pexels-photo-1680140.jpeg?auto=compress&cs=tinysrgb&dpr=3&h=750&w=1260" "c:/tmp/img-2.gif")
-  (download-info "https://images.pexels.com/photos/1680140/pexels-photo-1680140.jpeg?auto=compress&cs=tinysrgb&dpr=3&h=750&w=1260" "c:/tmp/img-2.gif")
- ;; (download "https://download.virtualbox.org/virtualbox/6.1.22/VirtualBox-6.1.22-144080-Win.exe" "VirtualBox-6.1.22-144080-Win.exe")
-  
-  
+  (download "https://download.virtualbox.org/virtualbox/6.1.22/VirtualBox-6.1.22-144080-Win.exe" "VirtualBox-6.1.22-144080-Win.exe")
   )
 
 ;; =================================================================
