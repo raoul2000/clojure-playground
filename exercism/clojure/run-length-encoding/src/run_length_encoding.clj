@@ -1,23 +1,26 @@
 (ns run-length-encoding)
 
+(defn encode-it [char-seq]
+  (if (= 1 (count char-seq))
+    (str (first char-seq))
+    (str (count char-seq) (first char-seq))))
+
 (defn run-length-encode
   "encodes a string with run-length-encoding"
   [plain-text]
-  (reduce #(str %1 (if (= 1 (count %2))
-                     (str (first %2))
-                     (str (count %2) (first %2))))
-          ""
-          (partition-by identity plain-text)))
+  (->> plain-text
+       (partition-by identity)
+       (map encode-it)
+       (apply str)))
+
+(defn decode-it [[_ cnt letter]]
+  (apply str (repeat (Integer/parseInt (or cnt "1")) letter)))
 
 (defn run-length-decode
   "decodes a run-length-encoded string"
   [cipher-text]
-  (reduce #(str %1 (if (= 1 (count %2))
-                     %2
-                     (let [match (first (re-seq #"(\d+)\D" %2))
-                           cnt   (Integer/parseInt (last match))
-                           lettr (last %2)]
-                       (apply str (repeat cnt lettr)))))
-          ""
-          (re-seq #"\d+\D|\D" cipher-text)))
+  (->> cipher-text
+       (re-seq #"(\d+)?(\D)")
+       (map decode-it)
+       (apply str)))
 
