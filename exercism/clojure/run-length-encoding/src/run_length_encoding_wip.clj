@@ -25,10 +25,15 @@
           ""
           (partition-by identity plain-text)))
 
-(defn encode-it [char-seq]
+(defn encode-it-1 [char-seq]
   (if (= 1 (count char-seq))
     (str (first char-seq))
     (str (count char-seq) (first char-seq))))
+
+(defn encode-it [[fst & rst :as char-seq]]
+  (cond->> fst
+    (nil? rst) str
+    rst (str (count char-seq))))
 
 (defn run-length-encode
   "encodes a string with run-length-encoding"
@@ -131,19 +136,25 @@
           ""
           (re-seq #"\d+\D|\D" cipher-text)))
 
-(defn decode-it [[_ cnt c]]
+(defn decode-it-1 [[_ cnt c]]
   (apply str (repeat (Integer/parseInt (or cnt "1")) c)))
+
+(defn decode-it [[_ cnt c]]
+  (cond->> c
+    (nil? cnt) (list)
+    cnt (repeat (Integer/parseInt cnt))))
 
 (defn run-length-decode
   "decodes a run-length-encoded string"
   [cipher-text]
   (->> cipher-text
-       (re-seq #"(\d+)?(\D)")
-       (map decode-it)
+       (re-seq #"(\d+)?(\D)") ;;(["x" nil "x"] ["2a" "2" "a"] ["2b" "2" "b"] ["10c" "10" "c"])
+       (mapcat decode-it)
        (apply str)))
 
 (comment
-  (decode-it ["4y" nil "y"])
+  (re-seq #"(\d+)?(\D)" "x2a2b10c")
+  (decode-it ["4y" "2" "y"])
   (run-length-decode "x2a2b10c")
   ;;"2A3B4CX" => "AABBBCCCCX"
   (reduce #(cond
