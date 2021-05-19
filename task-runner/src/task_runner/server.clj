@@ -5,6 +5,7 @@
             [compojure.route :as compr]
             [compojure.core :as compc]))
 
+(declare stop-server start-server)
 (defonce server (atom nil))
 
 (defn app [req]
@@ -23,9 +24,25 @@
    :headers {"Content-Type" "application/json"}
    :body (json/encode '{:a 1 :b [1 2 3] :boolean true :str "a string"})})
 
+(defn bye-bye [req]
+  (stop-server)
+  {:status 200
+   :headers {"Content-Type" "application/json"}
+   :body (json/encode '{:a 1 :b [1 2 3] :boolean true :str "bye bye"})})
+
+(def my-thread (Thread. (fn []
+                          (Thread/sleep 1000)
+                          (print "hi"))))
+(defn fake-fetch []
+
+  (Thread/sleep
+   (Thread/sleep 5000)
+   "Ready!"))
+
 (compojure.core/defroutes all-routes
   (compc/GET "/" [] app)
   (compc/GET "/json" [] resp-json)
+  (compc/GET "/stop" [] bye-bye)
   (compc/GET "/user/:id" [] echo-id)
   (compr/files "/static/") ;; static file url prefix /static, in `public` folder
   (compr/not-found "<p>Page not found.</p>"))
@@ -40,4 +57,3 @@
 (defn start-server
   []
   (reset! server (server/run-server all-routes {:port 8080})))
-
