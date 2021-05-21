@@ -8,7 +8,7 @@
 (declare stop-server start-server)
 (defonce server (atom nil))
 
-(defn app [req]
+(defn app [_]
   (prn "hello")
   {:status  200
    :headers {"Content-Type" "text/html"}
@@ -19,25 +19,20 @@
    :headers {"Content-Type" "text/html"}
    :body    (str "id = " ((req :route-params) :id))})
 
-(defn resp-json [req]
+(defn resp-json [_]
   {:status 200
    :headers {"Content-Type" "application/json"}
    :body (json/encode '{:a 1 :b [1 2 3] :boolean true :str "a string"})})
 
-(defn bye-bye [req]
-  (stop-server)
+(defn bye-bye [_]
+  (.start (Thread. (fn []
+                     (println "shutting down server ...")
+                     (Thread/sleep 5000)
+                     (stop-server)
+                     (println "server stopped."))))
   {:status 200
-   :headers {"Content-Type" "application/json"}
-   :body (json/encode '{:a 1 :b [1 2 3] :boolean true :str "bye bye"})})
-
-(def my-thread (Thread. (fn []
-                          (Thread/sleep 1000)
-                          (print "hi"))))
-(defn fake-fetch []
-
-  (Thread/sleep
-   (Thread/sleep 5000)
-   "Ready!"))
+   :headers {"Content-Type" "text/plain"}
+   :body "shutting down ..."})
 
 (compojure.core/defroutes all-routes
   (compc/GET "/" [] app)
@@ -53,6 +48,7 @@
     ;; :timeout is optional, when no timeout, stop immediately
     (@server :timeout 100)
     (reset! server nil)))
+
 
 (defn start-server
   []
