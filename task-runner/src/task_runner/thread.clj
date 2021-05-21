@@ -1,6 +1,6 @@
 (ns task-runner.thread
   (:require [clojure.string :as s]
-           [clojure.core.async :as async] ))
+            [clojure.core.async :as async]))
 
 
 (def my-thread (Thread. (fn []
@@ -22,8 +22,7 @@
                      (Thread/sleep 1000)
                      (println "end")))))
 (defn fake-fetch []
-  (
-   (Thread/sleep 5000)
+  ((Thread/sleep 5000)
    "Ready!"))
 
 (defn user-async []
@@ -37,6 +36,4 @@
                    (Thread/sleep 1000)
                    (println "done")
                    (flush)))
-    .start)
-  
-  )
+    .start))
