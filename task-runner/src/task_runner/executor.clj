@@ -3,7 +3,10 @@
 
 
 (defn build-executor []
-  (. Executors newSingleThreadScheduledExecutor))
+  ;;(Executors/newFixedThreadPool 3)
+  (. Executors newFixedThreadPool 3)
+  ;;(. Executors newSingleThreadScheduledExecutor)
+  )
 
 (defn go []
   (let [exec-srv (build-executor)]
@@ -13,23 +16,34 @@
 ;; -----------------------------------------------------------------
 
 (defn f1 []
-  (println (rand-int 100))
-  (flush))
+  (let [rnd-sleep (* 500 (inc (rand-int 5)))
+        thread-id (.getName (Thread/currentThread))]
+    (println (format ">> [%s] %s" rnd-sleep thread-id))
+    (Thread/sleep rnd-sleep)
+    (println (format "<< [%s]" rnd-sleep))
+    (flush)))
 
 (defn go2 []
-  (let [exec-srv (build-executor)]
-    (map #(.schedule exec-srv % 2 (. TimeUnit SECONDS))
-         (repeat 3 f1))))
+  (let [pool (Executors/newFixedThreadPool 3)]
+    (map #(.execute pool %)
+         (repeat 10 f1))))
 
 ;; -- wip 
 
 (defn go3 []
-  (let [exec-srv (build-executor)]
-    (map #(.schedule exec-srv % 1 (. TimeUnit SECONDS))
-         (repeat 3 f1))
-    (println "all tasks scheduled")
-    (.awaitTermination exec-srv 5 (. TimeUnit SECONDS))
-    (println "executor service stopped")))
+  (println "main:" (.getName (Thread/currentThread)))
+  (let [pool (Executors/newFixedThreadPool 3)]
+    (map #(.execute pool %)
+         (repeat 5 f1))
+    ;;(println "all tasks scheduled")
+    ;;(.awaitTermination pool 5 (. TimeUnit SECONDS))
+    ;;(println "executor service stopped")
+    ))
+
+(comment
+  (go3)
+  (go2)
+  (f1))
 
 
 
