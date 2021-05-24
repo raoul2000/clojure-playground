@@ -1,6 +1,5 @@
 (ns task-runner.core-test
-  (:require [clojure.test :refer :all]
-            [task-runner.core :refer :all]))
+  (:require [clojure.test :refer [deftest testing is]]))
 
 (deftest a-test
   (testing "FIXME, I fail."
