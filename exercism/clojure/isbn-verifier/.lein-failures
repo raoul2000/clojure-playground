@@ -1,0 +1,1 @@
+{"isbn-verifier-test" ["isbn-without-separating-dashes-and-X-as-check-digit" "isbn-without-check-digit" "too-long-isbn-and-no-dashes" "valid-isbn-without-separating-dashes" "valid-isbn-number-with-a-check-digit-of-10" "valid-isbn-number"]}
