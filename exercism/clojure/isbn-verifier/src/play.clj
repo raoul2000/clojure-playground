@@ -112,4 +112,12 @@
         :when (or
                (Character/isDigit c)
                (= \X c))]
-    c))
+    c)
+
+  (loop [isbn (seq "6-232-9X")
+         idx 10
+         acc 0]
+    (let [c (first isbn)]
+      (cond
+        (Character/isDigit c)    (recur (rest isbn) (dec idx) (+ acc (* idx (Character/digit c 10))))
+        (and (= \X c) (= 1 idx)) (recur (rest isbn) (dec idx) (+ acc (* idx 10)))))))

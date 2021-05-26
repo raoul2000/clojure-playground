@@ -1,16 +1,24 @@
 (ns isbn-verifier)
 
-(defn isbn? [isbn] ;; <- arglist goes here
-  (if (re-matches #"(?:(\d+)\-?)+[X\d]$" isbn)
-    (= 0 (mod
-          (->> isbn
-               reverse
-               (filter #(or
-                         (Character/isDigit %)
-                         (= \X %)))
-               (into [])
-               (reduce-kv (fn [r k v]
-                            (+ r (* (inc k) (if (= \X v)
-                                              10
-                                              (Character/digit v 10))))) 0)) 11))
-    false))
+(defn isbn-char-to-int
+  [c]
+  (if (= \X c)
+    10
+    (Character/digit c 10)))
+
+(defn isbn-checksum [r k v]
+  (+ r (* (inc k) (isbn-char-to-int v))))
+
+(defn isbn? [isbn]
+  (let [no-dash  (filter #(not (= \- %)) isbn)
+        len      (count no-dash)
+        valid    (and (re-matches #"^(?:(\d+)\-?)+[X\d]$" isbn)
+                      (= 10 len))]
+    (if valid
+      (= 0 (mod
+            (->> no-dash
+                 reverse
+                 (into [])
+                 (reduce-kv isbn-checksum 0)) 
+            11))
+      false)))
