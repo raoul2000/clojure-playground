@@ -1,15 +1,35 @@
 (ns task-runner.client
-  (:require [org.httpkit.client :as http]))
+  (:require [org.httpkit.client :as http]
+            [cheshire.core :as json]))
 
-(defn cb [{:keys [status body error]}]
-  (prn "A"))
 
-(time (repeatedly 10  #(http/get "http://localhost:8080/" cb)))
+;; asynchronous (fire and forget)
+(http/get "https://jsonplaceholder.typicode.com/users" prn)
 
-(comment
-  (http/get "http://localhost:8080/" cb)
+;; use callback
+(http/get "https://jsonplaceholder.typicode.com/users"
+          (fn [{:keys [opts status body headers error] :as resp}]
+            (println status)
+            (println body)))
 
-  (let [resp (http/get "http://localhost:8080/")]
-    @resp)
+;; store the promise (resp)
+(let [resp (http/get "https://jsonplaceholder.typicode.com/users")]
+  (println "the request has been sent...")
+  (if (= 200 (@resp :status))
+    (println (@resp :body))
+    (println "status = " (@resp :status))))
 
-  (cb '{:status 12 :body "body"}))
+;; POST a json body and process response via callback
+(http/post "https://reqres.in/api/users"
+           {:headers {"Content-Type" "application/json"}
+            :body (json/encode {:name "bobby" :job "singer"})}
+           (fn [{:keys [opts status body headers error] :as resp}]
+             (if (= 201 status)
+               (do
+                 (println "=== success")
+                 (let [body (json/parse-string body)
+                       name (body "name") ;; because once parsed keys are string, not keywords
+                       job (body "job")]
+                   (println "=== response = name and job :" name " " job)))
+               (println "!!! ERROR : status code = " status))))
+
