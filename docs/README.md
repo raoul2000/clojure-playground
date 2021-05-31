@@ -11,9 +11,10 @@
 - [Collections](#collections)
   - [take, take-while, take-last, take-nth](#take-take-while-take-last-take-nth)
   - [drop, drop-while, drop-last](#drop-drop-while-drop-last)
-  - [some](#some)
   - [into](#into)
   - [conj](#conj)
+  - [some](#some)
+  - [dedupe](#dedupe)
 - [Function Functions](#function-functions)
   - [create](#create)
   - [apply](#apply)
@@ -21,17 +22,22 @@
 ## Data Structure
 
 ### vector
-- create a vector from elements with **vector**
+create a vector from elements with **vector**
+
 ```clojure
 (vector a b c)
 => [a b c]
 ```
-- create a vector from collection with **vec**
+
+create a vector from collection with **vec**
+
 ```clojure
 (vec '(a b c))
 => [a b c]
 ```
-- get element from vector with **get**
+
+get element from vector with **get**
+
 ```clojure
 (get [ \a \b \c] 0)
 => \a
@@ -41,6 +47,7 @@
 ```
 
 ### map
+
 - create a map from elements with **hash-map**
 ```clojure
 (hash-map :name "bob" :age 12)
@@ -277,6 +284,7 @@ The sequence abstraction is about operating on members individually, whereas the
 (conj {:a 1} [:b 2] [:c "color"] [:a "A"])
 =>{:a "A", :b 2, :c "color"}
 ```
+
 ### some
 - explore coll with **some**
 ```clojure
