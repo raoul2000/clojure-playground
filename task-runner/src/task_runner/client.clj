@@ -12,6 +12,18 @@
             (println status)
             (println body)))
 
+;; GET with query params
+(http/get "https://reqres.in/api/users"
+          {:query-params {"page" 1}}
+          (fn [{:keys [opts status body headers error] :as resp}]
+            (println status)
+            (println body)))
+
+(http/get "https://www.google.com/search" 
+          {:query-params {"client"  "firefox-b-d" 
+                          "q"       "jsonista"}}
+          prn)
+
 ;; store the promise (resp)
 (let [resp (http/get "https://jsonplaceholder.typicode.com/users")]
   (println "the request has been sent...")
@@ -21,7 +33,8 @@
 
 ;; POST a json body and process response via callback
 (http/post "https://reqres.in/api/users"
-           {:headers {"Content-Type" "application/json"}
+           {:headers {"Content-Type"  "application/json"
+                      "X-custom-data" "hello"}
             :body (json/encode {:name "bobby" :job "singer"})}
            (fn [{:keys [opts status body headers error] :as resp}]
              (if (= 201 status)
