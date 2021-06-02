@@ -24,20 +24,60 @@
 (def end-chan   (async/chan))
 
 (defn task2
-  []
-  (println "begin")
-  (Thread/sleep (rand-int 3000))
-  (println "end"))
+  [id]
+  (println (str "begin " id))
+  (Thread/sleep (rand-int 1000))
+  (println (str "end " id))
+  id)
 
-(defn run-task-in-thread [t]
-  (async/thread
-    (for [x (range 1 4)]
-      (do
-        (println "starting")
-        (t)
-        (println "sleeping")
-        (println "loop")))))
+;; run async task once, and block until it returns a result
+(let [fut (future (task2 :b))]
+  (println "waiting ...")
+  (Thread/sleep 2000)
+  (println (str "res = " @fut)))
+
+;; task wait rand ms and terminates
+(defn task3
+  [id]
+  (let [sleep (rand-int 3000)]
+    (println (str "begin " id " " sleep))
+    (Thread/sleep (rand-int sleep))
+    (println (str "end " id " " sleep))
+    sleep))
 
 
+;; run t expecting a future. wait the future is realized or
+;; some time (loop)
+(defn run-task [t]
+  (let [fut (future (t))]
+    (loop [cnt 20]
+      (println cnt)
+      (if (or (= 0 cnt) (realized? fut))
+        :done
+        (do
+          (Thread/sleep 50)
+          (recur (dec cnt)))))))
 
+(comment
+  (run-task (partial task3 :t3)))
+
+;; stop execution
+(def interrupt (atom true))
+
+;; repeately execute fn t until timeout or
+;; interrupt. Pause n ms between successive call to t
+(defn run-task2b [t]
+  (let [res (deref (future (t)) 2000 :timeout)]
+    (cond
+      (= res :timeout) "timeout"
+      @interrupt       "interrupt"
+      :else (do
+              (println (str "result = " res ". waiting ..and start again"))
+              (Thread/sleep 100)
+              (recur t)))))
+
+(comment
+  (deref (future (run-task2b (partial task3 :t1000))))
+  
+  )
 
