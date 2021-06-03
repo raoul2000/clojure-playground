@@ -31,10 +31,12 @@
   id)
 
 ;; run async task once, and block until it returns a result
-(let [fut (future (task2 :b))]
-  (println "waiting ...")
-  (Thread/sleep 2000)
-  (println (str "res = " @fut)))
+(defn run-task0 []
+  (let [fut (future (task2 :b))]
+    (println "waiting ...")
+    (Thread/sleep 2000)
+    (println (str "res = " @fut))))
+
 
 ;; task wait rand ms and terminates
 (defn task3
@@ -62,22 +64,23 @@
   (run-task (partial task3 :t3)))
 
 ;; stop execution
-(def interrupt (atom true))
+(def interrupt (atom false))
 
 ;; repeately execute fn t until timeout or
 ;; interrupt. Pause n ms between successive call to t
 (defn run-task2b [t]
   (let [res (deref (future (t)) 2000 :timeout)]
     (cond
-      (= res :timeout) "timeout"
-      @interrupt       "interrupt"
+      (= res :timeout) (println "?????? timeout")
+      @interrupt       (println "====== interrupt")
       :else (do
               (println (str "result = " res ". waiting ..and start again"))
               (Thread/sleep 100)
               (recur t)))))
 
+(defn stop-task2b []
+  (reset! interrupt true))
+
 (comment
-  (deref (future (run-task2b (partial task3 :t1000))))
-  
-  )
+  (deref (future (run-task2b (partial task3 :t1000)))))
 

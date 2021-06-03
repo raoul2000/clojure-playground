@@ -3,7 +3,8 @@
             [cheshire.core :as json]
             [clojure.java.io :as io]
             [compojure.route :as compr]
-            [compojure.core :as compc]))
+            [compojure.core :as compc]
+            [task-runner.concurrency.first :as tr]))
 
 (declare stop-server start-server)
 (defonce server (atom nil))
@@ -34,8 +35,23 @@
    :headers {"Content-Type" "text/plain"}
    :body "shutting down ..."})
 
+(defn start-task [_]
+  (reset! tr/interrupt false)
+   (future (tr/run-task2b #(tr/task3 :web)))
+  {:status 200
+   :headers {"Content-Type" "text/plain"}
+   :body "starting"})
+
+(defn stop-task [_]
+  (reset! tr/interrupt true)
+  {:status 200
+   :headers {"Content-Type" "text/plain"}
+   :body "stopping"})
+
 (compojure.core/defroutes all-routes
   (compc/GET "/" [] app)
+  (compc/GET "/task-start" [] start-task)
+  (compc/GET "/task-stop"  [] stop-task)
   (compc/GET "/json" [] resp-json)
   (compc/GET "/stop" [] bye-bye)
   (compc/GET "/user/:id" [] echo-id)
