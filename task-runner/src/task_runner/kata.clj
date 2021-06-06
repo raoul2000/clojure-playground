@@ -1,5 +1,6 @@
 (ns task-runner.kata
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as s]
+            [clojure.data :as d]))
 
 ;; ===================================================
 (defn encode-dups [text]
@@ -65,52 +66,133 @@
 
 ;; ===================================================
 
-(defn merge-s-0 [s cnt]
-  (loop [l s
-         res []]
-    (if (or
-         (< (count l) cnt)
-         (empty? l))
+;; much better with (partition k 1 ...)
+(defn longest-cons [strarr k]
+  (if (< k 1)
+    ""
+    (loop [arr     strarr
+           result  ""]
+      (if (or
+           (< (count arr) k)
+           (empty? arr))
+        result
+        (recur
+         (rest arr)
+         (let [candidate (str (first arr) (apply str (take (dec k) (rest arr))))]
+           (if (> (count candidate) (count result))
+             candidate
+             result)))))))
+
+
+;; ===================================================
+
+(defn array-diff [a b]
+  (loop [l b
+         res a]
+    (if (empty? l)
       res
       (recur
        (rest l)
-       (conj res (into [(first l)] (take (dec cnt) (rest l))))))))
+       (filter #(not= % (first l)) res)))))
 
-(defn merge-s [strarr k]
-  (loop [arr strarr
-         res []]
-    (if (or
-         (< (count arr) k)
-         (empty? arr))
-      res
-      (recur
-       (rest arr)
-       (conj res (str (first arr) (apply str (take (dec k) (rest arr)))))))))
+(defn array-diff-best [a b]
+  (remove (set b) a))
 
-(defn longest-cons [strarr k]
-  (cond
-    (> k (count strarr)) ""
-    (< k 1 ) ""
-    :else "ok"
-    )
-  )
+;; ==========================================
+
+(defn dna-strand-1 [dna]
+  (apply str (map #(cond
+                     (= \A %) \T
+                     (= \T %) \A
+                     (= \C %) \G
+                     (= \G %) \C) dna)))
+
+(def dna->complement {\A \T
+                      \T \A
+                      \C \G
+                      \G \C})
+(defn dna-strand [dna]
+  (apply str (map dna->complement dna)))
 
 (comment
-  ;;"abigailtheta"
-  (longest-cons ["zone", "abigail", "theta", "form", "libe", "zas", "theta", "abigail"], 2)
-
-  (merge-s ["zone", "abigail", "theta", "form", "libe", "zas", "theta", "abigail"] )
-  (merge-s [:a :b :c :d :e] -1)
-  (merge-s [] 3)
-  (loop [l [:a :b :c :d :e]
-         res []]
-    (if (or
-         (< (count l) 4)
-         (empty? l))
-      res
-      (recur
-       (rest l)
-       (conj res (into [(first l)] (take (dec 4) (rest l)))))))
+  (dna-strand "ATCG")
+  (dna-strand "AAAA")
   ;;
   )
 
+;; ==========================================
+
+(defn encrypt [st n]
+  (if (< n 1)
+    st
+    (recur
+     (apply str (flatten (concat (partition 1 2 (rest st)) (partition 1 2 st))))
+     (dec n))))
+
+(defn f1 [s]
+  (partition-by #(even? (first %)) (map-indexed vector s)))
+
+(defn f2 [s]
+  (reduce #(if (even? (first %2))
+             [(first %1) (str (second %1) (second %2))]
+             [(str (first %1) (second %2)) (second %1)]) ["" ""] (map-indexed vector s)))
+
+(comment
+  (f1 "abcde")
+  (map-indexed vector "abcde")
+  (f2 "This is a test!")
+  ;;
+  )
+
+(comment
+  (partition 1 2 (rest "abcd"))
+  (apply str (flatten (concat (partition 1 2 (rest "This is a test!")) (partition 1 2 "This is a test!"))))
+  (reduce-kv (fn [res k v]
+               (if (even? k))) [] (into [] "This is a test!"))
+
+  ;; "abc" => {1 \a 2 \b 3 \c}
+  (map-indexed vector "abc") ;; => ([0 \a] [1 \b] [2 \c])
+  (partition-by #(even? (first %)) '([0 \a] [1 \b] [2 \c] [3 \d]))
+  ;;
+  )
+
+(defn decrypt-1 [st n]
+  (if (< n 1)
+    st
+    (let [s st
+          half (quot (count s) 2)]
+      (recur
+       (apply str (flatten (map vector (drop half s) (take half s))))
+       (dec n)))))
+
+(defn decrypt [st n]
+  (if (< n 1)
+    st
+    (let [s st
+          half (quot (count s) 2)]
+      (recur
+       (apply str (interleave (drop half s) (conj (take half s) nil)))
+       (dec n)))))
+
+(comment
+  (let [s "hsi  etti sats"
+        half (quot (count s) 2)]
+    [(drop half s)
+     (take half s)])
+
+  (encrypt "this is a test" 1)
+  (apply str  (interleave '(\t \i \space \s \a \t \s) '(\h \s \i \space \space \e \t)))
+  (interleave '(\t \i \space \s \a \t \s) '(\h \s \i \space \space \e \t \!))
+
+  (let [s "hsi  etti sats"
+        half (quot (count s) 2)]
+    (apply str (flatten (map vector (drop half s) (take half s)))))
+
+  (encrypt "ab!" 1)
+  (decrypt "ba!" 1)
+
+  (let [s "hsi  etti sats"]
+    (split-at (quot (count s) 2) s))
+
+  ;;
+  )
