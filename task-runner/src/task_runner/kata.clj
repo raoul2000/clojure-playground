@@ -126,7 +126,9 @@
   (if (< n 1)
     st
     (recur
-     (apply str (flatten (concat (partition 1 2 (rest st)) (partition 1 2 st))))
+     (s/join (flatten (concat 
+                       (partition 1 2 (rest st)) 
+                       (partition 1 2 st))))
      (dec n))))
 
 (defn f1 [s]
@@ -171,7 +173,9 @@
     (let [s st
           half (quot (count s) 2)]
       (recur
-       (apply str (interleave (drop half s) (conj (take half s) nil)))
+       (s/join (interleave 
+                (drop half s) 
+                (concat (take half s) '(nil))))
        (dec n)))))
 
 (comment
@@ -184,12 +188,15 @@
   (apply str  (interleave '(\t \i \space \s \a \t \s) '(\h \s \i \space \space \e \t)))
   (interleave '(\t \i \space \s \a \t \s) '(\h \s \i \space \space \e \t \!))
 
+  (clojure.string/join '(1 2))
+
   (let [s "hsi  etti sats"
         half (quot (count s) 2)]
     (apply str (flatten (map vector (drop half s) (take half s)))))
 
-  (encrypt "ab!" 1)
-  (decrypt "ba!" 1)
+  (take 6 (concat '(1 2 3 4 5) (repeat nil)))
+  (encrypt "abc!" 1)
+  (decrypt "b!ac" 1)
 
   (let [s "hsi  etti sats"]
     (split-at (quot (count s) 2) s))
