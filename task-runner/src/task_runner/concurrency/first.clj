@@ -82,5 +82,9 @@
   (reset! interrupt true))
 
 (comment
-  (deref (future (run-task2b (partial task3 :t1000)))))
+  (deref (future (run-task2b (partial task3 :t1000))))
+  (future (run-task2b (partial task3 :t1000)))
+  (reset! interrupt true)
+  )
+
 

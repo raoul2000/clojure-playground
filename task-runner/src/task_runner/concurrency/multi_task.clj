@@ -2,23 +2,25 @@
 
 ;; { taskId-1 {:func f1}
 ;;   taskId-1 {:func f2}}
-(def tasks (atom {}))
+(def tasks-atom (atom {}))
 
 (defn create-task [f]
-  {:func f})
+  {:func f
+   :running false
+   :interrupt false})
 
 (defn add-task
   "add task t with id in the task list. Returns the new entry
    or nil if id already exists"
   [t id]
-  (when-not (@tasks id)
-    (swap! tasks #(assoc % id t))))
+  (when-not (@tasks-atom id)
+    (swap! tasks-atom #(assoc % id t))))
 
 (defn remove-task
   "remove a task from the task list given its id"
   [id]
-  (when (@tasks id)
-    (swap! tasks #(dissoc % id))))
+  (when (@tasks-atom id)
+    (swap! tasks-atom #(dissoc % id))))
 
 (comment
   (add-task (create-task #(println "foo")) "foo")
@@ -30,12 +32,41 @@
 (defn list-task-id
   "returns a list of all task id in the task list"
   []
-  (keys @tasks))
+  (keys @tasks-atom))
 
 (comment
   (list-task-id)
   ;;
   )
+
+;; repeately execute fn t until timeout or
+;; interrupt. Pause n ms between successive call to t
+(defn run-task [id tsk]
+  (println (str "run-task : " id))
+  (swap! tsk #(assoc % :running true :interrupt false))
+  (let [res (deref (future (tsk :func)) 2000 :timeout)]
+    (cond
+      (= res :timeout)           (println "?????? timeout")
+      (deref (tsk :interrupt))   (println "====== interrupt")
+      :else (do
+              (println (str "result = " res ". waiting ..and start again"))
+              (Thread/sleep 100)
+              (recur id tsk)))))
+
+(defn interrupt-task [])
+
+(defn start-scheduler []
+  (for [tks (seq tasks-atom)
+        :let [[id task] tks]
+        :when (not (task :running))]
+    (run-task id task))
+  (Thread/sleep 1000)
+  (recur))
+
+(defn stop-scheduler []
+  (for [tks (seq tasks-atom)
+        :let [[id task]] tks]
+    (swap! tasks-atom )))
 
 (defn task-A
   [id]
@@ -45,7 +76,7 @@
     (println (str "end " id " " sleep))))
 
 (defn start-0 []
-  (loop [[cur & remaining] (seq @tasks)]
+  (loop [[cur & remaining] (seq @tasks-atom)]
     (when-let [[id task] cur]
       (println (str "task-id: " id))
       (future ((task :func)))
@@ -60,26 +91,25 @@
   (update task-map task-id #(assoc % :future fut)))
 
 (comment
-  (set-run-task "foo" @tasks false))
+  (set-run-task "foo" @tasks-atom false))
 
 (defn start []
-  (loop [[cur & remaining] (seq @tasks)]
+  (loop [[cur & remaining] (seq @tasks-atom)]
     (when-let [[id task] cur]
       (println (str "task-id: " id))
       (if (not (realized? (task :future)))
         "running"
         (let [fut-task (future ((task :func)))]
-          (swap! tasks (partial set-future-task id fut-task))))
+          (swap! tasks-atom (partial set-future-task id fut-task))))
       (recur remaining)))
   (println "done"))
 
 (defn loop-tasks []
-  (for[x [1 2 3]]
-   (do
-     (start)
+  (for [x [1 2 3]]
+    (do
+      (start)
      ;;(Thread/sleep 10)
-     ))
-  )
+      )))
 
 
 (comment
