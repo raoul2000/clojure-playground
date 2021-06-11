@@ -18,9 +18,6 @@
         :when (= (compute x) x)]
     x))
 
-
-
-
 (comment
   (exp 2 3)
   (Math/pow 2 3)
