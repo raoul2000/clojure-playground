@@ -4,31 +4,24 @@
 
 ;; https://www.codewars.com/kata/55aa075506463dac6600010d/clojure
 
-(defn square-root-int?
-  "returns true if the square root of n is an int"
-  [n]
-  (let [int-part (.intValue (BigDecimal/valueOf (Math/sqrt n)))]
-    (= n (* int-part int-part))))
+(defn square-root-int? [n]
+  (zero? (rem (Math/sqrt n) 1)))
 
 (defn divisors [n]
   (filter #(= 0 (rem n %)) (range 1 (inc n))))
 
-(defn square [d]
+(defn map-square [d]
   (map #(* % %) d))
 
 (defn sum-square-div [n]
-  (let [sum-divisors (apply + (square (divisors n)))]
-    [(square-root-int? sum-divisors) sum-divisors]))
+  (let [sum-divisors (apply + (map-square (divisors n)))]
+    (when (square-root-int? sum-divisors) sum-divisors)))
 
 (defn list-squared [m n]
-  (reduce (fn [acc item]
-            (let [res (sum-square-div item)]
-              (if (first res)
-                (conj acc [item (second res)])
-                acc)))
-          []
-          (range m (inc n))))
-
+  (for [i     (range m (inc n))
+        :let  [sum (sum-square-div i)]
+        :when sum]
+    [i  sum]))
 
 (comment
   (range 1 (inc 4))
@@ -38,11 +31,11 @@
   (divisors 42)
   (sum-square-div 42)
   (sum-square-div 4)
-  (apply + (square (divisors 42)))
+  (apply + (map-square (divisors 42)))
 
   (list-squared 1 250)
-  (square? 84100)
-  (square? 2500)
+  (square-root-int? 84100)
+  (square-root-int? 2500)
 
   ;;
   )
