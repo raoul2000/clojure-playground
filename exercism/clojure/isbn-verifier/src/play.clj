@@ -1,4 +1,5 @@
-(ns play)
+(ns play
+  (:require [clojure.string :as s]))
 
 (defn test1 [isbn]
   (= 0 (mod
@@ -121,3 +122,31 @@
       (cond
         (Character/isDigit c)    (recur (rest isbn) (dec idx) (+ acc (* idx (Character/digit c 10))))
         (and (= \X c) (= 1 idx)) (recur (rest isbn) (dec idx) (+ acc (* idx 10)))))))
+;; ==============================
+
+(defn isbn-char->int
+  [c]
+  (if (= \X c)
+    10
+    (Character/digit c 10)))
+
+(defn isbn? [isbn]
+  (let [no-dash (re-matches #"^\d{9}[X\d]$" (s/replace isbn "-" ""))]
+    (and
+     (some? no-dash)
+     (->> no-dash
+          (map isbn-char->int)
+          (map * (range 10 0 -1))
+          (apply +)
+          (#(mod % 11))
+          zero?))))
+
+(comment
+  (apply + (map * [1 2 3] (range 10 0 -1)))
+  (apply + (map str "123" (range 10 0 -1)))
+  (filter #(if (Character/isDigit %)))
+  (isbn? "3-598-21507-X")
+  (isbn? "3-598-21515-X")
+
+  ;;
+  )
