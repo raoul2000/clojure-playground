@@ -22,11 +22,11 @@
   (let [particip (clojure.string/split st #",")
         cnt-part (count particip)]
     (cond
-      (= 0 cnt-part) "No participants"
-      (> n cnt-part) "Not enough participants"
+      (clojure.string/blank? st) "No participants"
+      (> n cnt-part)             "Not enough participants"
       :else (->> particip
-                 (map (fn [[w name]] (vector name w)) we)
-                 (map (fn [[name w]] [(* w (char-sum name)) name]))
+                 (map vector we)
+                 (map (fn [[w name]] [(* w (char-sum name)) name]))
                  (sort comp-entries)
                  (get-nth n)))))
 
