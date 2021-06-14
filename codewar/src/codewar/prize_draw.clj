@@ -5,7 +5,7 @@
 ;; https://www.codewars.com/kata/5616868c81a0f281e500005c/train/clojure
 
 (defn char-sum [st]
-  (reduce #(+ %1 (- (int (Character/toUpperCase %2)) 64))
+  (reduce #(+ %1 (- (int (Character/toUpperCase %2)) (dec (int \A))))
           (count st)
           st))
 
@@ -16,14 +16,13 @@
       (compare (second e1) (second e2)))))
 
 (defn get-nth [n coll]
-  (second (nth coll (dec n) [nil nil])))
+  (second (nth coll (dec n))))
 
 (defn rank [st we n]
-  (let [particip (clojure.string/split st #",")
-        cnt-part (count particip)]
+  (let [particip (s/split st #",")]
     (cond
-      (clojure.string/blank? st) "No participants"
-      (> n cnt-part)             "Not enough participants"
+      (s/blank? st)          "No participants"
+      (> n (count particip)) "Not enough participants"
       :else (->> particip
                  (map vector we)
                  (map (fn [[w name]] [(* w (char-sum name)) name]))
