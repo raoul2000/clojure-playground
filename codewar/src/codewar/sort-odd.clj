@@ -14,13 +14,11 @@
     (reduce (fn [acc [pos v]] (assoc acc pos v)) placeholder result)))
 
 (defn sort-array-2 [xs]
-  (let [odd-items       (for [n (map-indexed vector xs)
-                              :when (odd? (second n))]
-                          n)
-        sorted-odd-vals (sort (map second odd-items))
-        odd-pos         (map first odd-items)
-        sorted-items    (map vector odd-pos sorted-odd-vals)]
-    (reduce #(assoc %1 (first %2) (second %2)) xs sorted-items)))
+  (let [odds-kv       (filter #(odd? (second %)) (map-indexed vector xs))
+        sorted-odds-v (sort (map second odds-kv))
+        odds-k        (map first odds-kv)
+        sorted-kv     (map vector odds-k sorted-odds-v)]
+    (reduce #(assoc (vec %1) (first %2) (second %2)) xs sorted-kv)))
 
 
 
@@ -33,6 +31,8 @@
   (for [n (map-indexed vector [5 3 2 8 1])
         :when (odd? (second n))]
     n)
+  ;; alternative
+  (filter #(odd? (second %)) (map-indexed vector [5 3 2 8 1]))
 
   ;; extract only list of v from [pos v]
   ;; => (5 3 1)
@@ -70,6 +70,9 @@
 
   (reduce (fn [acc [pos v]] (assoc acc pos v)) [nil nil nil] '([0 :z] [2 :d] [1 :u]))
   (sort-array-2 [5 3 2 8 1 4])
+  (sort-array-2 [1 21 7 8 12 2])
+  (sort-array-2 [21 7 8 4])
+  (sort-array-2 [9, 8, 7, 6, 5, 4, 3, 2, 1, 0])
   (= (sort-array-2 [5 3 2 8 1 4]) [1 3 2 8 5 4])
 
   (->> (map-indexed vector [9 8 7])
