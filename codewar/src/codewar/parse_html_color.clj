@@ -4,23 +4,9 @@
 
 (def preset-colors {"LimeGreen" "#FF0AB1"})
 
-(defn hex-char->int [c]
-  (if (Character/isDigit c)
-    (- (int c) (int \0))
-    (- (int c) (- (int \A) 10))))
-
-(defn hex-string->int [s]
-  (->> s
-       (map hex-char->int)
-       (reverse)
-       (map-indexed #(* %2 (Math/pow 16 %1)))
-       (apply +)
-       int))
-
 (defn hex-seq->map
-  "creates a rgb map from a seq of 3 hexa strings"
   [xs]
-  (zipmap [:r :g :b] (map hex-string->int  xs)))
+  (zipmap [:r :g :b] (map #(Integer/parseInt % 16)  xs)))
 
 (defn clone-char [xs]
   (map (fn [c] (str c c)) xs))
@@ -31,9 +17,8 @@
     #"#(\w)(\w)(\w)"       :>> #(hex-seq->map (clone-char (rest (first %1))))
     (parse-html-color (get preset-colors (clojure.string/lower-case color)))))
 
-
-
 (comment
+  (parse-html-color "#FA1")
   ;; 2 digit hexa number to decimal
 
   ;; use a map
