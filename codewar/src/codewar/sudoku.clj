@@ -5,7 +5,7 @@
 (defn valid-seq? [s]
   (empty? (remove (set s) (range 1 10))))
 
-(defn test-block-line [three-lines]
+(defn test-block-line-1 [three-lines]
   (loop [l1 (first three-lines)
          l2 (second three-lines)
          l3 (last three-lines)
@@ -18,17 +18,25 @@
                    m3 (take 3 l3)]
                (valid-seq? (concat m1 m2 m3)))))))
 
+(defn valid-blocks-per-line? [lines]
+  (loop [[l1 l2 l3] lines
+         valid      true]
+    (if (or (< (count l1) 3) (not valid))
+      valid
+      (recur [(drop 3 l1) (drop 3 l2) (drop 3 l3)]
+             (valid-seq? (concat (take 3 l1) (take 3 l2) (take 3 l3)))))))
+
 (defn valid-blocks? [board]
-  (loop [m     board
-         valid true]
-    (if (or (< (count m) 3) (not valid))
+  (loop [lines  board
+         valid  true]
+    (if (or (< (count lines) 3) (not valid))
       valid
       (recur
-       (drop  3 m)
-       (test-block-line (take 3 board))))))
+       (drop 3 lines)
+       (valid-blocks-per-line? (take 3 lines))))))
 
 (defn inverse-matrix [m]
-  (loop [m (flatten m)
+  (loop [m      (flatten m)
          result []]
     (if (< (count m) 73)
       result
@@ -36,17 +44,10 @@
        (rest m)
        (conj result  (take-nth 9 m))))))
 
-(defn valid-cols? [board]
-  (every? valid-seq? (inverse-matrix board)))
-
-(defn valid-lines? [board]
-  (every? valid-seq? board))
-
-
 (defn valid-solution [board]
   (and
-   (valid-lines? board)
-   (valid-cols? board)
+   (every? valid-seq? board)
+   (every? valid-seq? (inverse-matrix board))
    (valid-blocks? board)))
 
 (comment
@@ -77,7 +78,7 @@
        (rest m)
        (conj result  (take-nth 9 m)))))
   (inverse-matrix grid-1)
-  (valid-cols? grid-1)
+  
   (valid-solution grid-1)
 
   ;;extract block (tricky !)
@@ -134,7 +135,7 @@
                (println m3)
                (valid-seq? (concat m1 m2 m3))))))
 
-  (test-block-line [[5 3 4 6 7 8 9 1 2]
+  (valid-blocks-per-line? [[5 3 4 6 7 8 9 1 2]
                     [6 7 2 1 9 5 3 4 8]
                     [1 9 8 3 4 2 5 6 7]])
   (valid-blocks? grid-1)
