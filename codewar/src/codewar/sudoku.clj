@@ -50,6 +50,15 @@
    (every? valid-seq? (inverse-matrix board))
    (valid-blocks? board)))
 
+;; the cleverest solution is 
+;; using partition, interleave and map on a flattened coll 
+;; is enough
+(defn clever-valid-solution [board]
+  (every? #(= (sort %) (range 1 10))
+          (concat board
+                  (partition 9 (apply interleave board))
+                  (map flatten (partition 3 (apply interleave (map #(partition 3 %) board)))))))
+
 (comment
 
   (def grid-1 [[5 3 4 6 7 8 9 1 2]
