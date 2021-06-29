@@ -1,7 +1,8 @@
-(ns say)
+(ns say
+  (:require [clojure.string :refer [join trimr]]))
 
 (def digit  ["one" "two" "three" "four" "five" "six" "seven" "eight" "nine"])
-(def root ["twen" "thir" "four" "fif" "six" "seven" "eigh" "nine"])
+(def root ["twen" "thir" "for" "fif" "six" "seven" "eigh" "nine"])
 
 (defn say<10
   "say n when n < 10, nil otherwise
@@ -42,10 +43,66 @@
            (let [r (rem n 10)]
              (when (pos? r) (str "-" (say<10 r)))))))
 
-(defn number [num] ;; <- arglist goes here
-  (if-not (< 0 num 999999999999)
-    (throw (IllegalArgumentException.))))
+(defn say<999 [n]
+  (if (< n 99)
+    (say<99 n)
+    (str
+     (say<10 (quot n 100))
+     " hundred "
+     (let [r (rem n 100)]
+       (when (pos? r) (say<99 r))))))
 
+(comment
+  (say<999 523)
+  (say<999 978)
+  ;;
+  )
+
+(defn split-by-3 [n]
+  (->> n
+       str
+       reverse
+       (partition-all 3)
+       reverse
+       (map #(Integer/parseInt (apply str (reverse %))))))
+
+(comment
+  (split-by-3 5)
+  (split-by-3 55)
+  (split-by-3 1236))
+
+(defn add-words [xs]
+  (->> ["trillion" "billion" "million" "thousand" ""]
+       (take-last (count xs))
+       (map vector xs)
+       (filter (comp pos? first))
+       flatten))
+
+(comment
+  (add-words [1 0 3])
+  (add-words [1 5 3])
+  ;;
+  )
+
+
+(defn number [num] ;; <- arglist goes here
+  (cond
+    (not (< -1 num 999999999999))    (throw (IllegalArgumentException.))
+    (= 0 num)                       "zero"
+    (< num 999)                     (say<999 num)
+    :else (->> num
+               split-by-3
+               add-words
+               (map #(if (number? %) (say<999 %) %))
+               (join " ")
+               trimr)))
+
+(comment
+  (number 0)
+  (number 1000000000)
+  (number 1236)
+  (number 112236)
+  (number 98112236))
 
 (comment
 
@@ -95,4 +152,16 @@
 
 
   (rem 2534 1000)                       ;; => 534
-  (rem (quot (- 2534 534) 1000) 1000))  ;; => 2
+  (rem (quot (- 2534 534) 1000) 1000)   ;; => 2
+
+  ;; considering string
+  (partition-all 3 "1234567")
+  (->> "23456789"
+       reverse
+       (partition-all 3)
+       reverse
+       (map #(Integer/parseInt (apply str (reverse %)))))  ;; => (1 432 765)
+
+
+  ;;
+  )
