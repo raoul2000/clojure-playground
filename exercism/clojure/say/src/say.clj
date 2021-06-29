@@ -1,46 +1,28 @@
 (ns say)
 
-;; eleven twelve thrirteen fourteen fifteen sixteen seventeen eighteen nineteen
-
+(def digit  ["one" "two" "three" "four" "five" "six" "seven" "eight" "nine"])
 (def root ["twen" "thir" "four" "fif" "six" "seven" "eigh" "nine"])
-(defn say-teen [n]
+
+(defn say<10
+  "say n when n < 10, nil otherwise
+   ex: one, two ... nine"
+  [n]
+  (when (< n 10)
+    (get digit (dec n))))
+
+(defn say-teen
+  "say n when 12 < n < 20, nil otherwise
+   ex: thirteen, fourteen, ... nineteen"
+  [n]
   (when (< 12 n 20)
     (str (get root (- n 12)) "teen")))
 
-(comment
-  (say-teen 19))
-
-(defn say-ty [n]
+(defn say-ty
+  "say n when divisible by 10 and  10 < n < 100, nil otherwise
+  ex :  twenty, thirty, ... ninety"
+  [n]
   (when (< 19 n 100)
     (str (get root (- (quot n 10) 2)) "ty")))
-
-(comment
-  (say-ty 30)
-  (say-ty 20)
-  (say-ty 90))
-
-
-(defn say<10
-  "say n when lower than 10 (exclusive)"
-  [n]
-  (get ["one" "two" "three" "four" "five" "six" "seven" "eight" "nine"] (dec n)))
-
-(comment
-  (say<10 8))
-
-(defn say-x10
-  "say n when multiple of 10"
-  [n]
-  (condp = n
-    10 "ten"
-    20 "twenty"
-    (say-ty n)))
-
-(comment
-  (say-x10 10)
-  (say-x10 20)
-  (say-x10 50)
-  (say-x10 90))
 
 ;; one two three ... nine
 ;; ten elven twelve
@@ -48,36 +30,13 @@
 ;; twenty twenty-one twenty-two
 ;; thirty thirty-one ... ninety-nine
 
-(defn say-11-to-19
-  "say n when between 11 and 19 (both inclusive) "
-  [n]
-  (condp = n
-    11 "eleven"
-    12 "twelve"
-    (say-teen n)))
-
-(comment
-  (say-11-to-19 19)
-  (say-11-to-19 10)
-  (say-11-to-19 11))
-
-(defn  say<99-1 [n]
-  (cond
-    (< n 10)           (say<10       n)
-    (zero? (rem n 10)) (say-x10      n)
-    (< n 20)           (say-11-to-19 n)
-    :else (str
-           (say-ty n)
-           "-"
-           (say<10 (rem n 10)))))
-
 (defn  say<99 [n]
   (cond
-    (= n 10)           "ten"
-    (= n 11)           "eleven"
-    (= n 12)           "twelve"
-    (< n 10)           (say<10    n)
-    (< n 20)           (say-teen  n)
+    (< n 10)  (say<10    n)
+    (= n 10)  "ten"
+    (= n 11)  "eleven"
+    (= n 12)  "twelve"
+    (< n 20)  (say-teen  n)
     :else (str
            (say-ty n)
            (let [r (rem n 10)]
@@ -118,3 +77,22 @@
   (say<99 99)
   ;;
   )
+
+(comment
+  (def trillion 1000000000000)
+  ;; 1
+  ;; 1 000 ..................... thousand
+  ;; 1 000 000 .................. million
+  ;; 1 000 000 000 000 .......... billion
+  ;; 1 000 000 000 000 000 000 .. trillion
+  (rem 1234567890 1000) ;; => 890
+  (rem (quot (- 1234567890 890) 1000) 1000)               ;; => 567
+  (rem (quot (- 1234567890 890 567) 1000000) 1000)        ;; => 234
+  (rem (quot (- 1234567890 890 567 234) 1000000000) 1000) ;; => 1
+
+  (rem 1000 1000)                   ;; => 0
+  (rem (quot (- 1000 0) 1000) 1000) ;; => 1
+
+
+  (rem 2534 1000)                       ;; => 534
+  (rem (quot (- 2534 534) 1000) 1000))  ;; => 2
