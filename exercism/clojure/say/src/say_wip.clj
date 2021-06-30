@@ -68,6 +68,18 @@
        reverse
        (map #(Integer/parseInt (apply str (reverse %))))))
 
+(defn split-by-3-digits-alter
+  "split n into max of 3 digits groups
+   ex: 1 223 656 => (1 223 656)"
+  [n]
+  (loop [xs (str n)
+         r []]
+    (if (empty? xs)
+      r
+      (recur
+       (drop-last 3 xs)
+       (cons (Integer/parseInt (join (take-last 3 xs))) r)))))
+
 (comment
   (split-by-3 5)
   (split-by-3 55)
