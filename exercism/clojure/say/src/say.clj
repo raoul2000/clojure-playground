@@ -4,36 +4,46 @@
 (def digit ["zero" "one" "two" "three" "four" "five" "six" "seven" "eight" "nine"])
 (def root  ["twen" "thir" "for" "fif" "six" "seven" "eigh" "nine"])
 
-(defn say-digit [n] (get digit  n))
+(defn say-digit
+  "say n when -1 < n < 10, nil otherwise
+   ex: zero, one, .... nine"
+  [n] (get digit  n))
 
 (defn say-teen
-  "say n when 12 < n < 20, nil otherwise
-   ex: thirteen, fourteen, ... nineteen"
+  "say n when 9 < n < 20, nil otherwise
+   ex: ten, eleven, twelve, thirteen, ... nineteen"
   [n]
-  (when (< 12 n 20)
-    (str (get root (- n 12)) "teen")))
+  (case n
+    10 "ten"
+    11 "eleven"
+    12 "twelve"
+    14 "fourteen"
+    (when-let [s (get root (- n 12))]
+      (str s "teen"))))
 
-(defn say-ty
-  "say n when divisible by 10 and  10 < n < 100, nil otherwise
+(defn say-the-ten
+  "say the ten of n when 19 < n < 100, nil otherwise
   ex :  twenty, thirty, ... ninety"
   [n]
-  (when (< 19 n 100)
-    (str (get root (- (quot n 10) 2)) "ty")))
+  (when-let [s (get root (- (quot n 10) 2))]
+    (str s "ty")))
 
-(defn  say<99 [n]
-  (cond
-    (< n 10)  (say-digit n)
-    (= n 10)  "ten"
-    (= n 11)  "eleven"
-    (= n 12)  "twelve"
-    (= n 14)  "fourteen"
-    (< n 20)  (say-teen  n)
-    :else (str
-           (say-ty n)
-           (let [r (rem n 10)]
-             (when (pos? r) (str "-" (say-digit r)))))))
+(defn  say<99
+  "say n when n < 99, nil otherwise
+   ex: one, twenty-one, fifty, ... ninety-nine"
+  [n]
+  (condp > n
+    10  (say-digit n)
+    20  (say-teen  n)
+    (when (< n 100)
+      (str
+       (say-the-ten n)
+       (let [r (rem n 10)]
+         (when (pos? r) (str "-" (say-digit r))))))))
 
-(defn say<999 [n]
+(defn say<999 
+  "say n when n < 999, nil otherwise"
+  [n]
   (if (< n 99)
     (say<99 n)
     (str
@@ -42,7 +52,7 @@
      (let [r (rem n 100)]
        (when (pos? r) (str " " (say<99 r)))))))
 
-(defn split-by-3 [n]
+(defn split-by-3-digits [n]
   (->> n
        str
        reverse
@@ -59,11 +69,10 @@
 
 (defn number [num]
   (cond
-    (not (< -1 num 999999999999))    (throw (IllegalArgumentException.))
-    (< num 10)                      (say-digit num)
+    (not (< -1 num 999999999999))   (throw (IllegalArgumentException.))
     (< num 999)                     (say<999 num)
     :else (->> num
-               split-by-3
+               split-by-3-digits
                add-words
                (map #(if (number? %) (say<999 %) %))
                (join " ")
