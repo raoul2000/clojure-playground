@@ -33,26 +33,31 @@
    ex: one, twenty-one, fifty, ... ninety-nine"
   [n]
   (condp > n
-    10  (say-digit n)
-    20  (say-teen  n)
-    (when (< n 100)
-      (str
-       (say-the-ten n)
-       (let [r (rem n 10)]
-         (when (pos? r) (str "-" (say-digit r))))))))
+    10   (say-digit n)
+    20   (say-teen  n)
+    100  (str
+          (say-the-ten n)
+          (let [r (rem n 10)]
+            (when (pos? r) (str "-" (say-digit r)))))
+    nil))
 
-(defn say<999 
-  "say n when n < 999, nil otherwise"
+(defn say<999
+  "say n when n < 999, nil otherwise
+   ex: three hundred tenwty-five ...nine hundred ninty-nine"
   [n]
-  (if (< n 99)
-    (say<99 n)
-    (str
-     (say-digit (quot n 100))
-     " hundred"
-     (let [r (rem n 100)]
-       (when (pos? r) (str " " (say<99 r)))))))
+  (condp > n
+    99   (say<99 n)
+    1000 (str
+          (say-digit (quot n 100))
+          " hundred"
+          (let [r (rem n 100)]
+            (when (pos? r) (str " " (say<99 r)))))
+    nil))
 
-(defn split-by-3-digits [n]
+(defn split-by-3-digits
+  "split n into max of 3 digits groups
+   ex: 1 223 656 => (1 223 656)"
+  [n]
   (->> n
        str
        reverse
