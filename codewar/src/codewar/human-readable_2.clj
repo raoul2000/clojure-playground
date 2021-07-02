@@ -2,90 +2,74 @@
 
 ;; https://www.codewars.com/kata/52742f58faf5485cae000b9a/train/clojure
 
-(def unit {"year"    30456000
-           "month"   2538000
-           "day"     84600
-           "hour"    3600
-           "minute"  60
-           "second"  1})
+(def time-unit {"year"       (* 365 24 3600)
+                "day"        (* 24 3600)
+                "hour"       3600
+                "minute"     60
+                "second"     1})
 
-(defn spread-1 [n]
-  (loop [d (vals unit)
-         s n
-         r []]
-    (if (empty? d)
-      r
-      (recur
-       (rest d)
-       (rem s (first d))
-       (conj r (quot s (first d)))))))
-
-(defn spread [n]
-  (->> (vals unit)
+(defn decompose [n]
+  (->> (vals time-unit)
        (reduce (fn [{:keys [v r]} u]
                  {:v (rem v u)
                   :r (conj r (quot v u))}) {:v n :r []})
        :r))
 
-
 (comment
-  (reduce (fn [acc u] {:v (rem (:v acc) u)
-                       :r (conj (:r acc) (quot (:v acc) u))}) {:v 3600 :r []} (vals unit))
-
-  (reduce (fn [{:keys [v r]} u]
-            {:v (rem v u)
-             :r (conj r (quot v u))}) {:v 3600 :r []} (vals unit))
-
-
-  (spread 3600)
-  (spread (+ (* 2 3600) 5)))
+  (decompose 3600)
+  (decompose 132030240)
+  (decompose (+ (* 24 3600) 121))
+  (decompose 0)
+  (decompose (+ (* 2 3600) 5)))
 
 (defn add-scale-words [xs]
-  (map vector xs (keys unit)))
+  (map (fn [v unit-name] [v (str " " unit-name)]) xs (keys time-unit)))
 
 (comment
   (add-scale-words [0 0 0 1 2 3]))
 
-(defn remove-0 [xs]
-  (remove (comp zero? first) xs))
+(defn zero-time? [x]
+  ((comp zero? first) x))
 
 (comment
-  (remove-0 [[1 1] [0 2]]))
+  (zero-time? [0 2]))
 
-(defn pluralize [xs]
-  (map (fn [[n s]] [n (if (= 1 n) s (str s "s") )]) xs))
-(comment
-  (pluralize [[1 "hour"] [3 "minute"]]))
-
-(defn add-and [xs]
-  (let [u (last (last xs))]
-    (if (= "sec" (subs u 0 3))
-      (concat (drop-last xs) ["and"] [(last xs)])
-      xs)))
+(defn pluralize [[v unit-name]]
+  [v (if (= 1 v) unit-name (str unit-name "s"))])
 
 (comment
-  (add-and [[1 "ee"] [2 "minute"]])
-  (add-and [[1 "ee"] [2 "second"]])
-  (add-and [[1 "ee"] [1 "second"]])
-  )
+  (pluralize [1 "hour"])
+  (pluralize [2 "hour"]))
+
+
+(defn add-separators [xs]
+  (if (= 1 (count xs))
+    xs
+    (cons (drop-last (interleave (drop-last xs) (repeat ", "))) [" and " (last xs)])))
+
+(comment
+  (add-separators [[1 "hour"] [23 "minutes"]])
+  (add-separators [[5 "days"] [1 "hour"] [23 "minutes"]]))
 
 (defn formatDuration [secs]
   (if (zero? secs)
     "now"
     (->> secs
-         spread
+         decompose
          add-scale-words
-         remove-0
-         pluralize
-         add-and)))
+         (remove zero-time?)
+         (map pluralize)
+         add-separators
+         flatten
+         (apply str))))
 
 (comment
   (formatDuration 3601)
-  (formatDuration 2538000)
-  )
+  (formatDuration 2538000))
 
 
 (comment
+  (time (repeatedly 10000 #(formatDuration 2538000)))
   (quot 3662 60)
   (rem 3662 60)
   (let [n 30662]
