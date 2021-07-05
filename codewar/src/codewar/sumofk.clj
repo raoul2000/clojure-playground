@@ -10,7 +10,7 @@
   (map (partial cons v) xs))
 
 (comment
-  (products 1 [[2] [3]]))
+  (products 1 [[2 3] [3]]))
 
 (defn all-products
   " ex: (all-products 2 [1 2 3 4]) => "
@@ -67,6 +67,8 @@
   (sub-lst 1 [2 3 4] 2)
   (sub-lst 2 [3 4] 2)
   (sub-lst 3 [4] 2)
+  (sub-lst :a [:b :c :d :e] 2)
+  (sub-lst 3 [:a :b :c :d :e] 3)
 
   (sub-lst 3 [4] 4)
 
@@ -83,34 +85,44 @@
        (into res (sub-lst (first l) (rest l) 2))))))
 
 (defn all-sub-lst [lst len]
-  (loop [l lst
-         res []]
-    (if (empty? l)
-      res
-      (recur
-       (rest l)
-       (into res (sub-lst (first l) (rest l) len))))))
+  (if (= 1 len)
+    (map vector lst)
+    (loop [l lst
+           res []]
+      (if (empty? l)
+        res
+        (recur
+         (rest l)
+         (into res (sub-lst (first l) (rest l) len)))))))
 
 (comment
-  (all-sub-lst [1 2 3 4 5 6] 3))
+  (all-sub-lst [1 2 3 4 5 6] 3)
+  (all-sub-lst  [91 74 73 85 73 81 87] 4))
 
 (defn compute-weight [lst len]
   (map #(apply + %) (all-sub-lst lst len)))
 
 (comment
   (compute-weight [91, 74, 73, 85, 73, 81, 87] 3)
+  (compute-weight [91 74 73 85 73 81 87] 4)
+
+  (doseq [route (all-sub-lst  [91 74 73 85 73 81 87] 4)]
+    (printf "%s = %d\n" route (apply + route)))
   ;;
   )
 
 (defn choose-best-sum [t k ls]
-  (if (< (count ls) k)
-    nil
-    (let [dist (remove (partial < t) (compute-weight ls k))]
+  (when-not (< (count ls) k)
+    (let [dist (remove #(> % t) (compute-weight ls k))]
       (when-not (empty? dist) (apply max dist)))))
 
 (comment
   (choose-best-sum 230 3 [91, 74, 73, 85, 73, 81, 87])
   (choose-best-sum 10 3 [91, 74, 73])
+  (choose-best-sum 163 3 [50 55 56 57 58])
+  (choose-best-sum 331 4 [91 74 73 85 73 81 87])
+  (choose-best-sum 230 4 [100 76 56 44 89 73 68 56 64 123 2333 144 50 132 123 34 89])
+
 
   ;;
   )
@@ -128,7 +140,7 @@
   ;;                                      bcd  bce  bde
   ;;                                                cde
   ;; => 4
-  ;;                                     abcd abce abde
+  ;;                                     abcd abce abde acde
   ;;                                               bcde
   ;; => 5
  ;;  abcde  
@@ -144,4 +156,74 @@
          (conj res (into [v] (take (dec len) xs)))))))
 
   ;;
-  )
+
+  ;; [a b c d e f] 
+  ;; => 1 tot = 6
+  ;; a
+  ;; b
+  ;; c
+  ;; d
+  ;; e
+  ;; f
+
+  ;; => 2 tot = 15
+  ;; ab ac ad ae af 
+  ;; bc bd be bf
+  ;; cd ce cf
+  ;; de df
+  ;; ef
+
+  ;; => 3 tot = 20
+  ;; abc abd abe abf acd ace acf ade adf aef
+  ;; bcd bce bcf bde bdf bef 
+  ;; cde cdf cef
+  ;; def
+
+  ;; => 4 tot = 15
+  ;; abcd abce abcf abde abdf abef acde acdf acef adef
+  ;; bcde bcdf bcef bdef
+  ;; cdef
+
+  ;; => 5 tot = 6
+  ;; abcde abcdf abcef abdef acdef
+  ;; bcdef
+  [[:a] [:b] [:c] [:d] [:e] [:f]]
+  [[[:a :b] [:a :c] [:a :d]]]
+
+  (let [lst [1 2 3 4 5 6]]
+    (map (comp vector vector) lst))
+
+  (let [groups ['([1]) 
+             '([2]) 
+             '([3]) 
+             '([4]) 
+             '([5]) 
+             '([6])]
+        xs [1 2 3 4 5 6]]
+    (loop [grp groups
+           v xs
+           res []]
+      (if (empty? v)
+        res
+        (recur
+         (rest grp)
+         (rest v)
+         (conj res (map #(into (first l) %) (rest grp)))))))
+
+
+  (let [lst ['([1 2] [1 3] [1 4] [1 5] [1 6])
+             '([2 3] [2 4] [2 5] [2 6])
+             '([3 4] [3 5] [3 6])
+             '([4 5] [4 6])
+             '([5 6])
+             '()]
+        xs [1 2 3 4 5 6]]
+    (loop [l lst
+           v xs
+           res []]
+      (if (empty? l)
+        res
+        (recur
+         (rest l)
+         (rest v)
+         (conj res (map #(into % (first l) ) (rest l))))))))
