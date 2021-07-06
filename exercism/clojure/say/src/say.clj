@@ -11,7 +11,7 @@
    ex: one, two, ...ten, eleven, twelve, thirteen, ... nineteen"
   [n]
   (or
-   (get spec n)
+   (spec n)
    (when-let [s (get root (- n 12))]
      (str s "teen"))))
 
@@ -48,15 +48,15 @@
     nil))
 
 (defn split-by-3-digits
-  "split n into max of 3 digits groups
+  "split num into max of 3 digits groups
    ex: 1 223 656 => (1 223 656)"
-  [n]
-  (->> n
-       str
-       reverse
-       (partition-all 3)
-       reverse
-       (map #(Integer/parseInt (join (reverse %))))))
+  [num]
+  (->> [num 0]
+       (iterate    (fn [[n _]] [(quot n 1000) (rem n 1000)]))
+       (take-while (fn [[n r]] (not= n r 0)))
+       rest
+       (map last)
+       reverse))
 
 (defn add-scale-words [xs]
   (->>  ["trillion" "billion" "million" "thousand" ""]

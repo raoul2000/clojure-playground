@@ -192,6 +192,31 @@
        reverse
        (map #(Integer/parseInt (apply str (reverse %)))))  ;; => (1 432 765)
 
+  (def trillion 1000000000000000000)
+  (take 7 (iterate (fn [[a b]] (vector (quot a 1000) (rem a 1000))) [23456789889 0]))
+  (take 7 (iterate (fn [n](rem n 1000)) 23456789889 ))
+  
+  (reverse (map last (rest (take-while (fn [[a b]] (not= a b 0)) 
+              (iterate 
+               (fn [[a _]] (vector (quot a 1000) (rem a 1000))) 
+               [23456789889 0])))))
+
+
+  (take 7 (iterate (fn [[a b]] (vector (quot a 1000) (rem a 1000))) [1000000 0]))
+   (take 10 (iterate #(rem % 1000) 23456789889))
+
+  (defn div-thousand [n]
+    (last (take-while (comp pos? first)  (iterate (fn [[a b]] (vector (quot a 1000) (* b 1000))) [n 1]))))
+
+
+  (loop [n 1234567
+         res []]
+    (if-not (pos? n)
+      res
+      (let [[tok th] (div-thousand n)]
+        (recur
+         (- n (* tok th))
+         (conj res tok)))))
 
   ;;
   )
