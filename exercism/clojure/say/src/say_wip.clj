@@ -218,5 +218,8 @@
          (- n (* tok th))
          (conj res tok)))))
 
+  ["tri" "bi" "mi" "thou" ""]
+  [1 23 3]
+  [ 3 23 1]
   ;;
   )

@@ -1,9 +1,11 @@
 (ns say
   (:require [clojure.string :refer [join trimr]]))
 
-(def spec {0 "zero", 1 "one",   2 "two",   3 "three", 4 "four", 5 "five"
-           6 "six",  7 "seven", 8 "eight", 9 "nine",  10 "ten"
-           11 "eleven", 12 "twelve", 14 "fourteen"})
+(def spec {0 "zero"    1  "one"  2  "two"  3  "three", 
+           4 "four"    5  "five" 6  "six"  7  "seven", 
+           8 "eight"   9  "nine" 10 "ten"  11 "eleven", 
+           12 "twelve" 14 "fourteen"})
+
 (def root  ["twen" "thir" "for" "fif" "six" "seven" "eigh" "nine"])
 
 (defn say<20
@@ -12,14 +14,14 @@
   [n]
   (or
    (spec n)
-   (when-let [s (get root (- n 12))]
+   (when-let [s (root (- n 12))]
      (str s "teen"))))
 
 (defn say-the-ten
   "say the ten of n when 19 < n < 100, nil otherwise
   ex :  twenty, thirty, ... ninety"
   [n]
-  (when-let [s (get root (- (quot n 10) 2))]
+  (when-let [s (root (- (quot n 10) 2))]
     (str s "ty")))
 
 (defn  say<99
@@ -49,20 +51,19 @@
 
 (defn split-by-3-digits
   "split num into max of 3 digits groups
-   ex: 1 223 656 => (1 223 656)"
+   ex: 1 223 656 => (656 223 1)"
   [num]
   (->> [num 0]
        (iterate    (fn [[n _]] [(quot n 1000) (rem n 1000)]))
        (take-while (fn [[n r]] (not= n r 0)))
        rest
-       (map last)
-       reverse))
+       (map last)))
 
 (defn add-scale-words [xs]
-  (->>  ["trillion" "billion" "million" "thousand" ""]
-        (take-last (count xs))
+  (->>  ["" "thousand" "million"  "billion" "trillion"]
         (map vector xs)
         (filter (comp pos? first))
+        reverse
         flatten))
 
 (defn number [num]
