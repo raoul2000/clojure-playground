@@ -187,43 +187,55 @@
   ;; => 5 tot = 6
   ;; abcde abcdf abcef abdef acdef
   ;; bcdef
-  [[:a] [:b] [:c] [:d] [:e] [:f]]
+  [[[:a]] [[:b]] [[:c]] [[:d]] [[:e]] [[:f]]]
   [[[:a :b] [:a :c] [:a :d]]]
 
   (let [lst [1 2 3 4 5 6]]
-    (map (comp vector vector) lst))
+    (map list lst))
 
-  (let [groups ['([1]) 
-             '([2]) 
-             '([3]) 
-             '([4]) 
-             '([5]) 
-             '([6])]
-        xs [1 2 3 4 5 6]]
-    (loop [grp groups
-           v xs
-           res []]
-      (if (empty? v)
-        res
-        (recur
-         (rest grp)
-         (rest v)
-         (conj res (map #(into (first l) %) (rest grp)))))))
+  (map #(conj % 1) (rest '(((1)) ((2)) ((3)))))
+  (map #(conj % 2) (rest (rest '((1) (2) (3)))))
+
+  (defn dispatch
+    "add v to all lists in coll, where coll is a 
+     list of list"
+    [v coll]
+    (map #(conj % v) coll))
+  (dispatch 1 '((2 3) (4 5)))
+  (dispatch 1 '((2)))
+
+  (def l '(((2 3) (4 5)) ((6 7) (8 9))))
+
+  (map #(dispatch 1 %) l)
+
+  (defn init-list [xs]
+    (map (comp list list) xs))
+  (init-list [1 2 3])
+
+  (map #(dispatch 1 %) (rest '(((1 2) (1 3)) ((2 3)))))
+  (map #(dispatch 1 %) '((()) ((2 3))))
 
 
-  (let [lst ['([1 2] [1 3] [1 4] [1 5] [1 6])
-             '([2 3] [2 4] [2 5] [2 6])
-             '([3 4] [3 5] [3 6])
-             '([4 5] [4 6])
-             '([5 6])
-             '()]
-        xs [1 2 3 4 5 6]]
-    (loop [l lst
-           v xs
-           res []]
-      (if (empty? l)
-        res
-        (recur
-         (rest l)
-         (rest v)
-         (conj res (map #(into % (first l) ) (rest l))))))))
+  (map (fn [m] (map #(conj % 1) m)) (rest '(((1 2) (1 3)) ((2 3)))))
+  
+{11 [[11]]
+ 2 [[2]]
+ 6 [[6]]}
+  
+{11 [[11 2] [11 6]]
+ 2 [[2 6]]
+ 6 [[]]}
+  
+{11 [[11 2 6] ]
+ 2 [[]]
+ 6 [[]]}
+
+  (map vector [1 2] [:a :b])
+  (map vector [1 2] [:b :a])
+
+  (map vector [1 2 3 4] '([1 :a] [2 :b] [3 :c]))
+  (repeat 3 (rest (take 4 (cycle [:a :b :c :d]))))
+
+
+  ;;
+  )
