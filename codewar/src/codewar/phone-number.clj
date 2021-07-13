@@ -3,7 +3,8 @@
 
 ;; https://www.codewars.com/kata/56baeae7022c16dd7400086e/train/clojure
 
-(defn remove-num [line]
+(defn remove-num
+  [line]
   (->> line
        (re-matches #"(.*)\+\d\d?-\d{3}-\d{3}-\d{4}(.*)")
        rest
@@ -19,9 +20,48 @@
        s/split-lines
        (some #(when (s/includes? % num) %))))
 
+(defn extract-name [doc]
+  (let [line (:line doc)
+        name-match (re-seq #"<([^>]*)>|<([^>]*)$" line)]
+    (cond
+      (empty? name-match)      (assoc doc :error "no name found")
+      (> (count name-match) 1) (assoc doc :error (str "Too many people: " (:num doc)))
+      :else (let [name (remove nil? (first name-match))]
+              (assoc doc
+                     :name (last name)
+                     :line (s/replace line (first name) " "))))))
+
+(comment
+  (extract-name {:line "qsdf<SSd> qsdf"})
+  (extract-name {:num "1234" :line "qsdf<SSd> qs<df"})
+  (extract-name {:line "qsdf qs<df"})
+  ;;
+  )
+
+(defn extract-address [doc]
+  (let [line (:line doc)]
+    (->> line
+         (filter #(or (Character/isLetterOrDigit %)
+                      (#{\. \-} %))))))
+
+(comment
+  (extract-address {:line "eb-kr?"})
+
+  ;;
+  )
+
+(defn parse-line [line num]
+  (-> {:phone num
+       :line (s/replace line num " ")}
+      extract-name))
+(comment
+  (parse-line "eer 123 665" "123")
+  (parse-line "eer 123 66<bob>5" "123")
+  ;;
+  )
 (defn phone [strng num]
   (if-let [line (find-by-num strng num)]
-    line
+    (parse-line line num)
     (format "Error => Not found: %s" num)))
 
 (def dr (str "/+1-541-754-3010 156 Alphand_St. <J Steeve>\n 133, Green, Rd. <E Kustur> NY-56423 ;+1-541-914-3010\n"
@@ -45,4 +85,13 @@
   (some #(when (s/includes? % "+19-421-674-8974") %) (s/split-lines dr))
   (s/replace)
   (re-matches #"(.*)\+\d\d?-\d{3}-\d{3}-\d{4}(.*)" "/+1-541-754-3010 156 Alphand_St. <J Steeve>")
-  (re-matches #"(.*)\+\d\d?-\d{3}-\d{3}-\d{4}(.*)" "/+1-541-754-3010 156 Alphand_St. <J Steeve"))
+  (re-matches #"(.*)\+\d\d?-\d{3}-\d{3}-\d{4}(.*)" "/+1-541-754-3010 156 Alphand_St. <J Steeve")
+
+  (re-seq #"<[^>]*>|<[^>]*$" "sdfg<R Steell> Quora Street AB-4<sdd> sdfgsd<sdd")
+  (->> (re-seq #"<([^>]*)>|<([^>]*)$" "sdfg<R Steell> Quora Street AB-4<sdd> sdfgsd<sdd")
+       (map (partial remove nil?))
+       last)
+
+
+  ;;
+  )
