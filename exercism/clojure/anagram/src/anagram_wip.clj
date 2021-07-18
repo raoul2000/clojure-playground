@@ -39,6 +39,9 @@
 
 
 (comment
+
+  (= (sort "abc") (sort "bca"))
+
   (time (anagram? "abcdefgjhijklmnopqrstuvewyz" "abcdefgjhijklmnopqrstuvewyzX"))
   (time (anagram?-1 "abcdefgjhijklmnopqrstuvewyz" "abcdefgjhijklmnopqrstuvewyzX"))
 
@@ -46,7 +49,7 @@
         s2 (str s1 "X")]
     (time (anagram? s1 s2))
     (time (anagram?-1 s1 s2)))
-  
+
 
 
   (def s1 (apply str (repeat 5000 \c)))

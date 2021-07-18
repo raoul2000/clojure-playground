@@ -1,12 +1,11 @@
 (ns anagram
-  (:require [clojure.string :refer [upper-case]]
-            [clojure.data :refer [diff]]))
+  (:require [clojure.string :refer [upper-case]]))
 
 (defn test-anagram [word anagram]
-  (when (not= word anagram)
-    (let [[w a] (diff (sort word) (sort anagram))]
-      (= nil w a))))
+  (= word (sort anagram)))
 
 (defn anagrams-for [word prospect-list]
-  (let [anagram? (partial test-anagram (upper-case word))]
-    (filter (comp anagram? upper-case) prospect-list)))
+  (let [anagram?       (partial test-anagram (sort (upper-case word)))
+        not-same-word? (partial not=         (upper-case word))
+        anagram-for?   (comp (every-pred not-same-word? anagram?) upper-case)]
+    (filter anagram-for? prospect-list)))
