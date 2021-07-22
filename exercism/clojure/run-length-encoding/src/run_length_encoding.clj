@@ -2,8 +2,7 @@
 
 (defn encode-it [[fst & rst :as char-seq]]
   (cond->> fst
-    (nil? rst) str
-    rst        (str (count char-seq))))
+    rst (str (count char-seq))))
 
 (defn run-length-encode
   "encodes a string with run-length-encoding"
@@ -16,8 +15,7 @@
 (defn decode-it
   [[_ cnt c]]
   (cond->> c
-    (nil? cnt) (list)
-    cnt        (repeat (Integer/parseInt cnt))))
+    cnt (repeat (Integer/parseInt cnt))))
 
 (defn run-length-decode
   "decodes a run-length-encoded string"
