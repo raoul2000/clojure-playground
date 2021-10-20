@@ -1,9 +1,11 @@
-(ns wordy)
+(ns wordy
+  (:require [clojure.string :refer [trim lower-case]]))
 
 (def operator-symbol {"divided by"    "/"
                       "multiplied by" "*"
                       "plus"          "+"
-                      "minus"         "-"})
+                      "minus"         "-"
+                      "what is"       "identity"})
 
 (defn operator->symbol [s]
   (let [sym (operator-symbol s)]
@@ -17,128 +19,73 @@
 
   ;;
   )
-(defn tokenize-operations-0 [s]
-  (let [matcher (re-matcher #"((?<op>divided by|multiplied by|plus|minus) +(?<val>[0-9]) *)" s)]
-    (loop  [match (re-find matcher)
-            result []]
-      (if-not match
-        result
-        (let [res  {:operator (operator->symbol (.group matcher "op"))
-                    :operand  (.group matcher "val")}]
-          (recur  (re-find matcher)
-                  (conj result res)))))))
 
-(defn tokenize-operations [s]
-  (let [matcher (re-matcher #"((?<op>divided by|multiplied by|plus|minus) +(?<val>[0-9]) *)" s)
-        first-match (re-find matcher)]
-    (if (and (> (.length s) 0) (empty? first-match))
-      (throw (IllegalArgumentException. (format "invalid operator: %s" s)))
-      (loop  [match first-match
+(defn tokenize 
+  "Returns a seq of tokens where each token is a pair [operation operand]"
+  [s]
+  (if (re-matches #".*[a-zA-Z]+ *\??$" s)
+    (throw (IllegalArgumentException.))
+    (let [matcher (re-matcher #"([a-zA-Z ]+)(-?[0-9]+)" s)]
+      (loop  [match (re-find matcher)
               result []]
         (if-not match
           result
-          (let [res  {:operator (operator->symbol (.group matcher "op"))
-                      :operand  (.group matcher "val")}]
+          (let [res [(->> (second match)
+                          trim
+                          lower-case)
+                     (last match)]]
             (recur  (re-find matcher)
                     (conj result res))))))))
 
 (comment
-  (tokenize-operations "multiplied by 2 divided by 4 minus 5")
-  (tokenize-operations "plus 2")
-  (tokenize-operations "cubed 2")
-  (eval '(+ 1 1))
+  (tokenize "aaa dfg -98 eeez ze 98 ?")
+  (tokenize "aaa dfg -98 eeez ze 98 operator C 55")
+  (tokenize "What is 3 minus 4 eee")
+  (tokenize "who is")
+  (tokenize "What is -3 multiplied by 25?")
+  (re-matches #".*[a-zA-Z]+ *\?$" "hello, world 3 ?")
+  (throw (IllegalArgumentException.))
   ;;
   )
 
-(defn tokenize [s]
-  (when-let [[_ str-val str-operations] (re-find (re-matcher #"^What is (-?[0-9]) +(..+)*\?$" s))]
-    [str-val (and
-              str-operations
-              (tokenize-operations str-operations))]))
+(defn tokens->sform [tokens]
+  (reduce (fn r [acc [str-op str-val]]
+            (format
+             "(%s %s %s)"
+             (operator->symbol str-op) acc str-val)) "" tokens))
 
 (comment
-  (tokenize "What is 4 minus 3 multiplied by 10?")
-  (tokenize "What is 4 ?")
+  (tokens->sform [["op1" "1"] ["op2" "4"] ["op3" "5"]])
+  (tokens->sform [["what is" "1"] ["divided by" "4"] ["minus" "5"]])
+  (tokens->sform [["what is" "1"]])
   ;;
   )
 
-(defn parse [s]
-  (when-let [[str-init-val operations] (tokenize s)]
-    (loop [ops operations
-           result (format "(identity %s)" str-init-val)]
-      (if (empty? ops)
-        result
-        (recur
-         (rest ops)
-         (format "(%s %s %s)"
-                 (:operator (first ops))
-                 result
-                 (:operand (first ops))))))))
+
+
+(defn evaluate [s]
+  (let [tokens (tokenize s)]
+    (if (empty? tokens)
+      (throw (IllegalArgumentException. ""))
+      (->> (tokens->sform tokens)
+           read-string
+           eval))))
 
 (comment
-
-  (parse "What is 4 minus 3 multiplied by 10?")
-  (parse "What is 4 cubed?")
-  (parse "qWhat is 4 minus 3 multiplied by 10?")
+  (evaluate "What is -3 multiplied by 25")
+  (evaluate "What is 56")
+  (evaluate "What is 56 cubed?")
 
   ;;
   )
 
-(defn evaluate [s] ;; <- arglist goes here
-      ;; your code goes here
-  )
-
-
-
 (comment
-  (def re #"((?<op>multiplied by|divided by) +(?<val>-?[[:digit:]]+))")
-  (def re (re-pattern "((?<op>divided by) +(?<val>-?[[:digit:]]+))"))
-
-  (def mm (re-matcher #"What is (-?[0-9]) +(.*)\?" "What is 5 plus 4 minus 5?"))
-  (re-find mm)
-
-
-
-
-
-  (def matcher (re-matcher #"What is 3 (?<op>divided by|multiplied by|plus) +(?<val>-?[0-9])"
-                           "What is 3 multiplied by 2 divided by 4"))
+  (def matcher (re-matcher #"([a-zA-Z ]+)(-?[0-9]+)"
+                           "What is 3 minus 4 cubed"))
 
   (re-find matcher)
-  ;;(re-groups matcher)
-  (def operation {:operator (.group matcher "op")
-                  :operand  (.group matcher "val")})
-  (prn operation)
-  (.group matcher "op")
-  (.group matcher "val")
+  (re-groups matcher)
 
-
-  (loop [match (re-find matcher)
-         result []]
-    (if-not match
-      result
-      (let [res {:operator (.group matcher "op")
-                 :operand  (.group matcher "val")}]
-        (recur (re-find matcher)
-               (conj result res)))))
-
-
-  (loop [match (re-find matcher)
-         result []]
-    (if-not match
-      result
-      (recur (re-find matcher)
-             (conj result match))))
-
-
-
-
-  (def matcher (re-matches re "divided by -2"))
-  (re-find matcher)
-  (.group matcher "op")
-
-  (def re2 #"((?:az|rt))")
-  (def matcher2 (re-matcher re2 "azazrt"))
-  (re-find matcher2)
+  ((comp trim lower-case) "E r ")
   ;;
   )
