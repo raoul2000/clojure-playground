@@ -11,9 +11,10 @@
 - [Collections](#collections)
   - [take, take-while, take-last, take-nth](#take-take-while-take-last-take-nth)
   - [drop, drop-while, drop-last](#drop-drop-while-drop-last)
-  - [some](#some)
   - [into](#into)
   - [conj](#conj)
+  - [some](#some)
+  - [dedupe](#dedupe)
 - [Function Functions](#function-functions)
   - [create](#create)
   - [apply](#apply)
@@ -323,6 +324,8 @@ The sequence abstraction is about operating on members individually, whereas the
 => 33
 
 ; without apply we should have written (conj [] 1 2)
-(apply conj [] [1 2])
+(apply conj [1 2] [3 4])
 => [1 2]
+(apply conj [1 2] [3 4] [5 6])
+=> [1 2 [3 4] 5 6]
 ```
