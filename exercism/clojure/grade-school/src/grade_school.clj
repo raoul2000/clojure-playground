@@ -1,23 +1,49 @@
 (ns grade-school)
 
-(def db (atom {}))
+(def roster (atom {}))
 
-(defn grade [grade school]  ;; <- arglist goes here
-  (school grade))
-
-
-(defn add-atom-solution [name grade]  ;; <- arglist goes here
-  (swap! db (fn [db] (if-let [students (db grade)]
-                       (assoc db grade (sort (conj students name)))
-                       (assoc db grade [name])))))
-
-(defn add [name grade db]  ;; <- arglist goes here
+(defn add [db name grade]  ;; <- arglist goes here
   (if-let [students (db grade)]
-    (assoc db grade (sort (conj students name)))
+    (assoc db grade (conj students name))
     (assoc db grade [name])))
 
+(comment
+  (add "bob" 2 roster)
+  (-> {}
+      (add "bob" 2)
+      (add "ali" 2))
+  ;;
+  )
+
+
+(defn grade [school grade]  ;; <- arglist goes here
+  (if-let [result (get school grade)]
+    result
+    []))
+
+(comment
+  (-> {}
+       (add "bob" 2)
+       (grade 1))
+  (-> {}
+      (grade-school/add "Franklin" 5)
+      
+      (grade-school/add "Bradley" 5)
+      (grade-school/add "Jeff" 1)
+      (grade-school/grade 5))
+  ;;
+  )
+
 (defn sorted [school]  ;; <- arglist goes here
-  (into (sorted-map) school))
+   (into (sorted-map) school))
+
+(comment
+  (map #())
+  (sorted {2 ["c" "d"] 1 ["e" "b" "a"]})
+  
+  ;;
+  )
+
 
 
 (comment
@@ -41,16 +67,16 @@
        (add "Albert" 1)
        (grade 1))
 
-  
-    (->> {}
-         (add "bob" 1)
-         (add "Alice" 1)
-         (add "Albert" 1)
-         (add "Zoe" 2)
-         (add "Bernard" 2)
-         (add "bill" 1)
-         (sorted ))
 
-  
+  (->> {}
+       (add "bob" 1)
+       (add "Alice" 1)
+       (add "Albert" 1)
+       (add "Zoe" 2)
+       (add "Bernard" 2)
+       (add "bill" 1)
+       (sorted))
+
+
   ;;
   )
