@@ -1,52 +1,25 @@
 (ns grade-school)
 
-(def roster (atom {}))
 
-(defn add [db name grade]  ;; <- arglist goes here
-  (if-let [students (db grade)]
-    (assoc db grade (conj students name))
-    (assoc db grade [name])))
-
-(comment
-  (add "bob" 2 roster)
-  (-> {}
-      (add "bob" 2)
-      (add "ali" 2))
-  ;;
-  )
+(defn add [db name grade]
+  (let [students (get db grade [])]
+    (assoc db grade (conj students name))))
 
 
-(defn grade [school grade]  ;; <- arglist goes here
-  (if-let [result (get school grade)]
-    result
-    []))
+(defn grade [school grade]
+  (get school grade []))
 
-(comment
-  (-> {}
-       (add "bob" 2)
-       (grade 1))
-  (-> {}
-      (grade-school/add "Franklin" 5)
-      
-      (grade-school/add "Bradley" 5)
-      (grade-school/add "Jeff" 1)
-      (grade-school/grade 5))
-  ;;
-  )
+(defn sorted [school]
+  (reduce (fn [acc [k v]]
+            (assoc acc k (sort v)))
+          (sorted-map)
+          school))
 
-(defn sorted [school]  ;; <- arglist goes here
-   (into (sorted-map) school))
-
-(comment
-  (map #())
-  (sorted {2 ["c" "d"] 1 ["e" "b" "a"]})
-  
-  ;;
-  )
 
 
 
 (comment
+  (into {} [1 2])
   ;; convert a string to a keyword
   (let [s "12"]
     (keyword (str s)))
