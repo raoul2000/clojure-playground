@@ -1,27 +1,21 @@
 (ns all-your-base)
 
 (defn find-smallest-pow
-  "find smallest power of i lower than or equal to max.
-   Example :
-   ```
-   (find-smallest-pow 3 42)
-   => 3
-   ```
-   3^3 = 27 lower than 42
-   3^4 = 81 NOT lower than 42
-   "
+  "find smallest power of i lower than or equal to max."
   [i max]
   (last (take-while #(<= (Math/pow i %) max) (range))))
 
 (comment
-  (find-smallest-pow 3 42)
-  (find-smallest-pow 3 27)
-  (find-smallest-pow 2 17)
-  (find-smallest-pow 10 1)
+  (= 3 (find-smallest-pow 3 42))
+  (= 3 (find-smallest-pow 3 27))
+  (= 4 (find-smallest-pow 2 17))
+  (= 0 (find-smallest-pow 10 1))
   ;;
   )
 
-(defn powers-of [i max]
+(defn powers-of
+  "returns seq of powers of i to combine to obtain max."
+  [i max]
   (->> (find-smallest-pow i max)
        inc
        range
@@ -33,17 +27,17 @@
   ;;
   )
 
-(defn base-10->base-n [i base]
-  (loop [num    i
-         powers (powers-of base i)
-         res    []]
-    (if (empty? powers)
-      res
-      (let [power (first powers)
-            div   (int (Math/pow base power))]
-        (recur (rem num div)
-               (rest powers)
-               (conj res (quot num div)))))))
+
+(defn base-10->base-n [i to-base]
+  (if (zero? i)
+    '(0)
+    (loop [num i
+           result '()]
+      (if (zero? num)
+        result
+        (recur (quot num to-base)
+               (conj result (rem num to-base)))))))
+
 
 (comment
   (base-10->base-n 42 3)
@@ -51,6 +45,7 @@
   (base-10->base-n 2 2)
   (base-10->base-n 3 2)
   (base-10->base-n 40 10)
+  (base-10->base-n 0 10)
   ;;
   )
 
@@ -67,18 +62,18 @@
   (base-n->base-10  10 '(5))
   (base-n->base-10  3 '(1 1 2 0))
   (base-n->base-10  2 '(1))
+  (base-n->base-10  4 '(0 0 0))
+  (base-n->base-10  4 '())
   ;;
   )
 
-
 (defn convert [base val to-base]
   (cond
-    (or (< base 2 )
-        (< to-base 2)) nil
-    (empty? val)       val
-    (every? zero? val) [0]
-    (some neg? val)    nil
-    (not-every? (partial > base)  val)  nil
+    (or (< base 2)
+        (< to-base 2)
+        (some neg? val)
+        (not-every? (partial > base)  val)) nil    
+    (empty? val)                            val
     :else (-> (base-n->base-10 base val)
               (base-10->base-n to-base))))
 
@@ -104,6 +99,23 @@
   (base-n->base-10 2 '(1))
   (base-10->base-n 1 10)
   (base-10->base-n 1 10)
+  ;;
+  )
+
+(defn decimal-n-to-base-x [n x]
+  (if (== n 0)
+    '(0)
+    (loop [num n
+           result '()]
+      (if (== num 0)
+        result
+        (recur (quot num x) (conj result (rem num x)))))))
+
+(comment
+  (decimal-n-to-base-x 42 2)
+  (decimal-n-to-base-x 42 3)
+
+
   ;;
   )
 
