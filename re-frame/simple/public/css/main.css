@@ -1,0 +1,45 @@
+.todo-list-container {
+    margin: 2em;
+    min-width:300px
+}
+
+.todo-list-container h1 {
+    padding-bottom: 0.5em;
+    border-bottom:1px solid rgb(126, 126, 126);
+}
+
+.todo-list-container .todo-list {
+
+    padding-bottom: 1em;
+    margin-bottom: 1.5wem;
+}
+
+.todo-list-container .todo {
+    display:flex;
+    padding:5px;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.todo-list-container .todo:hover {
+    background-color: rgb(230, 230, 230);
+}
+
+.todo-list-container .todo .text {
+    flex-grow: 1;
+    margin-right: 1em;
+}
+
+.todo-list-container .todo button {
+    margin-left:1em;
+}
+
+.todo-list-container .input {
+    display:flex;
+}
+
+.todo-list-container .input input{
+    flex-grow: 1;
+    margin-right: 1em;
+    padding:0.5em;
+}
