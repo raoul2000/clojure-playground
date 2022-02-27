@@ -16,8 +16,26 @@
    {:todos ["first task"]
     :form ""}))
 
+
+(def dummy-interceptor (re-frame.core/->interceptor :id :dumb-interc
+                                                    :before (fn [context]
+                                                              (print context)
+                                                              context)))
+
+(def next-id (re-frame.core/->interceptor :id :create-next-todo-id
+                                          :before (fn [context]
+                                                    (let [{:keys [db]} (:coeffects context)
+                                                          new-id (count (:todos db))]
+                                                      (assoc-in context [:coeffects :db]
+                                                                (assoc db :new-id new-id))))
+                                          :after (fn [context]
+                                                   (let [{:keys [db]} (:coeffects context)]
+                                                     (assoc-in context [:coeffects :db]
+                                                               (dissoc db :new-id))))))
+
 (rf/reg-event-db
  :add
+ [dummy-interceptor next-id]
  (fn [db [_ text]]
    (-> db
        (update :todos conj text)
@@ -31,12 +49,12 @@
 ;; 4. Query ------------------------------------------------
 
 (rf/reg-sub
- :add
+ :add-todo-subs
  (fn [db _]
    (:todos db)))
 
 (rf/reg-sub
- :form-change
+ :form-change-subs
  (fn [db _]
    (:form db)))
 
@@ -45,11 +63,11 @@
 (defn todo-list
   []
   [:div.todo-list
-   (for [todo-text @(rf/subscribe [:add])]
+   (for [todo-text @(rf/subscribe [:add-todo-subs])]
      [:div.todo-item {:key todo-text} todo-text])])
 
 (defn input-form []
-  (let [form-val @(rf/subscribe [:form-change])]
+  (let [form-val @(rf/subscribe [:form-change-subs])]
     [:div.todo-input
      [:input {:type "text"
               :value form-val
