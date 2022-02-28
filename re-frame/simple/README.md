@@ -13,8 +13,32 @@ Example:
 
 ## Event Handler
 
-- *pure* function
-- receives input: the *coeffect*
-- produce and return output: the *effect*
-- *coeffect* and *effect* are data
+An Event handler is created by associating an *event id* with a *function*. When the event is fired, the function is invoked. 
+
+About the function:
+- it is *pure* 
+- it receives 2 arguments 
+  - the *coeffect* : a map describing the *world* and any input data required by the function
+  - the event to handle
+- it produces and return output: the *effect*
+
+
+This association is can be done in two ways :
+- the *coeffect* is limitated to the application state (*app-db*)
+```clojure
+(re-frame.core/reg-event-db        ;; <-- call this to register a handler
+    :set-flag                      ;; this is an event id
+   (fn [db [_ new-value]]          ;; this function does the handling
+      (assoc db :flag new-value)))
+```
+
+- the *coeffect* includes some additional data which are needed by the function to be able to produce effects (e.g. the `local store`)
+```clojure
+(re-frame.core/reg-event-fx                            ;; notice the -fx
+   :load-localstore
+   (fn [cofx  _]                                       ;; cofx is a map containing inputs
+     (let [defaults (:local-store cofx)]               ;; <--  use it here
+       {:db (assoc (:db cofx) :defaults defaults)})))  ;; returns effects map
+```
+
 
