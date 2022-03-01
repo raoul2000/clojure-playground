@@ -2,3 +2,5 @@
 .exercism
 target
 **/**/.lsp
+.clj-kondo
+.cpcache
