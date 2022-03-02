@@ -19,11 +19,15 @@
                :on-click #(rf/dispatch [:add-todo form-val])}
       "Add"]]))
 
+(defn todo-stats []
+  [:div.todo-stats
+   [:span @(rf/subscribe [:todos-count])]])
 
 (defn ui
   []
   [:div.todo-app
    [:h2 "Todos"]
+   [todo-stats]
    [todo-list]
    [input-form]])
 
