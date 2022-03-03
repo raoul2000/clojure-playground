@@ -7,20 +7,13 @@
  (fn [db _]
    (:todos db)))
 
-(rf/reg-sub
- :form-text
- (fn [db _]
-   (:form db)))
-
-
 ;; Layer 3  ------------------------------------------------------
 
 (rf/reg-sub
  :todos-count
- 
+
  (fn [_]
    [(rf/subscribe [:todos])])
- 
+
  (fn [[todos] _]
-   (count todos))
- )
+   (count todos)))

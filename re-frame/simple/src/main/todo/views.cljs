@@ -1,6 +1,7 @@
 (ns todo.views
   (:require [re-frame.core :as rf]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [reagent.core :as re]))
 
 
 (defn todo-list
@@ -9,15 +10,18 @@
    (for [todo-text @(rf/subscribe [:todos])]
      [:div.todo-item {:key (:id todo-text)} (:text todo-text)])])
 
-(defn input-form []
-  (let [form-val @(rf/subscribe [:form-text])]
-    [:div.todo-input
-     [:input {:type "text"
-              :value form-val
-              :on-change #(rf/dispatch [:update-form (.-value (.-target %))])}]
-     [:button {:disabled  (str/blank? form-val)
-               :on-click #(rf/dispatch [:add-todo form-val])}
-      "Add"]]))
+(defn todo-form []
+  (let [text-val (re/atom "")]
+    (fn []                        ;; create a closure to capture the atom
+      [:div.todo-form
+       [:input {:type "text"
+                :value @text-val
+                :on-change #(reset! text-val (-> % .-target .-value))}]
+       [:button {:disabled (str/blank? @text-val)
+                 :on-click #(let [todo-text @text-val]
+                              (rf/dispatch [:add-todo todo-text])
+                              (reset! text-val ""))}
+        "Add"]])))
 
 (defn todo-stats []
   [:div.todo-stats
@@ -29,6 +33,6 @@
    [:h2 "Todos"]
    [todo-stats]
    [todo-list]
-   [input-form]])
+   [(todo-form)]])
 
 
