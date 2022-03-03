@@ -7,7 +7,7 @@
   []
   [:div.todo-list
    (for [todo-text @(rf/subscribe [:todos])]
-     [:div.todo-item {:key todo-text} todo-text])])
+     [:div.todo-item {:key (:id todo-text)} (:text todo-text)])])
 
 (defn input-form []
   (let [form-val @(rf/subscribe [:form-text])]
