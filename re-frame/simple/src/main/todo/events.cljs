@@ -7,19 +7,17 @@
  (fn [coeffects _]
    (assoc coeffects :uuid (.toString (random-uuid)))))
 
-
+ ;; add a todo item to the todo list
 ;; usage:  (dispatch [:add-todo  "a description string"])
-(rf/reg-event-fx
+(rf/reg-event-db
 
- :add-todo
+ :add-todo                    
+
  [(rf/inject-cofx :uuid)]
- (fn [{:keys [db uuid] :as cofx} [_ text]]
-   (print db)
-   (assoc cofx :db (-> db
-                        (update :todos conj {:id uuid
-                                             :text text})
-                        (assoc  :form "")))))
-
+ (fn [db [_ text]]
+   (-> db
+       (update :todos conj {:id uuid,  :text text})
+       (assoc  :form ""))))
 
 
 ;; usage:  (dispatch [:update-form "some text"])
