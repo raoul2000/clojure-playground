@@ -8,7 +8,7 @@
   [:div.todo-item {:key id
                    :style (when done {:text-decoration "line-through"})}
    [:div text]
-   [:button 
+   [:button
     {:on-click #(rf/dispatch [:toggle-done id])}
     (if done "undo" "done")]
    [:button
@@ -33,9 +33,17 @@
                               (reset! text-val ""))}
         "Add"]])))
 
+
+(defn todos-count []
+  [:div @(rf/subscribe [:todos-count])])
+
+(defn todos-done-count []
+  [:div @(rf/subscribe [:todos-done-count])])
+
 (defn todo-stats []
   [:div.todo-stats
-   [:span @(rf/subscribe [:todos-count])]])
+   (todos-count)
+   (todos-done-count)])
 
 (defn ui
   []

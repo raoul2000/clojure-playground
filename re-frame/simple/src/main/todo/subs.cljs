@@ -17,3 +17,12 @@
 
  (fn [[todos] _]
    (count todos)))
+
+
+(rf/reg-sub
+ :todos-done-count
+
+ (fn [_]
+   [(rf/subscribe [:todos])])
+ (fn [[todos] _]
+   (count (filter :done todos))))
