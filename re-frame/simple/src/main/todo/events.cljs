@@ -29,17 +29,25 @@
  (fn [db [_ value]]
    (assoc db :form value)))
 
-
+;; ---------------------------------------------
 (defn toggle-todo-done [todos todo-id]
   (map (fn [{:keys [id] :as m}]
          (if (= id todo-id)
            (update m :done not)
            m)) todos))
 
-(rf/reg-event-db
-
- :toggle-done
-
+(rf/reg-event-db :toggle-done
  (fn [db [_ todo-id]]
    (update db :todos toggle-todo-done todo-id)))
 
+;; ---------------------------------------------
+
+(defn remove-todo [todos todo-id]
+  (remove #(= todo-id (:id %)) todos))
+
+(rf/reg-event-db
+
+ :remove-todo
+
+ (fn [db [_ todo-id]]
+   (update db :todos remove-todo todo-id)))

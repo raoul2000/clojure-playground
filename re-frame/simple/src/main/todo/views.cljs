@@ -10,7 +10,10 @@
    [:div text]
    [:button 
     {:on-click #(rf/dispatch [:toggle-done id])}
-    (if done "undo" "done")]])
+    (if done "undo" "done")]
+   [:button
+    {:on-click #(rf/dispatch [:remove-todo id])}
+    "delete"]])
 
 (defn todo-list
   []

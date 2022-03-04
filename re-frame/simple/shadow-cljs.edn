@@ -18,7 +18,7 @@
   {:target     :browser
    :modules
    {:main
-    {:init-fn todo/run}}
+    {:init-fn todo.core/run}}
    :devtools
    {:preloads [day8.re-frame-10x.preload]}
    :dev
