@@ -6,7 +6,8 @@
 ;;
 ;; example :
 ;; {:id "112365"
-;;  :text "by some milk"}
+;;  :text "by some milk"
+;;  :done true}
 
 
 (def default-db      ;; what gets put into app-db by default.

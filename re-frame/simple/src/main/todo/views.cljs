@@ -4,11 +4,18 @@
             [reagent.core :as re]))
 
 
+(defn todo-item [{:keys [id text done]}]
+  [:div.todo-item {:key id
+                   :style (when done {:text-decoration "line-through"})}
+   [:div text]
+   [:button 
+    {:on-click #(rf/dispatch [:toggle-done id])}
+    (if done "undo" "done")]])
+
 (defn todo-list
   []
   [:div.todo-list
-   (for [todo-text @(rf/subscribe [:todos])]
-     [:div.todo-item {:key (:id todo-text)} (:text todo-text)])])
+   (map todo-item @(rf/subscribe [:todos]))])
 
 (defn todo-form []
   (let [text-val (re/atom "")]
