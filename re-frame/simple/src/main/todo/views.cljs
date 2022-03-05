@@ -45,12 +45,27 @@
    (todos-count)
    (todos-done-count)])
 
+(defn todo-item-2 [todo-id]
+  (let [{:keys [text done]} @(rf/subscribe [:todo-info todo-id])]
+    [:div {:key todo-id
+           :style (when done {:text-decoration "line-through"})}
+     (str "todo:" todo-id  " __ " text (when done " - done"))]))
+
+(defn todo-list-2 []
+  [:div.todo-list2
+   (for [id @(rf/subscribe [:todo-ids])]
+     [todo-item-2 id])])
+
+
 (defn ui
   []
   [:div.todo-app
    [:h2 "Todos"]
    [todo-stats]
-   [todo-list]
-   [(todo-form)]])
+   ;;[todo-list]
+   [todo-list-2]
+   [(todo-form)]
+   [:button {:on-click #(rf/dispatch [:fetch-todos])}
+    "Load from server"]])
 
 

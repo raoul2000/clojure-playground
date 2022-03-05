@@ -1,5 +1,7 @@
 (ns todo.events
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [ajax.core :as ajax]
+            [day8.re-frame.http-fx]))
 
 ;; coeffect to inject a new uuid
 (rf/reg-cofx
@@ -37,8 +39,8 @@
            m)) todos))
 
 (rf/reg-event-db :toggle-done
- (fn [db [_ todo-id]]
-   (update db :todos toggle-todo-done todo-id)))
+                 (fn [db [_ todo-id]]
+                   (update db :todos toggle-todo-done todo-id)))
 
 ;; ---------------------------------------------
 
@@ -51,3 +53,27 @@
 
  (fn [db [_ todo-id]]
    (update db :todos remove-todo todo-id)))
+
+
+;; ---------------------------------------------
+
+(rf/reg-event-db
+ :process-response
+ (fn [db [_ response]]
+   (let [resp-todos (->> response
+                         (take 5)
+                         (map #(hash-map :id   (:id %)
+                                         :text (:title %)
+                                         :done (:completed %))))]
+     (assoc db :todos resp-todos))))
+
+(rf/reg-event-fx
+ :fetch-todos
+
+ (fn [_ _]
+   {:http-xhrio {:method          :get
+                 :uri             "https://jsonplaceholder.typicode.com/todos"
+                 :format          (ajax/json-request-format)
+                 :response-format (ajax/json-response-format {:keywords? true})
+                 :on-success      [:process-response]
+                 :on-failure      [:bad-response]}}))

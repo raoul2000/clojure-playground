@@ -7,6 +7,16 @@
  (fn [db _]
    (:todos db)))
 
+(rf/reg-sub
+ :todo-ids
+ (fn [db _]
+   (map :id (:todos db))))
+
+(rf/reg-sub
+ :todo-info
+ (fn [db [_ todo-id]]
+   (first (filter #(= todo-id (:id %)) (:todos db)))))
+
 ;; Layer 3  ------------------------------------------------------
 
 (rf/reg-sub
@@ -26,3 +36,4 @@
    [(rf/subscribe [:todos])])
  (fn [[todos] _]
    (count (filter :done todos))))
+
