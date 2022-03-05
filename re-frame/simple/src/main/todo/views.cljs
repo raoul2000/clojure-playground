@@ -33,13 +33,17 @@
   ;; Use a non-reactive atom (a clojure atom instead of a reagent atom) because
   ;; we don't want to trigger a render on each atom change
   (let [count-render (atom 0)]
+    ;; form-2 re-agent component is required to capture the count-render atom
     (fn []
       (let [{:keys [text done]} @(rf/subscribe [:todo-info todo-id])]
         (swap! count-render inc)
         [:div {:key todo-id
                :style (when done {:text-decoration "line-through"})}
          [:div
-          (str text " (render counr = " @count-render ") ")]
+          [:small
+           (str " (render count = " @count-render ") ")]
+          text]
+
          [:button
           {:on-click #(rf/dispatch [:toggle-done todo-id])}
           (if done "undo" "done")]
@@ -48,7 +52,7 @@
           "delete"]]))))
 
 (defn todo-list []
-  [:div.todo-list2
+  [:div.todo-list
    (for [id @(rf/subscribe [:todo-ids])]
      [(todo-item id)])])
 
