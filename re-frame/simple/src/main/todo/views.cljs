@@ -26,8 +26,8 @@
 
 (defn todo-stats []
   [:div.todo-stats
-   (todos-count)
-   (todos-done-count)])
+   [todos-count]
+   [todos-done-count]])
 
 (defn todo-item [todo-id]
   ;; keep track of render count when todo info change.
@@ -55,13 +55,16 @@
 
 (defn todo-list []
   [:div.todo-list
-   (for [id @(rf/subscribe [:todo-ids])]
+   (for [id @(rf/subscribe [:filtered-todo-ids])]
      ^{:key id} [(todo-item id)])])
 
-(defn todo-view []
-  [todo-stats]
-  [todo-list]
-  [(todo-form)])
+(defn view-filter []
+  [:div#view-filter
+   [:select {:name "view-filter"
+             :on-change #(rf/dispatch [:select-filter (.-value (.-target %))])}
+    [:option {:value :all}    "show all"]
+    [:option {:value :done}   "done"]
+    [:option {:value :undone} "not done"]]])
 
 (defn ui
   []
@@ -72,9 +75,10 @@
        [:div.loading
         "loading todo list, please wait ..."]
        [:div
+        [view-filter]
         [todo-stats]
         [todo-list]
-        [(todo-form)]]))
+        [todo-form]]))
 
    [:button {:on-click #(rf/dispatch [:fetch-todos])}
     "Load from server"]])

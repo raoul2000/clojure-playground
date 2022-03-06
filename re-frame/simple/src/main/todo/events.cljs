@@ -61,7 +61,7 @@
   "Convert request response into a seq of todo maps"
   [response]
   (->> response
-       (take 5)
+       (take 10)
        (map #(hash-map :id   (:id %)
                        :text (:title %)
                        :done (:completed %)))))
@@ -91,3 +91,14 @@
                  :on-success      [:process-response]
                  :on-failure      [:bad-response]}
     :db (assoc db :loading true)}))
+
+;; filter ---------------------------------------------
+
+;; set the show todo filter
+;; usage (dispatch [:select-filter :done])
+
+(rf/reg-event-db
+ :select-filter
+
+ (fn [db [_ filter-name]]
+   (assoc db :show filter-name)))
