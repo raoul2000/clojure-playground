@@ -17,6 +17,11 @@
  (fn [db [_ todo-id]]
    (first (filter #(= todo-id (:id %)) (:todos db)))))
 
+(rf/reg-sub
+ :loading
+ (fn [db _]
+   (:loading db)))
+
 ;; Layer 3  ------------------------------------------------------
 
 (rf/reg-sub

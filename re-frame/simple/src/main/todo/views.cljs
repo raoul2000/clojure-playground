@@ -54,16 +54,27 @@
 (defn todo-list []
   [:div.todo-list
    (for [id @(rf/subscribe [:todo-ids])]
-     [(todo-item id)])])
+     ^{:key id} [(todo-item id)])])
 
+(defn todo-view []
+  [todo-stats]
+  [todo-list]
+  [(todo-form)])
 
 (defn ui
   []
   [:div.todo-app
    [:h2 "Todos"]
-   [todo-stats]
-   [todo-list]
-   [(todo-form)]
+   (let [loading @(rf/subscribe [:loading])]
+     (if loading
+       [:div.loading
+        "loading todo list, please wait ..."]
+       [:div
+        [todo-stats]
+        [todo-list]
+        [(todo-form)]
+        ]))
+
    [:button {:on-click #(rf/dispatch [:fetch-todos])}
     "Load from server"]])
 

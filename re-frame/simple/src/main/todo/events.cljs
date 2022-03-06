@@ -57,23 +57,37 @@
 
 ;; ---------------------------------------------
 
+(defn response->todos
+  "Convert request response into a seq of todo maps"
+  [response]
+  (->> response
+       (take 5)
+       (map #(hash-map :id   (:id %)
+                       :text (:title %)
+                       :done (:completed %)))))
+
 (rf/reg-event-db
  :process-response
  (fn [db [_ response]]
-   (let [resp-todos (->> response
-                         (take 5)
-                         (map #(hash-map :id   (:id %)
-                                         :text (:title %)
-                                         :done (:completed %))))]
-     (assoc db :todos resp-todos))))
+   (-> db
+       (assoc :todos  (response->todos response))
+       (assoc :loading false))))
+
+(rf/reg-event-db
+ :bad-response
+ (fn [db _]
+   (-> db
+       (assoc :todos [])
+       (assoc :loading false))))
 
 (rf/reg-event-fx
  :fetch-todos
 
- (fn [_ _]
+ (fn [{:keys [db]} _]
    {:http-xhrio {:method          :get
                  :uri             "https://jsonplaceholder.typicode.com/todos"
                  :format          (ajax/json-request-format)
                  :response-format (ajax/json-response-format {:keywords? true})
                  :on-success      [:process-response]
-                 :on-failure      [:bad-response]}}))
+                 :on-failure      [:bad-response]}
+    :db (assoc db :loading true)}))
