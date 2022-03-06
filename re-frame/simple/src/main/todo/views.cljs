@@ -6,7 +6,7 @@
 (defn todo-form []
   (let [text-val (re/atom "")]
     (fn []                        ;; create a closure to capture the atom
-      [:div.todo-form
+      [:div.input
        [:input {:type "text"
                 :value @text-val
                 :on-change #(reset! text-val (-> % .-target .-value))}]
@@ -16,12 +16,13 @@
                               (reset! text-val ""))}
         "Add"]])))
 
-
 (defn todos-count []
-  [:div @(rf/subscribe [:todos-count])])
+  (let [todo-count @(rf/subscribe [:todos-count])]
+    [:div (str "total : " todo-count)]))
 
 (defn todos-done-count []
-  [:div @(rf/subscribe [:todos-done-count])])
+  (let [todo-done-count @(rf/subscribe [:todos-done-count])]
+    [:div (str "done : " todo-done-count)]))
 
 (defn todo-stats []
   [:div.todo-stats
@@ -37,9 +38,10 @@
     (fn []
       (let [{:keys [text done]} @(rf/subscribe [:todo-info todo-id])]
         (swap! count-render inc)
-        [:div {:key todo-id
-               :style (when done {:text-decoration "line-through"})}
-         [:div
+        [:div {:class "todo"
+               :key todo-id}
+         [:div.text
+          {:style (when done {:text-decoration "line-through"})}
           [:small
            (str " (render count = " @count-render ") ")]
           text]
@@ -63,8 +65,8 @@
 
 (defn ui
   []
-  [:div.todo-app
-   [:h2 "Todos"]
+  [:div.todo-list-container
+   [:h1 "Todos"]
    (let [loading @(rf/subscribe [:loading])]
      (if loading
        [:div.loading
@@ -72,8 +74,7 @@
        [:div
         [todo-stats]
         [todo-list]
-        [(todo-form)]
-        ]))
+        [(todo-form)]]))
 
    [:button {:on-click #(rf/dispatch [:fetch-todos])}
     "Load from server"]])
