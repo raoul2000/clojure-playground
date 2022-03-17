@@ -20,20 +20,28 @@
   (tr \a))
 
 
-(defn translate [c]
+(defn translate-char
+  "apply atbash conversion to alphabetic char *c*. Digit chars are not modified"
+  [c]
   (if (Character/isDigit c)
     c
-    (char (- 219 (int c)))))
+    (char (- 219 (int c)))))                   ;; 219 = (+ (int \a) (int \z))
+
+(defn char-seq->string
+  "Given a char seq, returns a string of chars words with a max len of 5"
+  [xs]
+  (->> xs
+       (partition 5 5 [])
+       (map #(apply str %))
+       (interpose " ")
+       (apply str)))
 
 (defn encode [s]
   (->> s
        (filter #(Character/isLetterOrDigit %)) ;; remove non alphu-num chars
-       (map #(Character/toLowerCase %))        ;; to lowercase
-       (map translate)                         ;; apply atbash-cipher
-       (partition 5 5 [])                      ;; group by 5 chars
-       (map #(apply str %))
-       (interpose " ")
-       (apply str)))
+       (map    #(Character/toLowerCase %))     ;; to lowercase
+       (map    translate-char)                 ;; apply atbash-cipher
+       char-seq->string))
 
 (comment
   (encode "omg")
