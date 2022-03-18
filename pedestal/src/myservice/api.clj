@@ -4,6 +4,9 @@
   (:gen-class))
 
 
+
+
+
 (defn respond-hello [request]
   {:status 200 :body "Hello, world!"})
 
@@ -11,14 +14,36 @@
   (route/expand-routes
    #{["/greet" :get respond-hello :route-name :greet]}))
 
-(defn create-server []
-  (http/create-server
-   {::http/routes routes
-    ::http/type   :jetty
-    ::http/port   8890}))
+
+(def service-map
+  {::http/routes routes
+   ::http/type   :jetty
+   ::http/port   8890})
 
 (defn start []
-  (http/start (create-server)))
+  (http/start (http/create-server service-map)))
+
+;; interactive development ----------------------------------------------
+
+(defonce server (atom nil))
+
+(defn start-dev []
+  (reset! server
+          (http/start (http/create-server
+                       (assoc service-map
+                              ::http/join? false)))))
+
+(defn stop-dev []
+  (http/stop @server))
+
+(defn restart []
+  (stop-dev)
+  (start-dev))
+
+
+
+
+
 
 (defn greet
   "Callable entry point to the application."
