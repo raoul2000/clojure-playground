@@ -1,0 +1,26 @@
+@hostname = localhost
+@port = 8890
+@host = {{hostname}}:{{port}}
+
+
+GET http://{{host}}/greet HTTP/1.1
+
+### bob is a forbidden name
+GET http://{{host}}/greet?name=bob 
+
+### No content type: use default "text/plain"
+GET http://{{host}}/greet?name=john
+
+### content-type = application/edn
+GET http://{{host}}/greet?name=john
+Accept: application/edn
+
+### content-type = application/json
+GET http://{{host}}/greet?name=john
+Accept: application/json
+
+###
+GET http://{{host}}/echo
+Accept: text/plain
+
+
