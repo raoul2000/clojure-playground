@@ -1,0 +1,6 @@
+@hostname = localhost
+@port = 8890
+@host = {{hostname}}:{{port}}
+
+###
+POST http://{{host}}/todo

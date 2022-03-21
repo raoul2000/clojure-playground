@@ -4,13 +4,17 @@
             [io.pedestal.http.route :as route]
             [io.pedestal.http.content-negotiation :as conneg]
             [io.pedestal.test :as test]
-            [io.pedestal.log :as log])
+            [io.pedestal.log :as log]
+            [myservice.todo :as todo])
   (:gen-class))
 
+(defn response [status body & {:as headers}]
+  {:status status :body body :headers headers})
 
-(defn ok [body]
-  {:status 200
-   :body body})
+(def ok       (partial response 200))
+(def created  (partial response 201))
+(def accepted (partial response 202))
+
 
 (defn not-found []
   {:status 404 :body "Not found or forbidden name\n"})
@@ -87,8 +91,9 @@
 ;; (route/try-routing-for hello/routes :prefix-tree "/greet" :get)
 (def routes
   (route/expand-routes
-   #{["/greet" :get [coerce-body content-neg-intc respond-hello]  :route-name :greet]
-     ["/echo"  :get [echo] :route-name :echo]}))
+   #{["/greet" :get  [coerce-body content-neg-intc respond-hello]  :route-name :greet]
+     ["/echo"  :get  [echo] :route-name :echo]
+     ["/todo"  :post [echo] :route-name :list-create]}))
 
 (def service-map
   {::http/routes routes

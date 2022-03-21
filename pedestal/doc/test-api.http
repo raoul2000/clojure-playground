@@ -3,7 +3,7 @@
 @host = {{hostname}}:{{port}}
 
 
-GET http://{{host}}/greet HTTP/1.1
+GET http://{{host}}/greet
 
 ### bob is a forbidden name
 GET http://{{host}}/greet?name=bob 
