@@ -3,4 +3,7 @@
 @host = {{hostname}}:{{port}}
 
 ###
-POST http://{{host}}/todo
+POST http://{{host}}/todo?name=list-1
+
+###
+GET http://{{host}}/todo/list-1

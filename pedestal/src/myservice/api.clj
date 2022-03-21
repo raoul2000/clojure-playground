@@ -93,7 +93,15 @@
   (route/expand-routes
    #{["/greet" :get  [coerce-body content-neg-intc respond-hello]  :route-name :greet]
      ["/echo"  :get  [echo] :route-name :echo]
-     ["/todo"  :post [echo] :route-name :list-create]}))
+
+     ["/todo"            :post   [todo/db-interceptor todo/list-create] :route-name :list-create]
+     
+     ["/todo/:list-id"   :get    [todo/entity-render 
+                                  todo/db-interceptor
+                                  todo/list-view]    :route-name :list-view]
+     
+     ;;
+     }))
 
 (def service-map
   {::http/routes routes
@@ -110,7 +118,16 @@
 
 ;; interactive development ----------------------------------------------
 
+;; the one and only server - used during DEV
 (defonce server (atom nil))
+
+(defn test-request [verb url]
+  (io.pedestal.test/response-for (::http/service-fn @server) verb url))
+
+(comment
+  (test-request :post "/todo")
+  ;;
+  )
 
 (defn start-dev []
   (reset! server (start-server)))
