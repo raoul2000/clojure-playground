@@ -57,7 +57,6 @@
 (defn transform-content
   "Converts and returns *body* into the given *content-type*"
   [body content-type]
-  (log/info "transform content" content-type)
   (case content-type
     "text/html"        body
     "text/plain"       body
@@ -72,7 +71,7 @@
       (update :body transform-content content-type)
       (assoc-in [:headers "Content-Type"] content-type)))
 
-(defn no-content-type? 
+(defn no-content-type?
   "Returns TRUE if the response header map doesn't contain any *Content-Type* key"
   [context]
   (nil? (get-in context [:response :headers "Content-Type"])))
@@ -91,34 +90,40 @@
 ;; (route/try-routing-for hello/routes :prefix-tree "/greet" :get)
 (def routes
   (route/expand-routes
-   #{["/greet"           :get    [coerce-body 
-                                  content-neg-intc 
+   #{["/greet"           :get    [coerce-body
+                                  content-neg-intc
                                   respond-hello]  :route-name :greet]
-     
+
      ["/echo"            :get    [echo] :route-name :echo]
 
      ["/todo"            :post   [todo/db-interceptor todo/list-create] :route-name :list-create]
-     
+
      ["/todo"            :get    [todo/entity-render
                                   todo/db-interceptor
                                   todo/all-list-view]    :route-name :list-view-all]
-     
-     ["/todo/:list-id"   :get    [todo/entity-render 
+
+     ["/todo/:list-id"   :get    [todo/entity-render
                                   todo/db-interceptor
                                   todo/list-view]    :route-name :list-view]
-     
-     ["/todo/:list-id"   :post   [todo/entity-render 
-                                  todo/list-item-view 
-                                  todo/db-interceptor 
+
+     ["/todo/:list-id"   :post   [todo/entity-render
+                                  todo/list-item-view
+                                  todo/db-interceptor
                                   todo/list-item-create] :route-name :list-item-create]
-     
+
+     ["/todo/:list-id/:item-id"   :put   [todo/entity-render
+                                          todo/list-item-view
+                                          todo/db-interceptor
+                                          todo/list-item-update] :route-name :list-item-update]
+
      ;;
      }))
 
 (def service-map
-  {::http/routes routes
-   ::http/type   :jetty
-   ::http/port   8890})
+  {::http/routes            routes
+   ::http/resource-path     "/public"
+   ::http/type              :jetty
+   ::http/port              8890})
 
 (defn start []
   (http/start (http/create-server service-map)))
@@ -127,7 +132,6 @@
   (http/start (http/create-server
                (assoc service-map
                       ::http/join? false))))
-
 
 ;; interactive development ----------------------------------------------
 

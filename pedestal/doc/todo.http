@@ -2,15 +2,20 @@
 @port = 8890
 @host = {{hostname}}:{{port}}
 
-@listId = l39522
-###
-POST http://{{host}}/todo?name=list-2
+@listId = l21283
 
-###
+### Get all lists
 GET http://{{host}}/todo
 
-### 
+
+### create a list
+POST http://{{host}}/todo?name=list-2
+
+###  Get one list by id
 GET http://{{host}}/todo/{{listId}}
 
-###
-POST http://{{host}}/todo/{{listId}}?name=item2
+### add item to existing list
+POST http://{{host}}/todo/{{listId}}?name=item22222
+
+### update one item per list id and item id
+PUT http://{{host}}/todo/{{listId}}/i21284?name=NEW_NAME_4

@@ -25,6 +25,12 @@
     (assoc-in dbval [list-id :items item-id] new-item)
     dbval))
 
+(defn list-item-update-by-ids
+  [dbval list-id item-id name]
+  (if (find-list-item-by-ids dbval list-id item-id)
+    (assoc-in dbval [list-id :items item-id] (make-list-item name))
+    dbval))
+
 ;; interceptors -----------------------------------------------------------------
 
 (def db-interceptor
@@ -120,6 +126,17 @@
 (def all-list-view
   "In `enter` add the complete database as `:result` in the context"
   {:name :list-all-view
-   :enter 
+   :enter
    (fn [context]
      (assoc context :result (get-in context [:request :database])))})
+
+(def list-item-update
+  {:name :list-item-update
+   :enter
+   (fn [context]
+     (if-let [list-id (get-in context [:request :path-params :list-id])]
+       (if-let [item-id (get-in context [:request :path-params :item-id])]
+         (assoc context :tx-data [list-item-update-by-ids list-id item-id 
+                                  (get-in context [:request :query-params :name] "no name")])
+         context)
+       context))})
