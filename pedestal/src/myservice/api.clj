@@ -91,14 +91,22 @@
 ;; (route/try-routing-for hello/routes :prefix-tree "/greet" :get)
 (def routes
   (route/expand-routes
-   #{["/greet" :get  [coerce-body content-neg-intc respond-hello]  :route-name :greet]
-     ["/echo"  :get  [echo] :route-name :echo]
+   #{["/greet"           :get    [coerce-body 
+                                  content-neg-intc 
+                                  respond-hello]  :route-name :greet]
+     
+     ["/echo"            :get    [echo] :route-name :echo]
 
      ["/todo"            :post   [todo/db-interceptor todo/list-create] :route-name :list-create]
      
      ["/todo/:list-id"   :get    [todo/entity-render 
                                   todo/db-interceptor
                                   todo/list-view]    :route-name :list-view]
+     
+     ["/todo/:list-id"   :post   [todo/entity-render 
+                                  todo/list-item-view 
+                                  todo/db-interceptor 
+                                  todo/list-item-create] :route-name :list-item-create]
      
      ;;
      }))
@@ -115,6 +123,7 @@
   (http/start (http/create-server
                (assoc service-map
                       ::http/join? false))))
+
 
 ;; interactive development ----------------------------------------------
 
@@ -140,6 +149,9 @@
   (start-dev))
 
 (comment
+  (start-dev)
+  (restart)
+  (stop-dev)
   (test/response-for (:io.pedestal.http/service-fn @server) :get "/echo"
                      :headers {"Accept" "application/json"})
   ;;

@@ -2,8 +2,12 @@
 @port = 8890
 @host = {{hostname}}:{{port}}
 
+@listId = l39522
 ###
-POST http://{{host}}/todo?name=list-1
+POST http://{{host}}/todo?name=list-2
 
 ###
-GET http://{{host}}/todo/list-1
+GET http://{{host}}/todo/{{listId}}
+
+###
+POST http://{{host}}/todo/{{listId}}?name=item2
