@@ -30,9 +30,8 @@
 (def db-interceptor
   {:name :database-interceptor
    :enter
-   ;; on enter, add the :database key with the databaso as value
+   ;; on enter, add the :database key with the database as value
    (fn [context]
-     (log/info "db-interceptor" "hello")
      (update context :request assoc :database @database))  ;; put the current database in the context
    :leave
    ;; if the :tx-data key is set, it contains transaction data consisting in operation
@@ -117,3 +116,10 @@
                                                                                           ;; by the db-interceptor
              (assoc-in [:request :path-params :item-id] item-id)))                        ;; item-id will be needed by the db-interceptor
        context))})
+
+(def all-list-view
+  "In `enter` add the complete database as `:result` in the context"
+  {:name :list-all-view
+   :enter 
+   (fn [context]
+     (assoc context :result (get-in context [:request :database])))})

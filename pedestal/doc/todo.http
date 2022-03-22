@@ -7,6 +7,9 @@
 POST http://{{host}}/todo?name=list-2
 
 ###
+GET http://{{host}}/todo
+
+### 
 GET http://{{host}}/todo/{{listId}}
 
 ###

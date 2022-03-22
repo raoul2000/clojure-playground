@@ -99,6 +99,10 @@
 
      ["/todo"            :post   [todo/db-interceptor todo/list-create] :route-name :list-create]
      
+     ["/todo"            :get    [todo/entity-render
+                                  todo/db-interceptor
+                                  todo/all-list-view]    :route-name :list-view-all]
+     
      ["/todo/:list-id"   :get    [todo/entity-render 
                                   todo/db-interceptor
                                   todo/list-view]    :route-name :list-view]
