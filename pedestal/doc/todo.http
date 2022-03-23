@@ -4,12 +4,33 @@
 
 @listId = l21283
 
+### 
+GET http://{{host}}/echo
+
+###
+POST http://{{host}}/echo
+content-type: application/json
+
+{
+    "name": "____sample",
+    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+}
+
+
 ### Get all lists
 GET http://{{host}}/todo
 
 
 ### create a list
 POST http://{{host}}/todo?name=list-2
+###
+POST http://{{host}}/todo2?name=list-2
+content-type: application/json
+
+{
+    "name": "sample 123",
+    "time": "Wed, 21 Oct 2015 18:27:50 GMT"
+}
 
 ###  Get one list by id
 GET http://{{host}}/todo/{{listId}}

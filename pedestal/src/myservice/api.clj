@@ -1,6 +1,7 @@
 (ns myservice.api
   (:require [clojure.data.json :as json]
             [io.pedestal.http :as http]
+            [io.pedestal.http.body-params :as body-params]
             [io.pedestal.http.route :as route]
             [io.pedestal.http.content-negotiation :as conneg]
             [io.pedestal.test :as test]
@@ -42,6 +43,7 @@
    :enter #(assoc % :response (ok (:request %))) ;; anonymous function to update the :response
                                                  ;; key in the context map
    })
+
 
 (def supported-types ["text/html" "application/edn" "application/json" "text/plain"])
 ;; create a content negociator interceptor for the given list
@@ -90,32 +92,46 @@
 ;; (route/try-routing-for hello/routes :prefix-tree "/greet" :get)
 (def routes
   (route/expand-routes
-   #{["/greet"           :get    [coerce-body
-                                  content-neg-intc
-                                  respond-hello]  :route-name :greet]
+   #{["/greet"                    :get    [coerce-body
+                                           content-neg-intc
+                                           respond-hello]         :route-name :greet]
 
-     ["/echo"            :get    [echo] :route-name :echo]
+     ["/echo"                     :get    [echo] :route-name :echo]
 
-     ["/todo"            :post   [todo/db-interceptor todo/list-create] :route-name :list-create]
+     ;; the inteceptor is responsible for parsing the body content. Depending on the
+     ;; Content-Type header value, the appropriate parser is used among : json, HTML form
+     ;; EDN.
+     ;; Depending on content type, the parsed value is stored in a different key in the
+     ;; request. For example, application/json will be stored into key ::json-params
+     ;;
+     ;; Context example : 
+     ;; {:request {:json-params {:key "value"}}}
+     ;; read more at http://pedestal.io/reference/parameters#_body_parameters
+     ;;
 
-     ["/todo"            :get    [todo/entity-render
-                                  todo/db-interceptor
-                                  todo/all-list-view]    :route-name :list-view-all]
+     ["/echo"                     :post   [(body-params/body-params)
+                                           echo]                   :route-name :echo-post]
 
-     ["/todo/:list-id"   :get    [todo/entity-render
-                                  todo/db-interceptor
-                                  todo/list-view]    :route-name :list-view]
+     ["/todo"                     :post   [todo/db-interceptor
+                                           todo/list-create]       :route-name :list-create]
 
-     ["/todo/:list-id"   :post   [todo/entity-render
-                                  todo/list-item-view
-                                  todo/db-interceptor
-                                  todo/list-item-create] :route-name :list-item-create]
+     ["/todo"                     :get    [todo/entity-render
+                                           todo/db-interceptor
+                                           todo/all-list-view]      :route-name :list-view-all]
+
+     ["/todo/:list-id"            :get    [todo/entity-render
+                                           todo/db-interceptor
+                                           todo/list-view]          :route-name :list-view]
+
+     ["/todo/:list-id"            :post   [todo/entity-render
+                                           todo/list-item-view
+                                           todo/db-interceptor
+                                           todo/list-item-create]   :route-name :list-item-create]
 
      ["/todo/:list-id/:item-id"   :put   [todo/entity-render
                                           todo/list-item-view
                                           todo/db-interceptor
-                                          todo/list-item-update] :route-name :list-item-update]
-
+                                          todo/list-item-update]    :route-name :list-item-update]
      ;;
      }))
 
@@ -154,6 +170,7 @@
 
 (defn restart []
   (stop-dev)
+  (reset! server nil)
   (start-dev))
 
 (comment
@@ -162,6 +179,10 @@
   (stop-dev)
   (test/response-for (:io.pedestal.http/service-fn @server) :get "/echo"
                      :headers {"Accept" "application/json"})
+
+  (test/response-for (:io.pedestal.http/service-fn @server) :post "/echo"
+                     :headers {"Content-Type" "application/json"}
+                     :body "{\"a\": 1}")
   ;;
   )
 ;; CLI ----------------------------------------------------------------
