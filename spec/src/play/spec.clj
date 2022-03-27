@@ -13,7 +13,8 @@
   [& args]
   (greet {:name (first args)}))
 
-
+;; ################################################################################
+;;
 ;; let's start playing
 ;; s/valid? returns the same value as the predicate
 
@@ -36,7 +37,7 @@
                      :kind list?
                      :min-count 1
                      :max-count 10
-                     :distinct true)'(1 2 3))
+                     :distinct true) '(1 2 3))
 
 ;; use :into to ask s/conform to convert the collection type
 ;; below, a vector is coerced to a set
@@ -45,9 +46,9 @@
                       :into #{}) [2 4 6]) ;; #{4 6 2}
 
 ;; For tuple use s/tuple
-(s/valid? (s/tuple pos-int? string? keyword?) 
+(s/valid? (s/tuple pos-int? string? keyword?)
           [1 "blue" :apple]) ;; true
-(s/valid? (s/tuple pos-int? string? keyword?) 
+(s/valid? (s/tuple pos-int? string? keyword?)
           [1 2 3]) ;; false
 
 ;; for homegenous map where all keys have same type and all 
@@ -60,8 +61,9 @@
 
 ;; compose predicates ----------------------------------------
 ;; with s/and
-(s/valid? (s/and even? #(> % 5)) 6)  ;; true
-(s/valid? (s/and even? #(> % 5)) 11) ;; false
+(defn >5? [n] (> n 5))
+(s/valid? (s/and even? >5?) 6)  ;; true
+(s/valid? (s/and even? >5?) 11) ;; false
 
 ;; with s/or
 ;; each alternative must be identified by a key which is useful
@@ -110,7 +112,7 @@
 ;; .. or as data
 (s/explain-data :person/age -1)
 
-;; let's see how to defin spec for ... maps !! ---------------------------
+;; let's see how to define spec for ... maps !! ---------------------------
 ;; I mean heteregenous!  First define spec for the map keys
 (s/def :pilot/name string?)
 (s/def :pilot/nickname string?)
@@ -154,6 +156,113 @@
 (s/explain :color/object [:color/name "blue"
                           :color/note 10]) ;;10 - failed: #{:ugly :medium :nice} in: [:color/note] at: [:color/note] spec: :color/note
 
-;; Sequences ----------------------------------------
+;; s/conform on a valid data will returns a Map
+(s/conform :color/object serialized-map-entries) ;; {:name "blue", :note :nice}
 
+;; Sequences ---------------------------------------------------------------
+;;
+;; specs for sequences are built using so called regular expression operators
+;; first is s/cat
+;; it accepts tagged items
+
+(s/valid? (s/cat :age int? :name string?) [12 "bob"]) ;; true
+
+;; tags are used to identify what was matched
+(s/explain (s/cat :age int? :name string?) [12 33]) ;; 33 - failed: string? in: [1] at: [:name]
+
+;; ... but also with s/conform, that returns a map where tags are keys
+(s/conform (s/cat :color #{"green" "red" "blue"} :quantity pos-int?)
+           '("red" 12)) ;; {:color "red", :quantity 12}
+
+;; next operator is s/* which mean zero or n
+(s/valid? (s/* int?) '(1 -1 5)) ;; true
+(s/valid? (s/* int?) '(1 -1 "five")) ;; false
+
+;; s/+ means 1 or n and s/? means 0 or 1
+;; combining with s/cat
+;; a seq of 0 or n ibtegers followed by 0 or 1 boolean
+(s/conform (s/cat :points     (s/* pos-int?)
+                  :registered (s/? boolean?))
+           [1 2 3 true]) ;; {:points [1 2 3], :registered true}
+
+(s/conform (s/+ (s/cat :name string?
+                       :age  (s/and pos-int? #(> % 5))))
+           ["bob" 12 "bill" 55]) ;; [{:name "bob", :age 12} {:name "bill", :age 55}]
+
+;; another operator is s/alt to describe an alternative. 
+;; Each alternative must be tagged
+
+(s/conform (s/* (s/alt :fruit #{:banana :orange :apple} :quantity pos-int?))
+           [:banana :orange 12 45]) ;; [[:fruit :banana] [:fruit :orange] [:quantity 12] [:quantity 45]]
+
+;; it is possible to mix an operator with a constraint using s/&
+;; for example, we want a sequence of more than 2 strings
+(s/valid? (s/& (s/+ string?)      ;; a seq of 0 ro n strings
+               #(> (count %) 2)   ;; seq must contain more than 2 items
+               )
+          ["a" "b" "s"]) ;; true
+
+(s/valid? (s/& (s/+ string?) 
+               #(> (count %) 2))
+          ["a"]) ;; false
+
+;; Tips : nested spec 
+;; enclose into a new spec context with s/spec
+;; for example, let's spec a sequence of sequences of strings
+(s/conform (s/* (s/cat :colors (s/spec (s/coll-of string?))))
+           [["blue" "green" "red"] ["yello"]]) ;; [{:colors ["blue" "green" "red"]} {:colors ["yello"]}]
+
+(s/explain (s/* (s/cat :colors (s/spec (s/coll-of string?))))
+           [["blue" "green" 1]]) ;; 1 - failed: string? in: [0 2] at: [:colors]
+
+;; spec function ---------------------------------------
+;; you can write a spec for a function
+;; see https://clojure.org/guides/spec#_specing_functions
+
+
+;; validation ------------------------------------------
+;; to validate a spec we can use s/valid? but that's nbot all. We can also
+;; use spec to validate a function contracts : input args and returned value
+
+;; use the :pre and :post conditions already built in defn
+(s/def ::game-name (s/and string? (comp not blank?)))
+
+(defn game-name-to-upper [name]
+  {:pre [(s/valid? ::game-name name)]
+   :post [(s/valid? string? %)]}
+  name)
+
+(game-name-to-upper 45) ;; Assert failed: (s/valid? :play.spec/game-name name)
+(game-name-to-upper "bob") ;; bob
+
+;; inside the function it is also possible to call s/assert to test a data is
+;; valid for a spec. Note that by default assertion check is OFF 
+
+;; Another option is to use s/conform inside the function and use the returned value
+;; which can be the conformed value if the data is valid, or a ::s/invalid value
+;; describing the error
+
+;; For example: spec a list of paramName, paramValue 
+(s/def ::config (s/*
+                 (s/cat :prop string?
+                        :val  (s/alt :s string? :b boolean?))))
+
+(s/valid? ::config [])
+(s/conform ::config ["host" "127.0.0.1" "username" "bob" "secure" false])
+;; => [{:prop "host", :val [:s "127.0.0.1"]} {:prop "username", :val [:s "bob"]} {:prop "secure", :val [:b false]}]
+
+(defn set-config [conf]
+  (let [param (s/conform ::config conf)] ;; like parsing the conf
+    (if (s/invalid? param)
+      ;; print error message with validation failure description
+      ;; we ciould also throw
+      ;; (throw (ex-info "Invalid input" (s/explain-data :ex/config input)))
+      (printf "invalid params : %s" (s/explain-str ::config param))
+
+      ;; use the parsed data 
+      (doseq [entry param]
+        (print (:prop entry) (:val entry))))))
+
+(s/conform ::config ["server" "localhost"])
+(set-config ["server" "localhost"])
 
