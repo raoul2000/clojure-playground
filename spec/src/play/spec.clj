@@ -1,6 +1,7 @@
 (ns play.spec
   (:require [clojure.spec.alpha :as s]
-            [clojure.string :refer [blank?]])
+            [clojure.string :refer [blank?]]
+            [clojure.spec.gen.alpha :as gen])
   (:gen-class))
 
 (defn greet
@@ -202,7 +203,7 @@
                )
           ["a" "b" "s"]) ;; true
 
-(s/valid? (s/& (s/+ string?) 
+(s/valid? (s/& (s/+ string?)
                #(> (count %) 2))
           ["a"]) ;; false
 
@@ -218,6 +219,19 @@
 ;; spec function ---------------------------------------
 ;; you can write a spec for a function
 ;; see https://clojure.org/guides/spec#_specing_functions
+
+;; let's consider a function
+(defn add-and-multiply [a b]
+  (+ a b))
+
+;; ... and create a spec for that function. Spec name is the same as function name
+(s/fdef add-and-multiply
+  :args (s/cat :first number? :second number?)
+  :ret number?)
+
+;; now that the function is speced, we can use s/exercise to test it with random generated
+;; values. This requires [clojure.spec.gen.alpha :as gen]
+(s/exercise-fn 'add-and-multiply)
 
 
 ;; validation ------------------------------------------
