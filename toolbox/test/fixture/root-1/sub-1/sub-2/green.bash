@@ -1,0 +1,2 @@
+# comment
+. .bash_profile
