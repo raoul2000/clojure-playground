@@ -5,9 +5,9 @@
             [toolbox.depend.core :refer [create-deps-tree]]
             [toolbox.depend.save :refer [supported-output-format? save-deps]]))
 
-(def opt-default-pattern "*.bash")
-(def opt-default-source-dir ".")
-(def opt-default-output-file *out*)  ;; stdout
+(def opt-default-pattern       "*.bash")
+(def opt-default-source-dir    ".")
+(def opt-default-output-file   *out*)  ;; stdout
 (def opt-default-output-format "json")  
 
 (defn parent-folder-eixsts? [s]
@@ -47,14 +47,20 @@
         ""
         "Example:"
         ""
-        "Process script."
+        "Process script, output result to standard output"
         "    toolbox depend ./folder/script.bash"
         ""
-        "Process files in folder /folder with extension txt"
-        "    toolbox depend --pattern \"*.txt\" /folder"
+        "Process files in folder /folder with extension txt. Write tgf result to out.tgf"
+        "    toolbox depend --pattern \"*.txt\" /folder > out.tgf"
         ""
-        "Process script and output json result. Dependencies files will be searched under folder .src"
-        "    toolbox depend --source-dir ./src --output-format json ./src/folder/script.bash"]
+        "Process script and output json result. Dependencies files will be searched under folder ./src"
+        "    toolbox depend --source-dir ./src --output-format json ./src/folder/script.bash"
+        ""
+        "Process script and output json result. Dependencies files will be searched under folder ./src"
+        "Output JSON result to file dependencies.json"
+        "    toolbox depend --source-dir ./src --output-file dependencies.json --output-format json ./src/folder/script.bash"
+        ""
+        ]
        (join \newline)))
 
 (defn help-option? [parsed-opts]
