@@ -21,7 +21,7 @@
       (-> res
           (assoc  :timestamp timestamp)
           (update :line-count inc)
-          (update :result parse-line-event timestamp line re-event)))))
+          (update :results parse-line-event timestamp line re-event)))))
 
 
 (defn extract-events
@@ -30,7 +30,7 @@
         (doall
          (reduce (event-reducer re-event)  {:line-count 0
                                             :timestamp  nil
-                                            :result     []} (line-seq rdr))))
+                                            :results    []} (line-seq rdr))))
       (assoc  :file (.toString file))
       (dissoc :timestamp)))
 
@@ -44,11 +44,12 @@
   (->> (map (fn [[timestamp _]]
               (if timestamp
                 (str (.format timestamp date-time-formatter) "-00")
-                "no timestamp")) (:result events))
+                "no timestamp")) (:results events))
        frequencies))
 
 (comment
   (def events (extract-events "./test/fixture/log/time_distrib/example-1.txt" #".*(event).*"))
+  
   (distrib events)
 
   ;;
