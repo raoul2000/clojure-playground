@@ -3,6 +3,7 @@
             [clojure.string :refer [blank? join]]
             [babashka.fs :as fs]
             [toolbox.log.time-distrib.core :as core]
+            [toolbox.log.time-distrib.frequencies :refer [report-frequencies]]
             [toolbox.log.time-distrib.save :refer [save-events supported-output-format? supported-output-formats-as-string]]))
 
 (def opt-default-pattern       "*.log")
@@ -62,12 +63,13 @@
 (defn run-single [file-path  output-file output-format event-re]
   (->> (core/extract-events file-path event-re)
        vector
+       report-frequencies
        (save-events output-file)))
 
 (defn run-multi [folder-path glob-pattern  output-file output-format event-re]
-  (let [events (->> (fs/glob folder-path glob-pattern)
-                    (map #(core/extract-events (.toString %) event-re)))]
-    (save-events output-file  events)))
+  (->> (fs/glob folder-path glob-pattern)
+       (map #(core/extract-events (.toString %) event-re))
+       (save-events output-file)))
 
 (defn string->re [s]
   (try
@@ -95,7 +97,8 @@
   (run [".*event"])
   (spit *out* "hello")
   (run [".*event$" "./test/fixture/log/time_distrib/example-1.txt"])
-  (run ["--output-file" "./test/output/evets-2.json"  ".*(event)$" "./test/fixture/log/time_distrib/example-2.txt"])
+  (run ["--output-file" "./test/output/evets-2.json"  ".*(event) .*(fffff).*$" "./test/fixture/log/time_distrib/example-1.txt"])
+
   (run ["--output-file" "./test/output/evets-3.json" "--pattern"  "*.txt" ".*(event)$" "./test/fixture/log/time_distrib"])
   ;;
   )

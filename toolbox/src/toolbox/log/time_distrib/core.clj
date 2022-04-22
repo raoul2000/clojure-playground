@@ -11,7 +11,7 @@
 
 (defn parse-line-event [old-value timestamp line re-event]
   (if-let [match (re-matches re-event line)]
-    (conj old-value [timestamp match])
+    (conj old-value (into [timestamp] match))
     old-value))
 
 (defn event-reducer [re-event]
