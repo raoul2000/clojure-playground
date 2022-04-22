@@ -10,8 +10,9 @@
       (java.time.LocalDateTime/of year month day hour min sec msec))))
 
 (defn parse-line-event [old-value timestamp line re-event]
-  (if-let [match (re-matches re-event line)]
-    (conj old-value (into [timestamp] match))
+  (if-let [match   (re-matches re-event line)]
+    (conj old-value (into [timestamp] (if (vector? match) match [match])))  ;; re with capture group returns an array 
+                                                                            ;; re without capturing group returns a string 
     old-value))
 
 (defn event-reducer [re-event]
@@ -36,6 +37,7 @@
 
 (comment
   (extract-events "./test/fixture/log/time_distrib/example-1.txt" #".*(event).*")
+  (extract-events  "./test/fixture/log/time_distrib/example-1.txt" #".*event$")
   ;;
   )
 (def date-time-formatter (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd-HH"))
@@ -49,7 +51,7 @@
 
 (comment
   (def events (extract-events "./test/fixture/log/time_distrib/example-1.txt" #".*(event).*"))
-  
+
   (distrib events)
 
   ;;

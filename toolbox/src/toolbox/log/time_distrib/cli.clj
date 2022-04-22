@@ -1,9 +1,10 @@
 (ns toolbox.log.time-distrib.cli
   (:require [clojure.tools.cli :refer [parse-opts]]
-            [clojure.string :refer [blank? join]]
+            [clojure.string :refer [blank? join lower-case]]
             [babashka.fs :as fs]
             [toolbox.log.time-distrib.core :as core]
-            [toolbox.log.time-distrib.frequencies :refer [report-frequencies]]
+            ;;[toolbox.log.time-distrib.frequencies :refer [report-frequencies valid-time-unit? time-unit-str-coll]]
+            [toolbox.log.time-distrib.frequencies :as freq]
             [toolbox.log.time-distrib.save :refer [save-events supported-output-format? supported-output-formats-as-string]]))
 
 (def opt-default-pattern       "*.log")
@@ -14,6 +15,9 @@
   (if-let [parent (fs/parent s)]
     (fs/exists? parent)
     true))
+
+(defn string->keyword [s]
+  (keyword (lower-case s)))
 
 (def cli-options [["-p" "--pattern GLOB" "Glob pattern applied to folder to get files to process. Ignored when applied to file"
                    :default       opt-default-pattern
@@ -36,6 +40,11 @@
                                          ". Must be one of "
                                          (supported-output-formats-as-string))]]
 
+                  ["-r" "--frequency TIME_UNIT" "Output event frequencies by time unit"
+                   :parse-fn      string->keyword
+                   :validate      [freq/valid-time-unit? (fn [_] (str "time unit must be one of : "
+                                                                 (join ", " (freq/time-unit-str-coll))))]]
+
                   ["-h" "--help"]])
 
 (comment
@@ -44,6 +53,8 @@
   (parse-opts ["-e" ""] cli-options)
   (parse-opts ["-e" "*ee"] cli-options)
   (parse-opts ["-e" ".*ee"] cli-options)
+  (parse-opts ["--frequency" "day"] cli-options)
+  (parse-opts ["--frequency" "dayzzz"] cli-options)
   ;;
   )
 
@@ -60,16 +71,28 @@
 (defn help-option? [parsed-opts]
   (get-in parsed-opts [:options :help]))
 
-(defn run-single [file-path  output-file output-format event-re]
-  (->> (core/extract-events file-path event-re)
-       vector
-       report-frequencies
-       (save-events output-file)))
+(defn output [events {:keys [output-format output-file frequency]}]
+  (if frequencies
+    (->> (freq/create events frequency)
+         (freq/save-as output-file output-format))
+    (save-events output-file output-format events)))
 
-(defn run-multi [folder-path glob-pattern  output-file output-format event-re]
-  (->> (fs/glob folder-path glob-pattern)
-       (map #(core/extract-events (.toString %) event-re))
-       (save-events output-file)))
+
+(defn run-single [file-path event-re options]
+  (let [events [(core/extract-events file-path event-re)]]
+    (prn events)
+    (output events options)
+    ;;(save-events output-file events)
+    ))
+
+(defn run-multi [folder-path event-re {:keys [pattern] :as options}]
+  (let [events (->> (fs/glob folder-path pattern)
+                    (map #(core/extract-events (.toString %) event-re)))]
+    (prn events)
+    (output events options)
+    ;;(save-events output-file events)
+    ;;
+    ))
 
 (defn string->re [s]
   (try
@@ -83,15 +106,12 @@
       (let [event-re-m    (string->re (first (:arguments parsed-opts)))
             file-or-path  (or (second (:arguments parsed-opts))
                               ".")
-            options       (:options       parsed-opts)
-            glob-pattern  (:pattern       options)
-            output-file   (:output-file   options)
-            output-format (:output-format options)]
+            options       (:options       parsed-opts)]
         (cond
           (:error event-re-m)                (printf (:error event-re-m))
           (not (fs/exists? file-or-path))    (printf "path not found : %s\n" file-or-path)
-          (fs/directory?   file-or-path)     (run-multi  file-or-path glob-pattern  output-file output-format (:re event-re-m))
-          :else                              (run-single file-or-path  output-file output-format (:re event-re-m)))))))
+          (fs/directory?   file-or-path)     (run-multi  file-or-path (:re event-re-m) options)
+          :else                              (run-single file-or-path (:re event-re-m) options))))))
 
 (comment
   (run [".*event"])
@@ -99,6 +119,7 @@
   (run [".*event$" "./test/fixture/log/time_distrib/example-1.txt"])
   (run ["--output-file" "./test/output/evets-2.json"  ".*(event) .*(fffff).*$" "./test/fixture/log/time_distrib/example-1.txt"])
 
+  (run ["--output-file" "./test/output/evets-3.json" "--pattern"  "*.txt" ".*(event)$" "./test/fixture/log/time_distrib"])
   (run ["--output-file" "./test/output/evets-3.json" "--pattern"  "*.txt" ".*(event)$" "./test/fixture/log/time_distrib"])
   ;;
   )

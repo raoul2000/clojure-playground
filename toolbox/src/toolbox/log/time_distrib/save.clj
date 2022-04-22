@@ -26,7 +26,7 @@
        (map #(update % :results stringify-timestamp))
        (json/write-str)))
 
-(defn save-events [file events]
+(defn save-events [file format events]
   (spit file (events->json events)))
 
 (comment
@@ -35,7 +35,7 @@
                          [date-1 "some value 2"]]})
 
   (events->json events)
-  (save-events *out* events)
+  (save-events *out* nil events)
 
   (java.time.format.DateTimeFormatter/ofPattern "yyyy MM dd HH mm ss nnn")
 

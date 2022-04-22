@@ -6,14 +6,22 @@
  ;;(.format timestamp java.time.format.DateTimeFormatter/ISO_LOCAL_DATE_TIME)
  ;;(let [date-formatter (java.time.format.DateTimeFormatter/ofPattern "yyyy MM dd HH mm ss nnn")])
 
+(def unit-m {:day    java.time.temporal.ChronoUnit/DAYS
+             :hour   java.time.temporal.ChronoUnit/HOURS
+             :minute java.time.temporal.ChronoUnit/MINUTES
+             :second java.time.temporal.ChronoUnit/SECONDS
+             :nano   java.time.temporal.ChronoUnit/NANOS})
+
+(defn valid-time-unit? [k]
+  (get unit-m k))
+
+(defn time-unit-str-coll []
+  (->> (keys unit-m)
+       (map name)))
+
 (defn round-timestamp-fn [unit-k]
-  (let [unit-m {:day    java.time.temporal.ChronoUnit/DAYS
-                :hour   java.time.temporal.ChronoUnit/HOURS
-                :minute java.time.temporal.ChronoUnit/MINUTES
-                :second java.time.temporal.ChronoUnit/SECONDS
-                :nano   java.time.temporal.ChronoUnit/NANOS}]
-    (fn [^java.time.LocalDateTime timestamp]
-      (.truncatedTo timestamp (get unit-m unit-k)))))
+  (fn [^java.time.LocalDateTime timestamp]
+    (.truncatedTo timestamp (get unit-m unit-k))))
 
 (defn timestamp-coll-mapper [events]
   (map first (:results events)))
@@ -21,7 +29,7 @@
 (defn occurency-count [[timestamp timestamp-coll]]
   [timestamp (count timestamp-coll)])
 
-(defn report-frequencies [events-coll group-by-k]
+(defn create [events-coll group-by-k]
   (->> events-coll
        (map timestamp-coll-mapper)             ;; get only timestamps
        flatten                                 ;; a seq of LocalDateTime objects
@@ -36,6 +44,9 @@
     (csv/write-csv writer [["date_time" "count"]])     ;; columns headers
     (csv/write-csv writer (map identity freq-coll))))  ;; data
 
+
+(defn save-as [file format freq-coll]
+  )
 (comment
   (def date-1 (java.time.LocalDateTime/of 2022 04 21 11 20 11))
   (def date-2 (java.time.LocalDateTime/of 2022 04 21 12 22 00))
@@ -51,8 +62,8 @@
                            [date-4 "some value 4"]]})
 
   (timestamp-coll-mapper events-1)
-  (report-frequencies [events-1 events-2] :day)
-  (def report (report-frequencies [events-1 events-2] :day))
+  (create [events-1 events-2] :day)
+  (def report (create [events-1 events-2] :day))
   (to-csv report)
 
   (def report-1 {date-4 44
