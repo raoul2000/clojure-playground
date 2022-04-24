@@ -10,7 +10,7 @@
              :hour   java.time.temporal.ChronoUnit/HOURS
              :minute java.time.temporal.ChronoUnit/MINUTES
              :second java.time.temporal.ChronoUnit/SECONDS
-             :nano   java.time.temporal.ChronoUnit/NANOS})
+             :millis java.time.temporal.ChronoUnit/MILLIS})
 
 (defn valid-time-unit? [k]
   (get unit-m k))
@@ -20,8 +20,10 @@
        (map name)))
 
 (defn round-timestamp-fn [unit-k]
-  (fn [^java.time.LocalDateTime timestamp]
-    (.truncatedTo timestamp (get unit-m unit-k))))
+  (if-let [chrono-unit (get unit-m unit-k)]
+    (fn [^java.time.LocalDateTime timestamp]
+      (.truncatedTo timestamp chrono-unit))
+    identity))
 
 (defn timestamp-coll-mapper [events]
   (map first (:results events)))
@@ -33,9 +35,10 @@
   (->> events-coll
        (map timestamp-coll-mapper)             ;; get only timestamps
        flatten                                 ;; a seq of LocalDateTime objects
-       (map (round-timestamp-fn  group-by-k))  ;; round-date
-       (group-by identity)                     ;; compute ...
-       (map occurency-count)                   ;; ... frequencies
+       (map (round-timestamp-fn group-by-k))  ;; round-date to prepare grouping
+       frequencies
+       ;;(group-by identity)                     ;; compute ...
+       ;;(map occurency-count)                   ;; ... frequencies
        ;;
        ))
 
@@ -45,8 +48,7 @@
     (csv/write-csv writer (map identity freq-coll))))  ;; data
 
 
-(defn save-as [file format freq-coll]
-  )
+(defn save-as [file format freq-coll])
 (comment
   (def date-1 (java.time.LocalDateTime/of 2022 04 21 11 20 11))
   (def date-2 (java.time.LocalDateTime/of 2022 04 21 12 22 00))

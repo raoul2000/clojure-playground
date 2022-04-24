@@ -19,7 +19,7 @@
   (testing "when match, conj event to old value and returns"
     (is (= [["TS" "abcd event efg"]]
            (c/parse-line-event [] "TS" "abcd event efg" #".*event.*")))
-    (is (= [["TS" ["abcd event efg" "event"]]]
+    (is (= [["TS" "abcd event efg" "event"]]
            (c/parse-line-event [] "TS" "abcd event efg" #".*(event).*"))))
 
   (testing "when match, return unchanged old value"

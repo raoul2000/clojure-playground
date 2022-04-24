@@ -20,10 +20,9 @@
     (let [timestamp (or (parse-line-timestamp line)
                         (:timestamp res))]
       (-> res
-          (assoc  :timestamp timestamp)
+          (assoc  :timestamp  timestamp)
           (update :line-count inc)
-          (update :results parse-line-event timestamp line re-event)))))
-
+          (update :results    parse-line-event timestamp line re-event)))))
 
 (defn extract-events
   [file re-event]
@@ -37,22 +36,8 @@
 
 (comment
   (extract-events "./test/fixture/log/time_distrib/example-1.txt" #".*(event).*")
+  (extract-events "./test/fixture/log/time_distrib/example-1.txt" #".*(XXX).*")
   (extract-events  "./test/fixture/log/time_distrib/example-1.txt" #".*event$")
   ;;
   )
-(def date-time-formatter (java.time.format.DateTimeFormatter/ofPattern "yyyy-MM-dd-HH"))
 
-(defn distrib [events]
-  (->> (map (fn [[timestamp _]]
-              (if timestamp
-                (str (.format timestamp date-time-formatter) "-00")
-                "no timestamp")) (:results events))
-       frequencies))
-
-(comment
-  (def events (extract-events "./test/fixture/log/time_distrib/example-1.txt" #".*(event).*"))
-
-  (distrib events)
-
-  ;;
-  )
