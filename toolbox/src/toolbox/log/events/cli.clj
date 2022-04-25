@@ -36,6 +36,7 @@
                                                       opt-default-output-format ". Supported formats : "
                                                       (search-out/supported-output-formats-as-string))
                    :default       opt-default-output-format
+                   :parse-fn      string->keyword
                    :default-desc  "csv"
                    :validate      [#(search-out/supported-output-format?  %)
                                    #(str "Unsupported output format: " %
@@ -50,6 +51,7 @@
                   ["-h" "--help"]])
 
 (comment
+
   (print (:summary (parse-opts [] cli-options)))
   (parse-opts [] cli-options)
   (parse-opts ["-e" ""] cli-options)
@@ -64,10 +66,24 @@
   (->> ["Log Event Search & frequency"
         "----------------------------"
         ""
+        (str "Processes one or more file searching for an 'event' identified by regular expression match and a timestamp. "
+             "Output the result as flat list or aggregated as a frequency list.")
+        ""
         (format "Usage: toolbox %s [options] REGEX [file|folder]" action-name)
         ""
         "Options:"
         (:summary parsed-opts)
+        ""
+        "Example:"
+        ""
+        "Extract event when string 'marker' is found in a line from the given file and write CSV result to stdout"
+        (format "    toolbox %s \".*marker.*\" ./folder/file.log > result.csv" action-name)
+        ""
+        "Extract event and build frequency report saved as JSON to stdout"
+        (format "    toolbox %s --frequency hour --output-format json \".*marker.*\" ./folder/file.log > result.json" action-name)
+        ""
+        "Extract event from all files with extension log under the given folder and build a day frequency report saved as CSV to file"
+        (format "    toolbox %s --frequency day --pattern \"**/*.log\" --output-file result.csv \".*marker.*\" ./folder" action-name)
         ""]
        (join \newline)))
 
@@ -79,7 +95,6 @@
     (->> (freq/create events frequency)
          (freq-out/save output-file output-format))
     (search-out/save-events output-file output-format events)))
-
 
 (defn run-single [file-path event-re options]
   (let [events-per-file [(search/extract-events file-path event-re)]]
@@ -101,7 +116,7 @@
     (cond
       (:errors parsed-opts)      (println (join \newline (:errors parsed-opts)))
       (help-option? parsed-opts) (println (usage parsed-opts))
-      (zero? (count arguments))  (println "Missing argument. Use '--help' to show usage") 
+      (zero? (count arguments))  (println "Missing argument. Use '--help' to show usage")
       :else (let [event-re-m   (string->re (first arguments))
                   file-or-path (or (second arguments) ".")
                   options      (:options       parsed-opts)]
@@ -111,20 +126,19 @@
                 (fs/directory?   file-or-path)  (run-multi  file-or-path (:re event-re-m) options)
                 :else                           (run-single file-or-path (:re event-re-m) options))))))
 
-
 (comment
+  (run ["-h"])
   (run [".*event"])
 
-  (run [".*event$" "--output-format" "csv" "./test/fixture/log/time_distrib/example-1.txt"])
+  (run ["--output-format" "csv" ".*event$" "./test/fixture/log/time_distrib/example-1.txt"])
 
   (run ["--output-file" "./test/output/out.csv"  ".*(event) .*(fffff).*$"
         "./test/fixture/log/time_distrib/example-1.txt"])
 
-  (run ["--output-file" "./test/output/evets-3.json" "--pattern"
+  (run ["--pattern"
         "*.txt" ".*(event)$" "./test/fixture/log/time_distrib"])
 
   (run ["--output-file" "./test/output/evets-3.json" "--pattern"  "*.txt" ".*(event)$" "./test/fixture/log/time_distrib"])
-
   ;;
   )
 

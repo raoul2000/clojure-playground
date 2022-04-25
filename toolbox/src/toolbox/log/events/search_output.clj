@@ -4,7 +4,6 @@
             [clojure.data.csv :as csv]
             [clojure.java.io :as io]))
 
-
 (def supported-output-formats #{:json :csv})
 
 (defn supported-output-format? [format]

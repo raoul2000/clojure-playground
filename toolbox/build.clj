@@ -3,7 +3,7 @@
   (:require [org.corfield.build :as bb]))
 
 (def lib 'net.clojars.toolbox/tools)
-(def version "0.1.0-SNAPSHOT")
+(def version "0.2.0-SNAPSHOT")
 (def main 'toolbox.tools)
 
 (defn test "Run the tests." [opts]
