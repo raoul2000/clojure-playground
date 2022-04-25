@@ -5,10 +5,11 @@
             [toolbox.depend.core :refer [create-deps-tree]]
             [toolbox.depend.save :refer [supported-output-format? save-deps]]))
 
+(def action-name "depend")
 (def opt-default-pattern       "*.bash")
 (def opt-default-source-dir    ".")
 (def opt-default-output-file   *out*)  ;; stdout
-(def opt-default-output-format "json")  
+(def opt-default-output-format "json")
 
 (defn parent-folder-eixsts? [s]
   (if-let [parent (fs/parent s)]
@@ -39,8 +40,9 @@
 
 (defn usage [parsed-opts]
   (->> ["Explore dependencies"
+        "--------------------"
         ""
-        "Usage: toolbox depend [options] [file|folder]"
+        (format "Usage: toolbox %s [options] [file|folder]" action-name)
         ""
         "Options:"
         (:summary parsed-opts)
@@ -48,19 +50,18 @@
         "Example:"
         ""
         "Process script, output result to standard output"
-        "    toolbox depend ./folder/script.bash"
+        (format "    toolbox %s ./folder/script.bash" action-name)
         ""
         "Process files in folder /folder with extension txt. Write tgf result to out.tgf"
-        "    toolbox depend --pattern \"*.txt\" /folder > out.tgf"
+        (format "    toolbox %s --pattern \"*.txt\" /folder > out.tgf" action-name)
         ""
         "Process script and output json result. Dependencies files will be searched under folder ./src"
-        "    toolbox depend --source-dir ./src --output-format json ./src/folder/script.bash"
+        (format "    toolbox %s --source-dir ./src --output-format json ./src/folder/script.bash" action-name)
         ""
         "Process script and output json result. Dependencies files will be searched under folder ./src"
         "Output JSON result to file dependencies.json"
-        "    toolbox depend --source-dir ./src --output-file dependencies.json --output-format json ./src/folder/script.bash"
-        ""
-        ]
+        (format "    toolbox %s --source-dir ./src --output-file dependencies.json --output-format json ./src/folder/script.bash" action-name)
+        ""]
        (join \newline)))
 
 (defn help-option? [parsed-opts]
@@ -80,19 +81,20 @@
 
 (defn run [args]
   (let [parsed-opts (parse-opts args cli-options)]
-    (if (help-option? parsed-opts)
-      (println (usage parsed-opts))
-      (let [file-or-path  (or (first (:arguments parsed-opts))
-                              ".")
-            options       (:options       parsed-opts)
-            glob-pattern  (:pattern       options)
-            source-dir    (:source-dir    options)
-            output-file   (:output-file   options)
-            output-format (:output-format options)]
-        (cond
-          (not (fs/exists? file-or-path))    (printf "path not found : %s\n" file-or-path)
-          (fs/directory?   file-or-path)     (run-multi  file-or-path glob-pattern source-dir output-file output-format)
-          :else                              (run-single file-or-path source-dir output-file output-format))))))
+    (cond
+      (:errors parsed-opts)      (println (join \newline (:errors parsed-opts)))
+      (help-option? parsed-opts) (println (usage parsed-opts))
+      :else (let [file-or-path  (or (first (:arguments parsed-opts))
+                                    ".")
+                  options       (:options       parsed-opts)
+                  glob-pattern  (:pattern       options)
+                  source-dir    (:source-dir    options)
+                  output-file   (:output-file   options)
+                  output-format (:output-format options)]
+              (cond
+                (not (fs/exists? file-or-path))    (printf "path not found : %s\n" file-or-path)
+                (fs/directory?   file-or-path)     (run-multi  file-or-path glob-pattern source-dir output-file output-format)
+                :else                              (run-single file-or-path source-dir output-file output-format))))))
 
 (comment
   ;; process all files in current dir matching default pattern
@@ -112,10 +114,10 @@
   (run ["/not/found"])
   (run ["/not/found.txt"])
 
-  
+
   (parse-opts ["-h"] cli-options)
   ;; process all files in current dir matching pattern *.txt
-  
+
   (parse-opts ["-p" "*.txt"] cli-options)
 
   ;; process script.bash in current folder

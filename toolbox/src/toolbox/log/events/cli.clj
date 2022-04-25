@@ -7,6 +7,8 @@
             [toolbox.log.events.frequencies :as freq]
             [toolbox.log.events.frequencies-output :as freq-out]))
 
+(def action-name "log-events")
+
 (def opt-default-pattern       "*.log")
 (def opt-default-output-file   *out*)    ;; stdout
 (def opt-default-output-format :csv)
@@ -32,13 +34,13 @@
 
                   ["-f" "--output-format FORMAT" (str "Output format, default to "
                                                       opt-default-output-format ". Supported formats : "
-                                                      (freq-out/supported-output-formats-as-string))
+                                                      (search-out/supported-output-formats-as-string))
                    :default       opt-default-output-format
                    :default-desc  "csv"
-                   :validate      [#(freq-out/supported-output-format?  %)
+                   :validate      [#(search-out/supported-output-format?  %)
                                    #(str "Unsupported output format: " %
                                          ". Must be one of "
-                                         (freq-out/supported-output-formats-as-string))]]
+                                         (search-out/supported-output-formats-as-string))]]
 
                   ["-r" "--frequency TIME_UNIT" "Output event frequencies by time unit"
                    :parse-fn      string->keyword
@@ -59,9 +61,10 @@
   )
 
 (defn usage [parsed-opts]
-  (->> ["Log Event Time Distribution"
+  (->> ["Log Event Search & frequency"
+        "----------------------------"
         ""
-        "Usage: toolbox log-time-distrib [options] REGEX [file|folder]"
+        (format "Usage: toolbox %s [options] REGEX [file|folder]" action-name)
         ""
         "Options:"
         (:summary parsed-opts)
@@ -74,7 +77,7 @@
 (defn output [events {:keys [output-format output-file frequency]}]
   (if frequency
     (->> (freq/create events frequency)
-         (freqout/save output-file output-format))
+         (freq-out/save output-file output-format))
     (search-out/save-events output-file output-format events)))
 
 
@@ -85,9 +88,7 @@
 (defn run-multi [folder-path event-re {:keys [pattern] :as options}]
   (let [events-per-file (->> (fs/glob folder-path pattern)
                              (map #(search/extract-events (.toString %) event-re)))]
-    (output events-per-file options)
-    ;;
-    ))
+    (output events-per-file options)))
 
 (defn string->re [s]
   (try
@@ -95,30 +96,34 @@
     (catch Exception ex {:error (str "Invalid regular expression : " (.getMessage ex))})))
 
 (defn run [args]
-  (let [parsed-opts (parse-opts args cli-options)]
-    (if (help-option? parsed-opts)
-      (println (usage parsed-opts))
-      (let [event-re-m    (string->re (first (:arguments parsed-opts)))
-            file-or-path  (or (second (:arguments parsed-opts))
-                              ".")
-            options       (:options       parsed-opts)]
-        (cond
-          (:error event-re-m)                (printf (:error event-re-m))
-          (not (fs/exists? file-or-path))    (printf "path not found : %s\n" file-or-path)
-          (fs/directory?   file-or-path)     (run-multi  file-or-path (:re event-re-m) options)
-          :else                              (run-single file-or-path (:re event-re-m) options))))))
+  (let [parsed-opts (parse-opts args cli-options)
+        arguments   (:arguments parsed-opts)]
+    (cond
+      (:errors parsed-opts)      (println (join \newline (:errors parsed-opts)))
+      (help-option? parsed-opts) (println (usage parsed-opts))
+      (zero? (count arguments))  (println "Missing argument. Use '--help' to show usage") 
+      :else (let [event-re-m   (string->re (first arguments))
+                  file-or-path (or (second arguments) ".")
+                  options      (:options       parsed-opts)]
+              (cond
+                (:error event-re-m)             (printf (:error event-re-m))
+                (not (fs/exists? file-or-path)) (printf "path not found : %s\n" file-or-path)
+                (fs/directory?   file-or-path)  (run-multi  file-or-path (:re event-re-m) options)
+                :else                           (run-single file-or-path (:re event-re-m) options))))))
+
 
 (comment
   (run [".*event"])
 
   (run [".*event$" "--output-format" "csv" "./test/fixture/log/time_distrib/example-1.txt"])
+
   (run ["--output-file" "./test/output/out.csv"  ".*(event) .*(fffff).*$"
         "./test/fixture/log/time_distrib/example-1.txt"])
 
   (run ["--output-file" "./test/output/evets-3.json" "--pattern"
         "*.txt" ".*(event)$" "./test/fixture/log/time_distrib"])
-  (run ["--output-file" "./test/output/evets-3.json" "--pattern"  "*.txt" ".*(event)$" "./test/fixture/log/time_distrib"])
 
+  (run ["--output-file" "./test/output/evets-3.json" "--pattern"  "*.txt" ".*(event)$" "./test/fixture/log/time_distrib"])
 
   ;;
   )

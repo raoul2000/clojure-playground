@@ -39,3 +39,23 @@
        ;;(map identity)
        ;;
        ))
+
+(comment
+  (def date-1 (java.time.LocalDateTime/of 2022 04 21 11 20 11))
+  (def date-2 (java.time.LocalDateTime/of 2022 04 21 12 22 00))
+  (def date-3 (java.time.LocalDateTime/of 2022 04 23 14 33 00))
+  (def date-4 (java.time.LocalDateTime/of 2022 05 24 14 44 00))
+
+  (def events-1 {:results [[date-1 "some value 1"]
+                           [date-2 "some value 2"]
+                           [date-3 "some value 3"]]})
+
+  (def events-2 {:results [[date-1 "some value 11"]
+                           [date-3 "some value 3"]
+                           [date-4 "some value 4"]]})
+
+  (timestamp-coll-mapper events-1)
+  (create [events-1 events-2] :minute)
+
+  ;;
+  )
