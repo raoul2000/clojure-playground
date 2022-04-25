@@ -1,10 +1,11 @@
-(ns toolbox.log.time-distrib.cli
+(ns toolbox.log.events.cli
   (:require [clojure.tools.cli :refer [parse-opts]]
             [clojure.string :refer [blank? join lower-case]]
             [babashka.fs :as fs]
-            [toolbox.log.time-distrib.core :as core]
-            [toolbox.log.time-distrib.frequencies :as freq]
-            [toolbox.log.time-distrib.save :refer [save-events supported-output-format? supported-output-formats-as-string]]))
+            [toolbox.log.events.search :as search]
+            [toolbox.log.events.search-output :as search-out]
+            [toolbox.log.events.frequencies :as freq]
+            [toolbox.log.events.frequencies-output :as freq-out]))
 
 (def opt-default-pattern       "*.log")
 (def opt-default-output-file   *out*)    ;; stdout
@@ -31,13 +32,13 @@
 
                   ["-f" "--output-format FORMAT" (str "Output format, default to "
                                                       opt-default-output-format ". Supported formats : "
-                                                      (supported-output-formats-as-string))
+                                                      (freq-out/supported-output-formats-as-string))
                    :default       opt-default-output-format
                    :default-desc  "csv"
-                   :validate      [#(supported-output-format?  %)
+                   :validate      [#(freq-out/supported-output-format?  %)
                                    #(str "Unsupported output format: " %
                                          ". Must be one of "
-                                         (supported-output-formats-as-string))]]
+                                         (freq-out/supported-output-formats-as-string))]]
 
                   ["-r" "--frequency TIME_UNIT" "Output event frequencies by time unit"
                    :parse-fn      string->keyword
@@ -73,17 +74,17 @@
 (defn output [events {:keys [output-format output-file frequency]}]
   (if frequency
     (->> (freq/create events frequency)
-         (freq/save output-file output-format))
-    (save-events output-file output-format events)))
+         (freqout/save output-file output-format))
+    (search-out/save-events output-file output-format events)))
 
 
 (defn run-single [file-path event-re options]
-  (let [events-per-file [(core/extract-events file-path event-re)]]
+  (let [events-per-file [(search/extract-events file-path event-re)]]
     (output events-per-file options)))
 
 (defn run-multi [folder-path event-re {:keys [pattern] :as options}]
   (let [events-per-file (->> (fs/glob folder-path pattern)
-                             (map #(core/extract-events (.toString %) event-re)))]
+                             (map #(search/extract-events (.toString %) event-re)))]
     (output events-per-file options)
     ;;
     ))
@@ -111,7 +112,7 @@
   (run [".*event"])
 
   (run [".*event$" "--output-format" "csv" "./test/fixture/log/time_distrib/example-1.txt"])
-  (run ["--output-file" "./test/output/out.csv"  ".*(event) .*(fffff).*$" 
+  (run ["--output-file" "./test/output/out.csv"  ".*(event) .*(fffff).*$"
         "./test/fixture/log/time_distrib/example-1.txt"])
 
   (run ["--output-file" "./test/output/evets-3.json" "--pattern"
@@ -121,3 +122,4 @@
 
   ;;
   )
+
