@@ -52,7 +52,10 @@
    (spit output-path (deps->format deps format))))
 
 (defn save-deps [output-file-path deps format]
-  (spit output-file-path (deps->format deps format)))
+  (let [data (deps->format deps format)]
+    (if (= *out* output-file-path)
+      (.write *out* data)
+      (spit output-file-path data))))
 
 (comment
   (def dep1 [{:script-path "./resources/test/root/start.bash",
