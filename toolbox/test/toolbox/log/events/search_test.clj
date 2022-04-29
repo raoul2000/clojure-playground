@@ -12,7 +12,19 @@
 
   (testing "when parse fails returns nil"
     (let [date-time (search/parse-line-timestamp "NO MATCH")]
-      (is (nil? date-time)))))
+      (is (nil? date-time))))
+
+  (testing "when timestamp format with T"
+    (let [date-time (search/parse-line-timestamp "2022-04-11T21:56:14,161Z data")]
+      (is (= "2022 04 11 21 56 14 161" (.format date-time date-time-formatter)))))
+
+  (testing "when timestamp enclosed"
+    (let [date-time (search/parse-line-timestamp "[2022-04-11T21:56:14,161Z] data")]
+      (is (= "2022 04 11 21 56 14 161" (.format date-time date-time-formatter)))))
+
+  (testing "when timestamp starts with whitespace char(s)"
+    (let [date-time (search/parse-line-timestamp " [ 2022-04-11T21:56:14,161 ] data")]
+      (is (= "2022 04 11 21 56 14 161" (.format date-time date-time-formatter))))))
 
 
 (deftest parse-line-event-test

@@ -2,8 +2,11 @@
   (:require [clojure.java.io :as io]))
 
 
-;; matches (ex): 2022-04-11 21:56:14,161
-(def default-re-timestamp #"^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}),(\d{3}).*")
+;; matches (ex): "2022-04-11 21:56:14,161..."
+;; matches (ex): "2022-04-11T21:56:14,161..."
+;; matches (ex): "[2022-04-11T21:56:14,161]..."
+;; matches (ex): " [ 2022-04-11T21:56:14,161 ]..."
+(def default-re-timestamp #"^\s*.?\s*(\d{4})-(\d{2})-(\d{2}).(\d{2}):(\d{2}):(\d{2}),(\d{3}).*")
 
 (defn parse-line-timestamp [line]
   (when-let [[_ & tokens]  (re-matches default-re-timestamp line)]
