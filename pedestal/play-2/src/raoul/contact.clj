@@ -120,12 +120,30 @@
             (async/go  ;; returns a channel
               (assoc context :response (ok (slurp "https://jsonplaceholder.typicode.com/todos/1")))))})
 
-;; Error are handled by the function value defined at the :error key
+;; Error are handled by the function value defined at the :error key.
+;; When an interceptor throw an exception, it bubles up in search for the first matching error handler
+
+(def throw-when-odd
+  {:name ::throw-when-odd
+   :enter (fn [{:keys [request] :as context}]
+            (if (odd? (Integer/parseInt (read-query-param request :id)))
+              (throw (Exception. "odd not supported"))
+              (assoc context :response (ok "good"))))})
+
 (def error-handler-1
   {:name ::error-handler-1
    :error (fn [context ex-info]
-            (println (format "error by %s"
-                             (:interceptor ex-info)))
+            (println "!!!! custom error handler ---- begin ---")
+            (prn ex-info)
+
+            (let [cause (:cause ex-info)
+                  ex-data (:data (first (:via ex-info)))
+                  stage (:stage ex-info)]
+              (println (str "cause : " cause))
+              (println (str "stage : " stage)))
+            
+            
+            (println "!!!! custom error handler ---- end ---")
             context ;; This is "catching" the error. Because the context map has no error bound to it, 
                     ;; Pedestal will exit error handling and execute any remaining :leave handlers
             )})
@@ -164,6 +182,11 @@
       :get
       [interc-ws-call]
       :route-name :async-1]
+
+     ["/err-1"
+      :get
+      [error-handler-1 throw-when-odd]
+      :route-name :err-1]
 
      ;;
      }))
