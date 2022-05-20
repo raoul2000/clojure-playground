@@ -27,3 +27,7 @@
 /checkouts
 /classes
 /target
+node_modules/
+.shadow-cljs/
+resources/public/js
+

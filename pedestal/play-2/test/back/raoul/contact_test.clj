@@ -60,6 +60,7 @@
     ;; so that interc-2 was not being invoked
     (testing "shortcut"
       (is (= {:steps-enter ["interc-1" "interc-3" "interc-2"],
-              :steps-leave ["interc-2" "interc-3" "interc-1"]}
+              :steps-leave ["interc-2" "interc-3" "interc-1"]
+              :response {:status 200, :body "shortcut", :headers {}}}
              (chain/execute {} [interc-1 interc-3 interc-shortcut interc-2]))))))
 

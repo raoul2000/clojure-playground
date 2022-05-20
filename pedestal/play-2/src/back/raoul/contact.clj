@@ -259,6 +259,12 @@
   (reset! server (-> service-map
                      ;; in dev mode, does not block the repl
                      (assoc ::http/join? false)
+                     ;; always allow CORS in dev
+                     (assoc ::http/allowed-origins  (constantly true))
+
+                     ;; This is required for a static served HTML page to load JS
+                     ;; TODO: study this settings to use the appropriate values
+                     (assoc ::http/secure-headers {:content-security-policy-settings {:object-src "none"}})
 
                      ;; add built-in default interceptors
                      (http/default-interceptors)
@@ -267,6 +273,7 @@
                      ;; note usage of i/interceptor to actually create the interceptor function
                      ;; out of the map definition
                      (update ::http/interceptors conj (i/interceptor interc-custom-default))
+
                      (http/create-server)
                      (http/start))))
 
