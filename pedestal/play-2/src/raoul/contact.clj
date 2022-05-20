@@ -2,6 +2,8 @@
   (:require [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
             [io.pedestal.interceptor :as i]
+            [io.pedestal.interceptor.chain :as chain]
+            [io.pedestal.interceptor.error :as error]
             [raoul.content-neg :as cneg]
             [clojure.core.async :as async])
   (:gen-class))
@@ -128,26 +130,48 @@
    :enter (fn [{:keys [request] :as context}]
             (if (odd? (Integer/parseInt (read-query-param request :id)))
               (throw (Exception. "odd not supported"))
-              (assoc context :response (ok "good"))))})
+              (assoc context :response (ok "good"))))
+   :error (fn [context ex]
+            ;; don't handle errors, just print a message :  pedestal will look for
+            ;; another handler in the up chain
+            (println "!!!! throw-when-odd : error handler (lazy one : rethrow)")
+            (assoc context ::chain/error ex))})
 
 (def error-handler-1
   {:name ::error-handler-1
-   :error (fn [context ex-info]
+   :error (fn [context ex]
             (println "!!!! custom error handler ---- begin ---")
-            (prn ex-info)
+            ;; extract exception map wit'h (ex-data ex)
+            ;; see http://pedestal.io/reference/error-handling for more
+            (let [{:keys [exception-type  stage]} (ex-data ex)]
+              (println (format "ex type : %s\nstage : %s"  exception-type stage)))
 
-            (let [cause (:cause ex-info)
-                  ex-data (:data (first (:via ex-info)))
-                  stage (:stage ex-info)]
-              (println (str "cause : " cause))
-              (println (str "stage : " stage)))
-            
-            
-            (println "!!!! custom error handler ---- end ---")
-            context ;; This is "catching" the error. Because the context map has no error bound to it, 
-                    ;; Pedestal will exit error handling and execute any remaining :leave handlers
+            ;; This is "catching" the error. Because the context map has no error bound to it, 
+            ;; Pedestal will exit error handling and execute any remaining :leave handlers
+            context
+
+            ;; If you cannot handle the exception, re-attach it to the ctx
+            ;; using the `:io.pedestal.interceptor.chain/error` key
+            ;; Non handled exception result in a "Internal Server Error" (http 500) response
+            ;;(assoc context ::chain/error ex)
             )})
 
+
+(def error-handler-2
+  ;; error/error-dispatch is a macro that produces an error dispatch function
+  ;; based on match
+  ;; see http://pedestal.io/cookbook/index#_how_to_handle_errors for more
+  (error/error-dispatch [context ex]
+                        ;; Handle `ArithmeticException`s thrown by `::throwing-interceptor`
+                        [{:exception-type :java.lang.ArithmeticException 
+                          :interceptor ::throwing-interceptor}]
+                        (assoc context :response {:status 500 :body "Exception caught!"})
+
+                        [{
+                          :interceptor ::throw-when-odd}]
+                        (assoc context :response {:status 500 :body "odd not supported"})
+
+                        :else (assoc context ::chain/error ex)))
 
 ;; Routes ---------------------------------------------
 
@@ -187,6 +211,11 @@
       :get
       [error-handler-1 throw-when-odd]
       :route-name :err-1]
+     
+     ["/err-2"
+      :get
+      [error-handler-2 throw-when-odd]
+      :route-name :err-2]
 
      ;;
      }))
