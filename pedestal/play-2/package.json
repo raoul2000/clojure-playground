@@ -8,7 +8,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "release" : "shadow-cljs release app",
+    "watch" : "shadow-cljs watch app"
   },
   "keywords": [],
   "author": "",
