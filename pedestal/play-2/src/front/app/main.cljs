@@ -1,6 +1,8 @@
 (ns app.main
   (:require [re-frame.core :as rf]
             [reagent.dom :as rdom]
+            [app.todo.views :as tdv]
+            [app.todo.events :as tde]
             [goog.dom :as gdom]))
 
 ;; helpers
@@ -97,6 +99,7 @@
 (defn ui
   []
   [:div
+   (tdv/todo-list)
    [:h1 "Contacts"]
    (contacts-list)
    (toolbar)])
@@ -109,7 +112,8 @@
 
 (defn run
   []
-  (dispatch-initialize)
+  ;;(dispatch-initialize)
+  (tde/dispatch-initialize-todo)
   (render))
 
 (defn init []

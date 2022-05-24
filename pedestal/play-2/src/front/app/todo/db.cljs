@@ -2,6 +2,8 @@
   (:require [cljs.spec.alpha :as s]
             [clojure.string :as str]))
 
+;; Spec ------------------------------------------------------------
+
 (s/def :todo/id    uuid?)
 (s/def :todo/title (s/and string? #(> (count (str/trim %)) 0)))
 (s/def :todo/done  boolean?)
@@ -36,37 +38,30 @@
    :todo/title (str/trim title)
    :todo/done  done})
 
+(defn create-todo-list [title]
+  {:pre [(s/valid? :todo-list/title title)]
+   :post [(s/valid? :todo/list %)]}
+  {:todo-list/title title
+   :todo-list/items []})
+
 (defn add-todo-to-list [todo-list todo]
-  (conj todo-list todo))
+  (update todo-list :todo-list/items #(conj % todo)))
 
 (defn read-todo-by-id [todo-list id]
-  (first (filter #(= id (:todo/id %)) todo-list)))
+  (first (filter #(= id (:todo/id %)) (:todo-list/items todo-list))))
 
 (defn delete-todo [todo-list id]
-  (remove #(= id (:todo/id %)) todo-list))
+  (update todo-list :todo-list/items (fn [todos] (filterv #(not= id  (:todo/id %)) todos))))
 
 (defn update-todo [todo-list id new-todo]
-  (map #(if (= id (:todo/id %))
-          (assoc new-todo :todo/id id)
-          %)
-       todo-list))
+  (when (read-todo-by-id todo-list id)
+    (update todo-list :todo-list/items (fn [todos]
+                                         (mapv #(if (= id (:todo/id %))
+                                                  (assoc new-todo :todo/id id)
+                                                  %)
+                                               todos)))))
 
-(defn mark-done [todo-list id done]
-  (when-let [subject (read-todo-by-id todo-list id)]
-    (->> (assoc subject :done done)
-         (update-todo todo-list id))))
-
-(comment
-  (create-todo "title" true)
-  (create-todo "title" false)
-  (create-todo "d" false)
-
-  (def list1 [{:todo/id "1"}
-              {:todo/id "2"}])
-  (read-todo-by-id [{:todo/id "1"}
-                    {:todo/id "2"}]
-                   "2")
-
-  (update-todo list1 "1" {:color "green"})
-  (s/explain :todo/list (mark-done list1 "2" false))
-  )
+(def initial-todo-list (-> (create-todo-list "My List")
+                           (add-todo-to-list (create-todo "do somthing" false))
+                           (add-todo-to-list (create-todo "do another thing" false))
+                           (add-todo-to-list (create-todo "do one last thing" false))))
