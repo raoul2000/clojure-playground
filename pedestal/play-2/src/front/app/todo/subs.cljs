@@ -1,5 +1,6 @@
 (ns app.todo.subs
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [app.todo.db :as db]))
 
 ;; ------ Layer 2 - Extractors
 
@@ -12,7 +13,7 @@
 
 (rf/reg-sub  :todo-items-id
              (fn [db _]
-               (mapv #(:todo/id %) (:todo-list/items db))))
+               (db/read-todo-ids (:todos db))))
 
 (rf/reg-sub  :todo-list-items
              (fn [db _]
@@ -21,6 +22,10 @@
 (rf/reg-sub  :todo-edit-id
              (fn [db _]
                (:todo-edit-id db)))
+
+(rf/reg-sub :todo-item
+            (fn [db [_ id]]
+              (db/read-todo-by-id (:todos db) id)))
 
 ;; ------ Layer 3 - Materialised View
 

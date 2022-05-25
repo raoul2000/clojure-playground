@@ -47,7 +47,17 @@
 (defn add-todo-to-list [todo-list todo]
   (update todo-list :todo-list/items #(conj % todo)))
 
-(defn read-todo-by-id [todo-list id]
+(defn read-todo-ids 
+  "retuns a vector of all todo ids in the given todo list. Returns an empty
+   vector when todo list is empty."
+  [todo-list]
+  (let [todo-items (:todo-list/items todo-list)]
+    (mapv :todo/id todo-items)))
+
+(defn read-todo-by-id 
+  "Given a todo list and a todo id, returns the todo-item with the given id
+   or *nil* when not found."
+  [todo-list id]
   (first (filter #(= id (:todo/id %)) (:todo-list/items todo-list))))
 
 (defn delete-todo [todo-list id]
@@ -70,6 +80,9 @@
 (defn update-todo-title [todo-list id new-title]
   (update todo-list :todo-list/items
           #(mapv (partial update-title-by-id id new-title) %)))
+
+(defn todo-done? [todo-item]
+  (:todo/done todo-item))
 
 (def initial-todo-list (-> (create-todo-list "My List")
                            (add-todo-to-list (create-todo "do somthing" false))
