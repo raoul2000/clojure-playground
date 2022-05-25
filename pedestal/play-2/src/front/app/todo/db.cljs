@@ -28,7 +28,7 @@
                                            :todo/id  #uuid "28db773c-24a6-446d-855f-6e8e6828c18e"
                                            :todo/done false}]}))
 
-;; -----------------------------------------------------
+;; CRUD -----------------------------------------------------
 
 (defn create-todo [title done]
   {:pre [(s/valid? :todo/title title)
@@ -51,7 +51,8 @@
   (first (filter #(= id (:todo/id %)) (:todo-list/items todo-list))))
 
 (defn delete-todo [todo-list id]
-  (update todo-list :todo-list/items (fn [todos] (filterv #(not= id  (:todo/id %)) todos))))
+  (update todo-list :todo-list/items 
+          (fn [todos] (filterv #(not= id (:todo/id %)) todos))))
 
 (defn update-todo [todo-list id new-todo]
   (when (read-todo-by-id todo-list id)
@@ -60,6 +61,15 @@
                                                   (assoc new-todo :todo/id id)
                                                   %)
                                                todos)))))
+
+(defn update-title-by-id [id new-title todo-item]
+  (if (= (:todo/id todo-item) id)
+    (assoc todo-item :todo/title new-title)
+    todo-item))
+
+(defn update-todo-title [todo-list id new-title]
+  (update todo-list :todo-list/items
+          #(mapv (partial update-title-by-id id new-title) %)))
 
 (def initial-todo-list (-> (create-todo-list "My List")
                            (add-todo-to-list (create-todo "do somthing" false))

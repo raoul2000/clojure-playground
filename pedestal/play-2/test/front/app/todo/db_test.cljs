@@ -80,10 +80,23 @@
       (is (true?
            (:todo/done (-> (t/update-todo todo-list #uuid "0-0-0-0-0" (t/create-todo "new title"  true))
                            (t/read-todo-by-id #uuid "0-0-0-0-0")))))
-      
-      (is (nil? (t/update-todo todo-list #uuid "2-2-2-2-2" (t/create-todo "new title"  true))))
-      
-      ))
+
+      (is (nil? (t/update-todo todo-list #uuid "2-2-2-2-2" (t/create-todo "new title"  true))))))
+
+  (testing "update todo title"
+    (let [todo-list (-> (t/create-todo-list "my list")
+                        (t/add-todo-to-list {:todo/id #uuid "0-0-0-0-0"
+                                             :todo/title "todo1"
+                                             :todo/done false})
+                        (t/add-todo-to-list {:todo/id #uuid "0-0-0-0-1"
+                                             :todo/title "todo2"
+                                             :todo/done false}))]
+      (is (= "new title"
+             (:todo/title
+              (t/read-todo-by-id
+               (t/update-todo-title todo-list #uuid "0-0-0-0-0" "new title")
+               #uuid "0-0-0-0-0"
+               ))))))
   ;;
   )
 

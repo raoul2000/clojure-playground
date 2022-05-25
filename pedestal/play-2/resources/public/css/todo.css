@@ -1,0 +1,56 @@
+body {
+    background-color: rgb(159, 210, 255);
+    font-family: 'Roboto', sans-serif;
+    
+
+}
+.todo-app {
+    border:0;
+    margin:0;
+}
+.todo-list ul {
+    border:1px red solid;
+    padding:0.5em;
+    margin:0.5em;
+    list-style:none;
+}
+.todo-list li {
+    margin:1em;
+    display: flex;
+}
+.todo-list li label,
+.todo-list li textarea
+ {
+    flex-grow: 1;
+}
+.todo-list li label:hover {
+    cursor:pointer;
+}
+.todo-list li input{
+    margin:0;
+    margin-right: 0.5em;
+    padding:0;
+}
+.todo-list li.todo-done label {
+    text-decoration: line-through;
+}
+.todo-action {
+    margin:0;
+    padding:0;
+    margin-left:1em;
+    display: flex;
+}
+.todo-action > div {
+    margin-right:0.5em;
+    text-transform:uppercase;
+    font-size: 0.7em;
+}
+.todo-action > div:hover {
+    color:blue;
+    cursor:pointer;
+    text-decoration: underline;
+    
+}
+
+
+
