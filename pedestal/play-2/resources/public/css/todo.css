@@ -4,9 +4,10 @@ body {
     
 
 }
-.todo-app {
+.todo-list {
     border:0;
     margin:0;
+    max-width: 500px;
 }
 .todo-list ul {
     border:1px red solid;

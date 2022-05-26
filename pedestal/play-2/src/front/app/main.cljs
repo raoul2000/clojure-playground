@@ -100,9 +100,10 @@
   []
   [:div
    (tdv/todo-list)
-   [:h1 "Contacts"]
-   (contacts-list)
-   (toolbar)])
+   ;;[:h1 "Contacts"]
+   ;;(contacts-list)
+   ;;(toolbar)
+   ])
 
 (defn render
   []

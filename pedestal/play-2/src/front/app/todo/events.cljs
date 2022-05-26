@@ -23,7 +23,6 @@
 
 (rf/reg-event-db
  :delete-todo-item
-
  (fn [db [_ id]]
    (update db :todos #(db/delete-todo % id))))
 
@@ -43,4 +42,12 @@
    (-> db
        (update :todos #(db/update-todo-title % id title))
        (assoc :todo-edit-id nil))))
+
+(rf/reg-event-db
+ :add-todo-item
+ (fn [db _]
+   (let [new-todo (db/create-todo "Enter your description ..." false)]
+     (-> db
+         (update :todos #(db/add-todo-to-list % new-todo))
+         (assoc :todo-edit-id (:todo/id new-todo))))))
 

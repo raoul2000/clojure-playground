@@ -6,7 +6,7 @@
 
 (defn main-toolbar []
   [:div.todo-action
-   [:div "Add TODO"]])
+   [:div {:on-click #(rf/dispatch [:add-todo-item])} "Add TODO"]])
 
 (defn action-bar-view [todo-id]
   [:div.todo-action
@@ -20,8 +20,7 @@
 
 (defn todo-view [{:keys [:todo/id :todo/title :todo/done]}]
   (fn []
-    [:li {:key   id
-          :class [(when done "todo-done")]}
+    [:li {:class [(when done "todo-done")]}
      [:label
       [:input {:id        (str "chk-" id)
                :type      :checkbox
@@ -33,8 +32,9 @@
 (defn todo-edit [{:keys [:todo/id :todo/title]}]
   (let [title-val (r/atom title)]
     (fn []
-      [:li {:key id}
+      [:li
        [:textarea {:value     @title-val
+                   :placeholder "What do you have to do ?"
                    :on-change #(reset! title-val (-> % .-target .-value))}]
        (action-bar-edit id @title-val)])))
 
@@ -42,8 +42,8 @@
   (let [todo-item    @(rf/subscribe [:todo-item id])
         todo-edit-id @(rf/subscribe [:todo-edit-id])]
     (if (= todo-edit-id (:todo/id todo-item))
-      [(todo-edit todo-item)]
-      [(todo-view todo-item)])))
+      ^{:key id} [(todo-edit todo-item)]
+      ^{:key id} [(todo-view todo-item)])))
 
 (defn todo-list
   []
