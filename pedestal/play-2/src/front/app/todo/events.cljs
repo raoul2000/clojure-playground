@@ -1,6 +1,6 @@
 (ns app.todo.events
   (:require [re-frame.core :as rf]
-            [app.todo.db :as db]))
+            [shared.db :as db]))
 
 (defn dispatch-initialize-todo []
   (rf/dispatch-sync [:initialize-todo]))

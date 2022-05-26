@@ -1,6 +1,8 @@
 ;; shadow-cljs configuration
 {:source-paths ["src/front"
-                "test/front"]
+                "src/common"
+                "test/front"
+                ]
 
  :dependencies
  [[reagent                     "1.1.0"]

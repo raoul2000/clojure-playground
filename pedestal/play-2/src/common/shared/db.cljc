@@ -1,5 +1,5 @@
-(ns app.todo.db
-  (:require [cljs.spec.alpha :as s]
+(ns shared.db
+  (:require [clojure.spec.alpha :as s]
             [clojure.string :as str]))
 
 ;; Spec ------------------------------------------------------------

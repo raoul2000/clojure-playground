@@ -5,6 +5,7 @@
             [io.pedestal.interceptor.chain :as chain]
             [io.pedestal.interceptor.error :as error]
             [raoul.content-neg :as cneg]
+            [raoul.todo :as todo]
             [clojure.core.async :as async])
   (:gen-class))
 
@@ -163,12 +164,11 @@
   ;; see http://pedestal.io/cookbook/index#_how_to_handle_errors for more
   (error/error-dispatch [context ex]
                         ;; Handle `ArithmeticException`s thrown by `::throwing-interceptor`
-                        [{:exception-type :java.lang.ArithmeticException 
+                        [{:exception-type :java.lang.ArithmeticException
                           :interceptor ::throwing-interceptor}]
                         (assoc context :response {:status 500 :body "Exception caught!"})
 
-                        [{
-                          :interceptor ::throw-when-odd}]
+                        [{:interceptor ::throw-when-odd}]
                         (assoc context :response {:status 500 :body "odd not supported"})
 
                         :else (assoc context ::chain/error ex)))
@@ -211,11 +211,17 @@
       :get
       [error-handler-1 throw-when-odd]
       :route-name :err-1]
-     
+
      ["/err-2"
       :get
       [error-handler-2 throw-when-odd]
       :route-name :err-2]
+
+     ;; Todo service 
+     ["/todo"
+      :get
+      [cneg/coerce-body cneg/content-neg-intc todo/respond-todo-list]
+      :route-name :get-todo]
 
      ;;
      }))

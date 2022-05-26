@@ -1,6 +1,6 @@
 (ns app.todo.subs
   (:require [re-frame.core :as rf]
-            [app.todo.db :as db]))
+            [shared.db :as db]))
 
 ;; ------ Layer 2 - Extractors
 

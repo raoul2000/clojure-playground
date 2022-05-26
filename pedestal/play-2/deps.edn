@@ -1,7 +1,8 @@
 {:paths ["src/back" 
+         "src/common"
          "resources"]
  
- :deps {org.clojure/clojure          {:mvn/version "1.10.3"}
+ :deps {org.clojure/clojure          {:mvn/version "1.11.1"}
         io.pedestal/pedestal.service {:mvn/version "0.5.7"}
         io.pedestal/pedestal.route   {:mvn/version "0.5.7"}
         io.pedestal/pedestal.jetty   {:mvn/version "0.5.7"}
