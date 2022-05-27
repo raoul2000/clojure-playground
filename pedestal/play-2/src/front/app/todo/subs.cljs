@@ -27,6 +27,10 @@
             (fn [db [_ id]]
               (db/read-todo-by-id (:todos db) id)))
 
+(rf/reg-sub :loading?
+            (fn [db [_ id]]
+              (:loading? db)))
+
 ;; ------ Layer 3 - Materialised View
 
 (rf/reg-sub

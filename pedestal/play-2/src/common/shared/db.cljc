@@ -1,7 +1,10 @@
 (ns shared.db
   (:require [clojure.spec.alpha :as s]
+            [com.cognitect.transit.types :as ty]
             [clojure.string :as str]))
 
+(extend-type ty/UUID
+  IUUID)
 ;; Spec ------------------------------------------------------------
 
 (s/def :todo/id    uuid?)
@@ -47,21 +50,21 @@
 (defn add-todo-to-list [todo-list todo]
   (update todo-list :todo-list/items #(conj % todo)))
 
-(defn read-todo-ids 
+(defn read-todo-ids
   "retuns a vector of all todo ids in the given todo list. Returns an empty
    vector when todo list is empty."
   [todo-list]
   (let [todo-items (:todo-list/items todo-list)]
     (mapv :todo/id todo-items)))
 
-(defn read-todo-by-id 
+(defn read-todo-by-id
   "Given a todo list and a todo id, returns the todo-item with the given id
    or *nil* when not found."
   [todo-list id]
   (first (filter #(= id (:todo/id %)) (:todo-list/items todo-list))))
 
 (defn delete-todo [todo-list id]
-  (update todo-list :todo-list/items 
+  (update todo-list :todo-list/items
           (fn [todos] (filterv #(not= id (:todo/id %)) todos))))
 
 (defn update-todo [todo-list id new-todo]
@@ -88,3 +91,20 @@
                            (add-todo-to-list (create-todo "do somthing" false))
                            (add-todo-to-list (create-todo "do another thing" false))
                            (add-todo-to-list (create-todo "do one last thing" false))))
+
+;; helper -----------------
+
+(defn check-and-throw
+  "Throws an exception if `data` doesn't match the Spec `a-spec`."
+  [a-spec data]
+  (when-not (s/valid? a-spec data)
+    (throw (ex-info (str "spec check failed: " (s/explain-str a-spec data)) {}))))
+
+(comment
+ (check-and-throw :todo/list
+                  {:todo-list/title "things to do "
+                   :todo-list/items [{:todo/title "title"
+                                      :todo/id  #uuid "edf45f-d54951-4ce8-8281-dc031d8e74ea"
+                                      :todo/done false}]})
+  ;;
+  )

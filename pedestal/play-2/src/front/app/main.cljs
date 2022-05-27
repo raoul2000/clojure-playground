@@ -3,7 +3,8 @@
             [reagent.dom :as rdom]
             [app.todo.views :as tdv]
             [app.todo.events :as tde]
-            [goog.dom :as gdom]))
+            [goog.dom :as gdom]
+            [day8.re-frame.http-fx]))
 
 ;; helpers
 

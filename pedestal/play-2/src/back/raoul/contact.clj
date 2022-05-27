@@ -245,6 +245,11 @@
    ::http/type              :jetty
    ::http/resource-path     "/public"    ;; serve static resources from /resources/public
                                          ;; http://localhost:8890/about.html
+   
+   ;; This is required for a static served HTML page to load JS
+   ;; TODO: study this settings to use the appropriate values   
+   ::http/secure-headers   {:content-security-policy-settings {:object-src "none"}}
+
    ;; uncomment to disable logging
    ;; ::http/request-logger nil
    ::http/port              8890})
@@ -265,6 +270,7 @@
   (reset! server (-> service-map
                      ;; in dev mode, does not block the repl
                      (assoc ::http/join? false)
+
                      ;; always allow CORS in dev
                      (assoc ::http/allowed-origins  (constantly true))
 
@@ -297,18 +303,7 @@
   (stop-dev)
   (start-dev))
 
-;; tests
-(comment
-  (route/try-routing-for routes :prefix-tree "/greet" :get)
-  (route/try-routing-for routes :prefix-tree "/greet?name=bob" :get))
-
-
-(defn greet
-  "Callable entry point to the application."
-  [data]
-  (println (str "Hello, " (or (:name data) "World") "!")))
-
 (defn -main
-  "I don't do a whole lot ... yet."
   [& args]
-  (greet {:name (first args)}))
+  (println "Starting server ...")
+  (start))

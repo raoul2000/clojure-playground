@@ -1,15 +1,62 @@
 (ns app.todo.events
   (:require [re-frame.core :as rf]
-            [shared.db :as db]))
+            [shared.db :as db]
+            [clojure.spec.alpha :as s]
+            [ajax.core :as ajax]))
+
+
+(def check-todo-spec-interceptor
+  (rf/->interceptor {:id :check-todo-spec
+                     :after (fn [context]
+                              (let [todos (get-in context [:effects :db :todos])
+                                    first-id (:todo/id (first (:todo-list/items todos)))]
+                                (js/console.log todos)
+                                (js/console.log first-id)
+                                (js/console.log (s/valid? :todo/id first-id))
+                                (js/console.log (uuid? first-id))
+                                ;;(db/check-and-throw :todo/id first-id)
+                                ;;(db/check-and-throw :todo/list todos)
+                                ;;
+                                ))}))
 
 (defn dispatch-initialize-todo []
-  (rf/dispatch-sync [:initialize-todo]))
+  (rf/dispatch-sync [:fetch-todo-list]))
 
 (rf/reg-event-db
  :initialize-todo
  (fn [_ _]
    {:todos db/initial-todo-list
     :todo-edit-id nil}))
+
+(rf/reg-event-fx
+ :fetch-todo-list
+ (fn [{:keys [db]} _]
+   {:http-xhrio {:method          :get
+                 :uri             "/todo"
+                 :response-format (ajax/transit-response-format)
+                 :on-success      [:success-fetch-todo-list]
+                 :on-failure      [:failure-fetch-todo-list]}
+    :db          (assoc db :loading? true)}))
+
+(extend-type com.cognitect.transit.types/UUID IUUID)
+
+(rf/reg-event-db
+ :success-fetch-todo-list
+ ;;[check-todo-spec-interceptor]
+ (fn [db [_ result]]
+   (-> db
+       (assoc :todos    result)
+       (assoc :loading? false))))
+
+
+(rf/reg-event-db
+ :failure-fetch-todo-list
+ (fn [db [_ result]]
+    ;; result is a map containing details of the failure
+   (-> db
+       (assoc :failure-http-result result)
+       (assoc :loading? false))))
+
 
 (rf/reg-event-db
  :toggle-todo-item
@@ -19,6 +66,10 @@
          new-list  (db/update-todo todo-list
                                    id
                                    (update todo :todo/done not))]
+     (js/console.log (type (:todo/id todo )))
+     (when-not (s/valid? :todo/item todo)
+       (js/console.log (s/explain-str :todo/item todo)))
+     ;;(db/check-and-throw :todo/item todo)
      (assoc db :todos new-list))))
 
 (rf/reg-event-db

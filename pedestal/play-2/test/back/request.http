@@ -1,2 +1,7 @@
 GET http://localhost:8890/todo
+Accept: application/transit+json
+
+###
+
+GET http://localhost:8890/todo
 Accept: application/edn

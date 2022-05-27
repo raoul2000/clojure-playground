@@ -6,7 +6,8 @@
 
 (defn main-toolbar []
   [:div.todo-action
-   [:div {:on-click #(rf/dispatch [:add-todo-item])} "Add TODO"]])
+   [:div {:on-click #(rf/dispatch [:add-todo-item])}   "Add TODO"]
+   [:div {:on-click #(rf/dispatch [:fetch-todo-list])} "Refresh"]])
 
 (defn action-bar-view [todo-id]
   [:div.todo-action
@@ -51,6 +52,8 @@
    [:h1 @(rf/subscribe [:todo-list-title])]
 
    (main-toolbar)
+   (when @(rf/subscribe [:loading?])
+     [:div "Loading..."])
 
    (let [todo-ids @(rf/subscribe [:todo-items-id])]
      (when (seq todo-ids)
