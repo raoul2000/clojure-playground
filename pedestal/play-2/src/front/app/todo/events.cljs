@@ -8,17 +8,9 @@
 (def check-todo-spec-interceptor
   (rf/->interceptor {:id :check-todo-spec
                      :after (fn [context]
-                              (let [todos (get-in context [:effects :db :todos])
-                                    first-id (:todo/id (first (:todo-list/items todos)))]
-                                (js/console.log todos)
-                                (js/console.log first-id)
-                                (js/console.log (s/valid? :todo/id first-id))
-                                (js/console.log (uuid? first-id))
-                                (db/check-and-throw :todo/id first-id)
-                                context
-                                ;;(db/check-and-throw :todo/list todos)
-                                ;;
-                                ))}))
+                              (let [todo-list (get-in context [:effects :db :todos])]
+                                (db/check-and-throw :todo/list todo-list)
+                                context))}))
 
 (defn dispatch-initialize-todo []
   (rf/dispatch-sync [:fetch-todo-list]))
@@ -39,7 +31,17 @@
                  :on-failure      [:failure-fetch-todo-list]}
     :db          (assoc db :loading? true)}))
 
-;;(extend-type com.cognitect.transit.types/UUID IUUID)
+(rf/reg-event-fx
+ :put-todo-list
+ (fn [{:keys [db]} _]
+   {:http-xhrio {:method          :put
+                 :uri             "/todo"
+                 :format          (ajax/transit-request-format)
+                 :params          (:todos db)
+                 :response-format (ajax/transit-response-format)
+                 :on-success      [:success-put-todo-list]
+                 :on-failure      [:failure-put-todo-list]}
+    :db          db}))
 
 (rf/reg-event-db
  :success-fetch-todo-list

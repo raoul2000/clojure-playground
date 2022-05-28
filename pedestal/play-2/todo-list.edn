@@ -1,0 +1,1 @@
+{:todo-list/title "My new List", :todo-list/items [{:todo/id #uuid "f6dd471f-45d1-4130-80d8-94fa3ff76c70", :todo/title "do somthing now !!!", :todo/done false} {:todo/id #uuid "833fef78-fde7-4e40-a4a5-1c48cc079fa0", :todo/title "do another thing", :todo/done false} {:todo/id #uuid "d8e13a05-74dc-401e-83bf-39973819dc60", :todo/title "do one last thing", :todo/done false}]}

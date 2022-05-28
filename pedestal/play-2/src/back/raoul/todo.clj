@@ -1,28 +1,39 @@
 (ns raoul.todo
-  (:require [shared.db :as db]))
+  (:require [shared.db :as db]
+            [clojure.spec.alpha :as spec]))
 
-(defn response [status body & {:as headers}]
-  {:status status :body body :headers (or headers {})})
+(def todo-list-file-path "todo-list.edn")
 
-(def ok        (partial response 200))
+;; Consider more efficient serialization/deserialization technique
+;; see https://github.com/ptaoussanis/nippy 
 
-(def init-todo-list  db/initial-todo-list)
-(def l #:todo-list{:title "My List",
-                   :items
-                   [#:todo{:id #uuid "21451425-1fa5-4472-9aef-20d8386c49e1", :title "do somthing", :done false}
-                    #:todo{:id #uuid "df8585ca-11f7-49fe-9f2f-57b6cfb96c04", :title "do another thing", :done false}
-                    #:todo{:id #uuid "b0a071c5-231c-4933-ad20-7ffb551cc268", :title "do one last thing", :done false}]})
+(defn write-to-file [file-path todo-list]
+  {:pre [(spec/valid? :todo/list todo-list)]}
+  (spit file-path  todo-list))
 
-(def m {:title "My List",
-        :items [{:id "1"
-                 :title "t1"}
-                {:id "2"
-                 :title "t2"}]})
+(defn read-from-file [file-path]
+  {:post [(spec/valid? :todo/list %)]}
+  (clojure.edn/read-string (slurp file-path)))
+
+
+;; interceptor - handler ---------------------------------
 
 (def respond-todo-list
   {:name ::respond-todo-list
    :enter (fn [context]
             (assoc context :response {:status  200
-                                      :body    db/initial-todo-list
+                                      :body    (read-from-file todo-list-file-path)
                                       :headers {}}))})
+
+(def update-todo-list
+  {:name ::update-todo-list
+   :enter (fn [context]
+            (let [transit-params (get-in context [:request :transit-params])]
+              (prn transit-params)
+              ;; TODO: check is valid 
+              (write-to-file todo-list-file-path transit-params)
+              (assoc context :response {:status 200
+                                        :body  transit-params
+                                        :headers {}})))})
+
 

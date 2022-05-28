@@ -3,10 +3,11 @@
             [reagent.dom :as rdom]
             [app.todo.views :as tdv]
             [app.todo.events :as tde]
-            [goog.dom :as gdom]
             [cognitect.transit :as t]
             [com.cognitect.transit.types :as ty]
-            [day8.re-frame.http-fx]))
+            [day8.re-frame.http-fx] ;; register the HTTP Effect handler (keyed http-xhrio)
+            
+            ))
 
 ;; Because UUID deserialized by transit-cljs produces a type distinct
 ;; from the cljs.core/uuid type, uuid? predicate fails and compare fails

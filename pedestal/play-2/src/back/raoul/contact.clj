@@ -218,11 +218,16 @@
       [error-handler-2 throw-when-odd]
       :route-name :err-2]
 
-     ;; Todo service 
+     ;; Todo service -------------------------
      ["/todo"
       :get
       [cneg/coerce-body cneg/content-neg-intc todo/respond-todo-list]
       :route-name :get-todo]
+     
+     ["/todo"
+      :put
+      [cneg/coerce-body cneg/content-neg-intc (io.pedestal.http.body-params/body-params) todo/update-todo-list]
+      :route-name :put-todo]
 
      ;;
      }))

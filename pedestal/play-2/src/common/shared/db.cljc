@@ -1,30 +1,31 @@
 (ns shared.db
   (:require [clojure.spec.alpha :as s]
-            ;;[com.cognitect.transit.types :as ty]
             [clojure.string :as str]))
 
-;;(extend-type ty/UUID IUUID)
 ;; Spec ------------------------------------------------------------
 
-(s/def :todo/id    uuid?)
-(s/def :todo/title (s/and string? #(> (count (str/trim %)) 0)))
-(s/def :todo/done  boolean?)
+;; ------ todo item 
+(s/def :todo/id         uuid?)
+(s/def :todo/title      (s/and string? #(> (count (str/trim %)) 0)))
+(s/def :todo/done       boolean?)
 
-(s/def :todo/item (s/keys :req [:todo/id :todo/title :todo/done]))
-
+(s/def :todo/item       (s/keys :req [:todo/id 
+                                      :todo/title 
+                                      :todo/done]))
+;; ------ todo list
 (s/def :todo-list/title string?)
 (s/def :todo-list/items (s/coll-of :todo/item
                                    :kind     vector?    ;; preserve order
                                    :distinct true))
 
-(s/def :todo/list (s/keys :req [:todo-list/title :todo-list/items]))
+(s/def :todo/list       (s/keys :req [:todo-list/title :todo-list/items]))
 
-(s/def :todo-list/list (s/coll-of :todo-list/list
-                                  :kind vector?))
+;; ------ list of todo lists
+(s/def :todo-list/list  (s/coll-of :todo-list/list
+                                   :kind vector?))
 
 ;; ------------------------------------------------------------
 (comment
-
   (s/valid? :todo/list {:todo-list/title "things to do "
                         :todo-list/items [{:todo/title "ee"
                                            :todo/id  #uuid "28db773c-24a6-446d-855f-6e8e6828c18e"
@@ -100,10 +101,10 @@
     (throw (ex-info (str "spec check failed: " (s/explain-str a-spec data)) {}))))
 
 (comment
- (check-and-throw :todo/list
-                  {:todo-list/title "things to do "
-                   :todo-list/items [{:todo/title "title"
-                                      :todo/id  #uuid "edf45f-d54951-4ce8-8281-dc031d8e74ea"
-                                      :todo/done false}]})
+  (check-and-throw :todo/list
+                   {:todo-list/title "things to do "
+                    :todo-list/items [{:todo/title "title"
+                                       :todo/id  #uuid "edf45f-d54951-4ce8-8281-dc031d8e74ea"
+                                       :todo/done false}]})
   ;;
   )

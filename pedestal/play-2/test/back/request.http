@@ -5,3 +5,44 @@ Accept: application/transit+json
 
 GET http://localhost:8890/todo
 Accept: application/edn
+
+###
+
+PUT http://localhost:8890/todo
+Content-Type: application/transit+json
+
+[
+  "^ ",
+  "~:todo-list/title",
+  "My new List",
+  "~:todo-list/items",
+  [
+    [
+      "^ ",
+      "~:todo/id",
+      "~uf6dd471f-45d1-4130-80d8-94fa3ff76c70",
+      "~:todo/title",
+      "do somthing now !!!",
+      "~:todo/done",
+      false
+    ],
+    [
+      "^ ",
+      "^2",
+      "~u833fef78-fde7-4e40-a4a5-1c48cc079fa0",
+      "^3",
+      "do another thing",
+      "^4",
+      false
+    ],
+    [
+      "^ ",
+      "^2",
+      "~ud8e13a05-74dc-401e-83bf-39973819dc60",
+      "^3",
+      "do one last thing",
+      "^4",
+      false
+    ]
+  ]
+]
