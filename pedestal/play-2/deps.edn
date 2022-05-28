@@ -11,8 +11,8 @@
         com.cognitect/transit-clj    {:mvn/version "1.0.329"}}
  
  :aliases
- {:run-m {:main-opts ["-m" "raoul.contact"]}
-  :run-x {:ns-default raoul.contact
+ {:run-m {:main-opts ["-m" "server"]}
+  :run-x {:ns-default server
           :exec-fn greet
           :exec-args {:name "Clojure"}}
   :build {:deps {io.github.seancorfield/build-clj
