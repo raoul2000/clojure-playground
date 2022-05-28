@@ -14,7 +14,8 @@
                                 (js/console.log first-id)
                                 (js/console.log (s/valid? :todo/id first-id))
                                 (js/console.log (uuid? first-id))
-                                ;;(db/check-and-throw :todo/id first-id)
+                                (db/check-and-throw :todo/id first-id)
+                                context
                                 ;;(db/check-and-throw :todo/list todos)
                                 ;;
                                 ))}))
@@ -38,11 +39,11 @@
                  :on-failure      [:failure-fetch-todo-list]}
     :db          (assoc db :loading? true)}))
 
-(extend-type com.cognitect.transit.types/UUID IUUID)
+;;(extend-type com.cognitect.transit.types/UUID IUUID)
 
 (rf/reg-event-db
  :success-fetch-todo-list
- ;;[check-todo-spec-interceptor]
+ [check-todo-spec-interceptor]
  (fn [db [_ result]]
    (-> db
        (assoc :todos    result)
@@ -66,10 +67,6 @@
          new-list  (db/update-todo todo-list
                                    id
                                    (update todo :todo/done not))]
-     (js/console.log (type (:todo/id todo )))
-     (when-not (s/valid? :todo/item todo)
-       (js/console.log (s/explain-str :todo/item todo)))
-     ;;(db/check-and-throw :todo/item todo)
      (assoc db :todos new-list))))
 
 (rf/reg-event-db

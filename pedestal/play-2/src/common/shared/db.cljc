@@ -1,10 +1,9 @@
 (ns shared.db
   (:require [clojure.spec.alpha :as s]
-            [com.cognitect.transit.types :as ty]
+            ;;[com.cognitect.transit.types :as ty]
             [clojure.string :as str]))
 
-(extend-type ty/UUID
-  IUUID)
+;;(extend-type ty/UUID IUUID)
 ;; Spec ------------------------------------------------------------
 
 (s/def :todo/id    uuid?)

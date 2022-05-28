@@ -4,9 +4,22 @@
             [app.todo.views :as tdv]
             [app.todo.events :as tde]
             [goog.dom :as gdom]
+            [cognitect.transit :as t]
+            [com.cognitect.transit.types :as ty]
             [day8.re-frame.http-fx]))
 
-;; helpers
+;; Because UUID deserialized by transit-cljs produces a type distinct
+;; from the cljs.core/uuid type, uuid? predicate fails and compare fails
+;; 
+;; see :
+;; - https://github.com/cognitect/transit-cljs/issues/18
+;; - https://github.com/hyperfiddle/hyperfiddle-2020/issues/728
+;; - https://github.com/cognitect/transit-cljs/issues/41
+
+(cognitect.transit/reader :json {:handlers {"u" cljs.core/uuid}})
+(extend-type ty/UUID IUUID)
+
+;; helpers ------------------------------------------------------
 
 (def gen-uuid #(str (random-uuid)))
 
