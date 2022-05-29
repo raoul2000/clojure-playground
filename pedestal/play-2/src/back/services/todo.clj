@@ -16,7 +16,6 @@
   {:post [(spec/valid? :todo/list %)]}
   (clojure.edn/read-string (slurp file-path)))
 
-
 ;; interceptor - handler ---------------------------------
 
 (def respond-todo-list
@@ -32,6 +31,4 @@
               ;; TODO: check is valid 
               (write-to-file todo-list-file-path transit-params)
               (assoc context :response (resp/ok transit-params))))})
-
-
 
