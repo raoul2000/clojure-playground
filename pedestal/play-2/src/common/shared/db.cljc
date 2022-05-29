@@ -64,6 +64,7 @@
   (first (filter #(= id (:todo/id %)) (:todo-list/items todo-list))))
 
 (defn delete-todo [todo-list id]
+  "Delete a todo item given its id from a todo-list"
   (update todo-list :todo-list/items
           (fn [todos] (filterv #(not= id (:todo/id %)) todos))))
 

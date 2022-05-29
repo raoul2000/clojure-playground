@@ -4,7 +4,7 @@
 
 (def lib 'net.clojars.raoul/contact)
 (def version "0.1.0-SNAPSHOT")
-(def main 'raoul.contact)
+(def main 'server)
 
 (defn test "Run the tests." [opts]
   (bb/run-tests opts))

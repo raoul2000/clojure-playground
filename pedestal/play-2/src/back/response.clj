@@ -33,7 +33,7 @@
 (defn ->transit+json 
   "Converts and returns *body* into a transit json formatted string"
   [body]
-  (let [out (ByteArrayOutputStream. 4096)
+  (let [out    (ByteArrayOutputStream. 4096)
         writer (transit/writer out :json)]
     (transit/write writer body)
     (.toString out)))

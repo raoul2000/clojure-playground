@@ -22,9 +22,7 @@
 (def respond-todo-list
   {:name ::respond-todo-list
    :enter (fn [context]
-            (assoc context :response {:status  200
-                                      :body    (read-from-file todo-list-file-path)
-                                      :headers {}}))})
+            (assoc context :response (resp/ok (read-from-file todo-list-file-path))))})
 
 (def update-todo-list
   {:name ::update-todo-list
@@ -33,9 +31,7 @@
               (prn transit-params)
               ;; TODO: check is valid 
               (write-to-file todo-list-file-path transit-params)
-              (assoc context :response {:status 200
-                                        :body  transit-params
-                                        :headers {}})))})
+              (assoc context :response (resp/ok transit-params))))})
 
 
 

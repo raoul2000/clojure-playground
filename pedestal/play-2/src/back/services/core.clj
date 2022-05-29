@@ -3,12 +3,7 @@
             [io.pedestal.http.route :as route]
             [response :as resp]
             [io.pedestal.http.body-params :refer [body-params]]
-            [io.pedestal.interceptor :as i]
-            [io.pedestal.interceptor.chain :as chain]
-            [io.pedestal.interceptor.error :as error]
-            [raoul.content-neg :as cneg]
-            [services.todo :as todo]
-            [clojure.core.async :as async]))
+            [services.todo :as todo]))
 
 (def common-interceptors [resp/coerce-body resp/content-negotiator (body-params)])
 
@@ -32,11 +27,11 @@
 
 (def routes
   (route/expand-routes
-   #{["/echo"    :get (conj common-interceptors echo-interceptor)         :route-name :get-echo ]
-     ["/about"   :get (conj common-interceptors about)                    :route-name :get-about]
+   #{["/echo"  :get (conj common-interceptors echo-interceptor)         :route-name :get-echo ]
+     ["/about" :get (conj common-interceptors about)                    :route-name :get-about]
      
-     ["/todo"    :get (conj common-interceptors todo/respond-todo-list)   :route-name :get-todo]
-     ["/todo"    :put (conj common-interceptors todo/update-todo-list)    :route-name :put-todo]
+     ["/todo"  :get (conj common-interceptors todo/respond-todo-list)   :route-name :get-todo]
+     ["/todo"  :put (conj common-interceptors todo/update-todo-list)    :route-name :put-todo]
      ;;
      }))
 
