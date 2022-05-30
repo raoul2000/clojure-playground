@@ -22,7 +22,7 @@ Content-Type: application/transit+json
       "~:todo/id",
       "~uf6dd471f-45d1-4130-80d8-94fa3ff76c70",
       "~:todo/title",
-      "do somthing now !!!",
+      "do somthing now",
       "~:todo/done",
       false
     ],

@@ -1,20 +1,27 @@
 (ns server
   (:require [io.pedestal.http :as http]
             [services.core :as service]
-            [cli :refer [parse-cli-options help-option? usage]])
+            [cli :refer [parse-cli-options help-option? usage show-errors cli-opt-working-dir]]
+            [services.todo :refer [prepare-working-dir]])
   (:gen-class))
 
 ;; Entry point ----------------------------------------------
 
-(defn start-server [port]
-  (println (format "\nCreating server...\nport = %d" port))
+(defn start-server [parsed-opts port]
+  (let [working-dir-path (cli-opt-working-dir parsed-opts)]
+    (println (format "working dir = %s" working-dir-path))
+    (prepare-working-dir working-dir-path))
+  (println (format "Creating server...\nport = %d" port))
   (http/start (http/create-server (assoc service/service ::http/port port))))
 
 (defn -main [& args]
-  (let [parsed-opts (parse-cli-options args)]
+  (let [parsed-opts (parse-cli-options args)
+        errors      (:errors parsed-opts)]
     (cond
       (help-option? parsed-opts)  (println (usage parsed-opts))
-      :else                       (start-server (get-in parsed-opts [:options :port])))
+      errors                      (println (show-errors errors))
+      :else                       (start-server parsed-opts
+                                                (get-in parsed-opts [:options :port])))
     (flush)))
 
 ;; interactive development ----------------------------------------------
