@@ -2,7 +2,7 @@
   (:require [io.pedestal.http :as http]
             [services.core :as service]
             [cli :refer [parse-cli-options help-option? usage show-errors cli-opt-working-dir]]
-            [services.todo :refer [prepare-working-dir]])
+            [services.todo :refer [prepare-working-dir default-base-path]])
   (:gen-class))
 
 ;; Entry point ----------------------------------------------
@@ -34,6 +34,7 @@
 
 (defn start-dev
   []
+  (prepare-working-dir default-base-path)
   (println "\nCreating [DEV] server...")
   (reset! server (-> service/service ;; start with production configuration
                      (merge {:env :dev
@@ -50,4 +51,8 @@
                      http/dev-interceptors
                      http/create-server
                      http/start)))
+
+(defn restart []
+  (stop-dev)
+  (start-dev))
 
