@@ -6,7 +6,6 @@
             [cognitect.transit :as t]
             [com.cognitect.transit.types :as ty]
             [day8.re-frame.http-fx] ;; register the HTTP Effect handler (keyed http-xhrio)
-            
             ))
 
 ;; Because UUID deserialized by transit-cljs produces a type distinct
@@ -111,14 +110,23 @@
              :value    "Add"
              :on-click #(dispatch-add-contact)}]])
 
+;; see https://tech.toryanderson.com/2021/11/06/uploading-files-and-handling-upload-requests-in-clojurescript/
+(defn upload-form []
+  []
+  [:div "Submit with an html form"
+   [:form {:action "/upload"
+           :enc-type "multipart/form-data"
+           :method "post"}
+    [:input {:type "file"
+             :name "myfileup"}]
+    [:button {:type "submit"}
+     "Submit image form"]]])
+
 (defn ui
   []
   [:div
    (tdv/todo-list)
-   ;;[:h1 "Contacts"]
-   ;;(contacts-list)
-   ;;(toolbar)
-   ])
+   (upload-form)])
 
 (defn render
   []
