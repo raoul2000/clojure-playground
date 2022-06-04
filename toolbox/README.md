@@ -46,7 +46,7 @@ from `build.clj`.
 
 Run that uberjar:
 
-    $ java -jar target/tools-0.1.0-SNAPSHOT.jar
+    $ java -jar target/tools-0.2.0-SNAPSHOT.jar
 
 If you remove `version` from `build.clj`, the uberjar will become `target/tools-standalone.jar`.
 

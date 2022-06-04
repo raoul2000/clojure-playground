@@ -25,6 +25,7 @@
                    :default       opt-default-pattern
                    :validate      [#(not (blank? %)) "Must not be blank"]]
 
+                  ["-m" "--match-pattern" "Output path of files matching the pattern. When set, no event extraction is performed but a REGEX is still required (it will be ignored). Ignored if a file path is provided"]
 
                   ["-o" "--output-file FILE_PATH" "Output file path. If not set output to stdout"
                    :default       opt-default-output-file
@@ -48,12 +49,14 @@
                    :validate      [freq/valid-time-unit? (fn [_] (str "time unit must be one of : "
                                                                       (join ", " (freq/time-unit-str-coll))))]]
 
-                  ["-h" "--help"]])
+                  ["-h" "--help" "Show action usage"]])
 
 (comment
 
   (print (:summary (parse-opts [] cli-options)))
   (parse-opts [] cli-options)
+  (parse-opts [""] cli-options)
+  (parse-opts ["-m"] cli-options)
   (parse-opts ["-e" ""] cli-options)
   (parse-opts ["-e" "*ee"] cli-options)
   (parse-opts ["-e" ".*ee"] cli-options)
@@ -63,13 +66,22 @@
   )
 
 (defn usage [parsed-opts]
-  (->> ["Log Event Search & frequency"
+  (->> [""
+        "Log Event Search & frequency"
         "----------------------------"
         ""
         (str "Processes one or more file searching for an 'event' identified by regular expression match and a timestamp. "
-             "Output the result as flat list or aggregated as a frequency list.")
+             "Output the result as flat list or aggregated as a frequency list in the configured format.")
         ""
         (format "Usage: toolbox %s [options] REGEX [file|folder]" action-name)
+        ""
+        "Arguments:"
+        ""
+        (->> ["  REGEX          Regular expression matching the full line of a log event."
+              "  [file|folder]  Path to the file or the folder to process. If not absolute it considered is relative to the current work dir. "
+              "                 When a folder path is given, it is used as the base folder from which the GLOB pattern is applied. All files "
+              "                 matching the GLOB pattern are processed in sequence."]
+             (join \newline))
         ""
         "Options:"
         (:summary parsed-opts)
@@ -82,7 +94,7 @@
         "Extract event and build frequency report saved as JSON to stdout"
         (format "    toolbox %s --frequency hour --output-format json \".*marker.*\" ./folder/file.log > result.json" action-name)
         ""
-        "Extract event from all files with extension log under the given folder and build a day frequency report saved as CSV to file"
+        "Extract event from all files with extension log under the given folder and its sub-folders. Bbuild a day frequency report saved as CSV to file"
         (format "    toolbox %s --frequency day --pattern \"**/*.log\" --output-file result.csv \".*marker.*\" ./folder" action-name)
         ""]
        (join \newline)))
@@ -100,10 +112,15 @@
   (let [events-per-file [(search/extract-events file-path event-re)]]
     (output events-per-file options)))
 
-(defn run-multi [folder-path event-re {:keys [pattern] :as options}]
-  (let [events-per-file (->> (fs/glob folder-path pattern)
-                             (map #(search/extract-events (.toString %) event-re)))]
-    (output events-per-file options)))
+(defn run-multi [folder-path event-re {:keys [pattern match-pattern] :as options}]
+  (if match-pattern
+    (->> (fs/glob folder-path pattern)
+         (map #(.toString %))
+         (join \newline)
+         println)
+    (let [events-per-file (->> (fs/glob folder-path pattern)
+                               (map #(search/extract-events (.toString %) event-re)))]
+      (output events-per-file options))))
 
 (defn string->re [s]
   (try
@@ -121,10 +138,11 @@
                   file-or-path (or (second arguments) ".")
                   options      (:options       parsed-opts)]
               (cond
-                (:error event-re-m)             (printf (:error event-re-m))
-                (not (fs/exists? file-or-path)) (printf "path not found : %s\n" file-or-path)
-                (fs/directory?   file-or-path)  (run-multi  file-or-path (:re event-re-m) options)
-                :else                           (run-single file-or-path (:re event-re-m) options))))))
+                (and (:error event-re-m)
+                     (not (:match-pattern options)))     (printf (:error event-re-m))
+                (not (fs/exists? file-or-path))          (printf "path not found : %s\n" file-or-path)
+                (fs/directory?   file-or-path)           (run-multi  file-or-path (:re event-re-m) options)
+                :else                                    (run-single file-or-path (:re event-re-m) options))))))
 
 (comment
   (run ["-h"])
@@ -135,7 +153,7 @@
   (run ["--output-file" "./test/output/out.csv"  ".*(event) .*(fffff).*$"
         "./test/fixture/log/time_distrib/example-1.txt"])
 
-  (run ["--pattern"
+  (run ["-m" "--pattern"
         "*.txt" ".*(event)$" "./test/fixture/log/time_distrib"])
 
   (run ["--output-file" "./test/output/evets-3.json" "--pattern"  "*.txt" ".*(event)$" "./test/fixture/log/time_distrib"])

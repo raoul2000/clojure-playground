@@ -35,11 +35,12 @@
                    :validate [#(supported-output-format?  %)
                               #(str "Unsupported output format: " %)]]
 
-                  ["-h" "--help"]])
+                  ["-h" "--help" "Show action usage"]])
 
 
 (defn usage [parsed-opts]
-  (->> ["Explore dependencies"
+  (->> [""
+        "Explore dependencies"
         "--------------------"
         ""
         (format "Usage: toolbox %s [options] [file|folder]" action-name)
