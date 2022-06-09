@@ -17,12 +17,12 @@
     :form ""}))
 
 
-(def dummy-interceptor (re-frame.core/->interceptor :id :dumb-interc
+(def dummy-interceptor (re-frame.core/->interceptor :id     :dumb-interc
                                                     :before (fn [context]
                                                               (print context)
                                                               context)))
 
-(def next-id (re-frame.core/->interceptor :id :create-next-todo-id
+(def next-id (re-frame.core/->interceptor :id     :create-next-todo-id
                                           :before (fn [context]
                                                     (let [{:keys [db]} (:coeffects context)
                                                           new-id (count (:todos db))]
