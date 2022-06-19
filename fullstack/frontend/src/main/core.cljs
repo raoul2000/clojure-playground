@@ -17,22 +17,40 @@
  (fn [db _]
    (update db :count inc)))
 
+(rf/reg-event-db
+ :fetch-success
+ (fn [db [_ response]]
+   (js/console.log response)
+   (-> db
+       (assoc :response response)
+       (assoc :loading false))))
+
+(rf/reg-event-db
+ :fetch-error
+ (fn [db [_ response]]
+   (-> db
+       (assoc :error response)
+       (assoc :loading false))))
+
 (rf/reg-event-fx
  :fetch
- (fn [cofx _]
+ (fn [cofx [_ arg-map]]
    (-> cofx
-       (assoc     :fetch-from    "http://source")
+       (assoc     :fetch-from    arg-map)
        (update-in [:db :loading] #(not %)))))
 
 (rf/reg-fx
  :fetch-from
- (fn [value]
-   (js/console.log value)
-   (js/setTimeout #(js/console.log "timeout") 1000)))
+ (fn [url]
+   (js/setTimeout #(do
+                     (js/console.log "timeout")
+                     (GET url {:handler         (fn [response] (rf/dispatch [:fetch-success response]))
+                               :error-handler   (fn [response] (rf/dispatch [:fetch-error   response]))
+                               :response-format :json})) 1000)))
 
 (defn dispatch-initialize [] (rf/dispatch [:initialize]))
 (defn dispatch-increment  [] (rf/dispatch [:increment-count]))
-(defn dispatch-fetch      [] (rf/dispatch [:fetch]))
+(defn dispatch-fetch      [] (rf/dispatch [:fetch "http://localhost:8890/greet"]))
 
 (rf/reg-sub
  :counter-update
@@ -71,7 +89,7 @@
 (defn view []
   [:div
    [:h1 "Hello"]
-   [ui-counter-view]   
+   [ui-counter-view]
    [:button {:onClick dispatch-increment} "increment"]
    [:button {:onClick dispatch-fetch} "fetch"]
    [ui-loader]])
