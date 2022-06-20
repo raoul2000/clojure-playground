@@ -25,11 +25,16 @@
           (first clock)
           (second clock)))
 
-(defn clock [hours minutes] ;; <- arglist goes here
+(defn clock-1 [hours minutes] ;; <- arglist goes here
   (let [m (mod minutes 60)
         min-offset (quot minutes 60)
         h (mod (+ hours  min-offset) 24)]
     [h m]))
+
+(defn clock [hours minutes] ;; <- arglist goes here
+  (let [min (+ (* 60 hours) minutes)]
+    [(mod (quot min 60) 24)
+     (rem min 60)]))
 
 (defn add-time [clock time] ;; <- arglist goes here
   ;; your code goes here
