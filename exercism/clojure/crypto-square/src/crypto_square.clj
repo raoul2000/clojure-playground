@@ -23,11 +23,15 @@
   (cond-> (quot v c)
     (pos-int? (rem v c)) (inc)))
 
+(comment
+  (row-count 11 5)
+  (mod 11 5))
+
 (defn square-size-invalid? [[c r]]
   (not (and (>= c r)
             (<= (- c r) 1))))
 
-(defn square-size [s]
+(defn square-size-1 [s]
   (let [str-len (count s)]
     (->> (range 1 str-len)
          (map #(vector % (row-count str-len %)))
@@ -46,6 +50,32 @@
        ((comp inc first last)))
   ;;
   )
+
+(defn rxc-valid? [c r len]
+  (and (>= c r)
+       (>= (* c r) len)
+       (<= (- c r) 1)))
+
+(defn compute-rxc [l]
+  (loop [c 1]
+    (let [r (quot l c)]
+      (if (rxc-valid? c r l)
+        [c r]
+        (recur (inc c))))))
+
+(comment
+  (compute-rxc 4)
+  (compute-rxc 3)
+  (compute-rxc 9)
+  (compute-rxc 10)
+  (compute-rxc 12)
+  (compute-rxc 11) 
+  (count (normalize-plaintext "ZOMG! ZOMBIES!!!"))
+  ;;
+  )
+
+(defn square-size [s]
+  (first (compute-rxc (count s))))
 
 (defn plaintext-segments [s]
   (let [normalized-text (normalize-plaintext s)
@@ -88,16 +118,15 @@
   )
 (defn normalize-ciphertext [s]
   (let [ciphered-text (ciphertext s)
-        col-count     (dec (square-size ciphered-text))]
-    (partition col-count col-count [" "] ciphered-text))
-  
-  )
+        col-count     (square-size ciphered-text)
+        chunk-len     (quot (count ciphered-text) col-count)]
+    (partition col-count col-count [" "] ciphered-text)))
 
 (comment
-  
-(normalize-ciphertext "Vampires are people too")
-(normalize-ciphertext "Madness, and then illumination.")
-(square-size "vrelaepemsetpaooirpo")
+
+  (normalize-ciphertext "Vampires are people too")
+  (normalize-ciphertext "Madness, and then illumination.")
+  (square-size "vrelaepemsetpaooirpo")
   (count "vrelaepemsetpaooirpo")
   (partition-all 5 "vrelaepemsetpaooirpo")
 
