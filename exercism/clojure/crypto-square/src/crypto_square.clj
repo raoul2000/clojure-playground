@@ -1,5 +1,5 @@
 (ns crypto-square
-  (:require [clojure.string :refer [lower-case]]))
+  (:require [clojure.string :refer [lower-case join]]))
 
 (defn normalize-plaintext [s]
   (->> s
@@ -33,20 +33,35 @@
          (remove nil?)
          (apply str))))
 
-(defn normalize-ciphertext [s]
-  (let [ciphered-text (ciphertext s)
-        col-count     (square-size ciphered-text)
-        chunk-len     (quot (count ciphered-text) col-count)]
-    (partition col-count col-count [" "] ciphered-text)))
+
+(defn split-in-chunks [chunk-size s]
+  (loop [i chunk-size, lst s, res []]
+    (if (zero? i)
+      res
+      (recur (dec i)
+             (rest lst)
+             (conj res (into [] (take-nth chunk-size lst)))))))
 
 (comment
+  (split-in-chunks 3 "123456789")
+  (split-in-chunks 4 "123456789a"))
 
-  (normalize-ciphertext "Vampires are people too")
+
+(defn normalize-ciphertext [s]
+  (let [ciphered-text (ciphertext s)
+        [c r]         (compute-cxr (count ciphered-text))]
+    (prn [c r ciphered-text])
+    (->> (split-in-chunks r ciphered-text)
+         ;;(map #(cond-> %
+         ;;        (not= (count %) r) (conj ,, \space)))
+         ;;(apply map vector)
+         ;;(map #(apply str %))
+         ;;
+         ))) 
+
+
+(comment
+  (normalize-ciphertext "Vampires are people too!")
   (normalize-ciphertext "Madness, and then illumination.")
-  (square-size "vrelaepemsetpaooirpo")
-  (count "vrelaepemsetpaooirpo")
-  (partition-all 5 "vrelaepemsetpaooirpo")
-
-  (square-size (normalize-plaintext "Madness, and then illumination."))
   ;;
   )
