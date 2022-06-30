@@ -28,7 +28,46 @@
 ;;              node1.2.3.2]]
 ;;]
 
-
+;; [root]   1,2 1,3 2,3
+;; [root 
+;      [1,2] 
+;;     [2,1]]        
+;; --------------
+;; [root 
+;      [1,2 
+;;        [2,3]] 
+;;     [2,1 
+;;        [1,3]]]        
+;; --------------
+;;
+;; [root 
+;      [1,2 
+;;        [2,3
+;;           [3,1]]] 
+;;     [2,1 
+;;        [1,3
+;;           [3,2]]]]        
+;; --------------
+(comment
+  (rest [1 2 3])
+  (next [1 2 3])
+  (take-while seq (iterate next [1 2 3]))
+  (take-while seq (iterate (comp first next) [1 [2 [3]]])) ;; 3 the leaf
+  (take-while seq (iterate (comp first next) [1 [2 [3]] 
+                                                [:a [:b [:c]]]]))
+  (def t1 [:root 
+              [:c1]
+              [:c2
+                  [:c2-1]
+                  [:c2-2 
+                      [:c2-2-1]
+                      [:c2-2-2]
+                   ]
+               ]
+              [:c3]
+           ])
+  (tree-seq (constantly true) next t1)
+  )
 
 
 
