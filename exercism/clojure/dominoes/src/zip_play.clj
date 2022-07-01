@@ -60,9 +60,9 @@
   ;; we want to go back to the root location so navigate one level up
   (def root-loc-3 (-> loc-3 z/up))
   (z/node root-loc-3)
-  
 
-  (-> root-loc-3 z/children)  
+
+  (-> root-loc-3 z/children)
 
   ;;
   )
@@ -82,14 +82,85 @@
   (z/node (-> root-loc z/down)) ;; => 1
   (z/node (-> root-loc z/down z/next z/down)) ;; => 11
 
-  (z/node (-> root-loc z/next ))                                   ;; 1
+  (z/node (-> root-loc z/next))                                   ;; 1
   (z/node (-> root-loc z/next z/next))                             ;; [11 12 13]
   (z/node (-> root-loc z/next z/next z/next))                      ;; 11
   (z/node (-> root-loc z/next z/next z/next z/next))               ;; 12
   (z/node (-> root-loc z/next z/next z/next z/next z/next))        ;; 13
   (z/node (-> root-loc z/next z/next z/next z/next z/next z/next)) ;; [1 [11 12 13]]
   (-> root-loc z/next z/next z/next z/next z/next z/next z/end?)   ;; true
+  ;;
+  )
+
+(comment
+  ;; let's define our own data structure to represent tree
+  ;; a node : {:node "whatever" :children []}
+  (def zipper-tree (partial z/zipper
+                            (constantly true)
+                            :children
+                            #(assoc %1 :children %2)))
+
+  (defn create-node [data]
+    {:node data :children []})
+
+  ;; let's create the following tree
+  ;;
+  ;; root
+  ;;   +--- 1
+  ;;        +--- 1.1
+  ;;   +--- 2
+  ;;        +--- 2.1
+  ;;              +--- 2.1.1
+  ;;              +--- 2.1.2
+  ;;                       
+  (def root-loc (zipper-tree  (create-node "root")))
 
 
+  (def r2-loc (zipper-tree (-> root-loc
+                               (z/append-child (create-node "1"))
+                               (z/append-child (create-node "2"))
+                               z/down
+                               (z/append-child (create-node "1.1"))
+                               z/right
+                               (z/append-child (create-node "2.1"))
+                               z/down
+                               (z/append-child (create-node "2.1.1"))
+                               (z/append-child (create-node "2.1.2"))
+                               z/root)))
 
+  (z/node r2-loc)
+  ;; lets navigate this tree starting from r2-location
+  (-> r2-loc z/down z/down) ;; 1.1
+  (-> r2-loc z/down z/right z/down z/down z/right) ;; 2.1.2
+
+  ;; use z/next to navigate from a location in a deep-first way
+  (-> r2-loc z/next z/next z/next z/next)
+
+  ;; with a loop, navigate all the tree
+  (loop [loc r2-loc]
+    (if (z/end? loc)
+      "done"
+      (do
+        (println (:node (z/node loc)))
+        (recur (z/next loc)))))
+
+  ;; same loop but this time, edit each visited node : add an index in front of
+  ;; node value
+  (loop [loc r2-loc
+         cnt 0]
+    (if (z/end? loc)
+      (z/root loc)
+      (recur (z/next (z/edit loc #(update % :node (partial str cnt "-"))))
+             (inc cnt))))
+  ;;
+  )
+
+(comment
+  ;; let's go back to the Dominoes exercism
+  ;; each node contains :
+  ;; - a domino represented as a vecotr of 2 integers
+  ;;      - (first dom) : match the parent number
+  ;; 
+
+  ;;
   )
