@@ -157,10 +157,120 @@
 
 (comment
   ;; let's go back to the Dominoes exercism
-  ;; each node contains :
-  ;; - a domino represented as a vecotr of 2 integers
-  ;;      - (first dom) : match the parent number
-  ;; 
+  ;; - a domino represented as a vector of 2 integers
+  ;; - 2 dominoes can connect to each other if they have at least one value in common
+  ;;      example: [1 2] and [1 3] can connect as [2 1] [1 3]. The domino [1 2] has been flipped
+  ;; - a domino chain is a list of more than 1 domino, where each domino is connected to another one
+  ;; except for the first and the last domino of the chain
+  ;;      Example: [ [1 2] [2 4] [4 4] [4 2]]
+  ;; - a domino chain is valid if the 2 not connected values are the same
+
+  (defn flip [[v1 v2]]  [v2 v1])
+  (flip [2 3])
+
+  (defn same-domino [a b]
+    (or (= a b)
+        (= a (flip b))))
+  (same-domino [1 2] [1 2])
+  (same-domino [1 2] [2 1])
+  (same-domino [1 2] [1 3])
+
+  (defn can-connect-no-flip [[_ a2] [b1 _]] (= a2 b1))
+
+  (can-connect-no-flip [1 2] [2 1])
+  (can-connect-no-flip [1 2] [3 1])
+  (can-connect-no-flip [1 2] [3 4])
+
+  (defn connect
+    "Given 2 dominoes, returns nil if they can't connect, or b or (flip b) 
+     if they can connect"
+    [a b]
+    (if (can-connect-no-flip a b)
+      b
+      (let [flipped-b (flip b)]
+        (when (can-connect-no-flip a flipped-b)
+          flipped-b))))
+
+  (connect [1 2] [2 3])
+  (connect [1 2] [3 2])
+  (connect [1 2] [3 4])
+
+  (defn group-by-connect [tail-domino dominoes]
+    (reduce (fn [result domino]
+              (if-let [connected-dom (connect tail-domino domino)]
+                (update result :can-connect conj connected-dom)
+                (update result :rejected    conj domino)))
+            {:can-connect [] :rejected []}
+            dominoes))
+
+  (group-by-connect [1 2] [[1 2] [2 1] [3 4] [4 3]])
+  (group-by-connect [1 4] [[1 4] [2 1] [3 4] [4 3]])
+  (group-by-connect [1 4] [[1 4] [2 1] [4 4] [4 3]])
+  (group-by-connect [6 7] [[1 4] [2 1] [4 4] [4 3]])
+
+  (defn remove-first [i xs]
+    (reduce (fn [result v]
+              (if (:removed result)
+                (update result :list conj i)
+                (do
+                  (assoc result :removed true))))
+            {:removed false
+             :lst []}
+            xs))
+  ;; Now lets  prepare our tree
+  ;; each node has the following shape
+  ;; {
+  ;;    :domino [1 2]
+  ;;    :remain [[2 4] [5 5] [4 3]]
+  ;;    :last true 
+  ;;    :children []
+  ;; }
+  ;;
+  ;; create the zipper
+  (def zipper-domino-chain (partial z/zipper
+                                    (constantly true)
+                                    :children
+                                    #(assoc %1 :children %2)))
+
+  (defn create-domino-node [domino remain]
+    {:domino domino :remain remain :children []})
+
+  ;; First we will build manually the tree
+  ;; create the root location
+  (def root-loc (zipper-domino-chain (create-domino-node [1 2] [[3 2] [4 5] [3 4] [2 7]])))
+
+  ;; all chains can be built in one tree navigation. In the example below, 2 chains are built
+  ;; and none is valid. Use z/next to deep-first navigate the tree until reach back the root (end? = true)
+  (-> root-loc
+      (z/append-child (create-domino-node [2 3] [[4 5] [3 4] [2 7]]))
+      (z/append-child (create-domino-node [2 7] [[4 5] [3 4] [3 2]]))
+      z/next   ;; move to [2 3]
+      (z/append-child (create-domino-node [3 4] [[4 5] [2 7]]))
+      z/next
+      (z/append-child (create-domino-node [4 5] [[2 7]]))
+      z/next  ;; [4 5] : no domino can be placed
+      (z/edit #(assoc % :last true)) ;; end of this chain
+      z/next  ;; nil 
+      z/next  ;; [2 7] no domino can be placed
+      (z/edit #(assoc % :last true)) ;; end of this chain
+      z/next
+      z/next
+      z/end?
+      ;;z/node
+      ;;
+      )
+
+  (defn place-dominoes [loc]
+    (let [{:keys [domino remain]} (z/node loc)]
+      (z/next (if (empty? remain)
+                loc
+                (-> loc
+                    (z/append-child (create-domino-node (first remain) (rest remain))))))))
+
+
+  (z/root (last (take-while #(not (z/end? %))
+                            (iterate place-dominoes root-loc))))
+
 
   ;;
   )
