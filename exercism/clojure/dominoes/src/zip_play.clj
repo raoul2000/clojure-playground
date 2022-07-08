@@ -382,6 +382,17 @@
 ;;
   )
 
+(defn valid-chain?
+  "Given the root location and the not-connected value of the first domino 
+   returns true if the tree contains a valid dominoes chain"
+  [root-loc head-domino-val]
+  (->> (iterate z/next root-loc)
+       (drop-while #(and (not (z/end? %))
+                         (not (valid-chain-terminator % head-domino-val))))
+       first
+       z/end?
+       not))
+
 (defn create-all-chains [root-loc]
   (->> (iterate place-dominoes root-loc)
        (take-while #(not (z/end? %)))
@@ -389,6 +400,8 @@
        z/root
        zipper-domino-chain))
 
-(defn can-chain? [])
+(defn can-chain? [[first-domino & remaining-dominoes]]
+  (let [root-loc (zipper-domino-chain (create-domino-node first-domino remaining-dominoes))]
+    (valid-chain? (create-all-chains root-loc) (first first-domino))))
 
 

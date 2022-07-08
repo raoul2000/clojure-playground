@@ -1,6 +1,6 @@
 (ns dominoes-test
   (:require [clojure.test :refer [deftest is]]
-            [dominoes     :refer [can-chain?]]))
+            [zip-play     :refer [can-chain?]]))
 
 (deftest empty-input-empty-output
   (is (can-chain? [])))
