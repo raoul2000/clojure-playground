@@ -1,15 +1,15 @@
 (ns meetup
   (:import [java.time LocalDate DayOfWeek]))
 
-(def days-of-week {:monday    DayOfWeek/MONDAY
-                   :tuesday   DayOfWeek/TUESDAY
-                   :wednesday DayOfWeek/WEDNESDAY
-                   :thursday  DayOfWeek/THURSDAY
-                   :friday    DayOfWeek/FRIDAY
-                   :saturday  DayOfWeek/SATURDAY
-                   :sunday    DayOfWeek/SUNDAY})
+(def ^:private days-of-week {:monday    DayOfWeek/MONDAY
+                             :tuesday   DayOfWeek/TUESDAY
+                             :wednesday DayOfWeek/WEDNESDAY
+                             :thursday  DayOfWeek/THURSDAY
+                             :friday    DayOfWeek/FRIDAY
+                             :saturday  DayOfWeek/SATURDAY
+                             :sunday    DayOfWeek/SUNDAY})
 
-(defn- find-first-dow 
+(defn- find-first-dow
   "Given a day of week, returns the first Date for this day in given month and year.
    *day-of-week* must be a key in map *days-of-week*.
 
@@ -26,10 +26,10 @@
          (drop-while #(not= dow (.getDayOfWeek %)))
          first)))
 
-(defn same-month [month ^java.time.LocalDate date]
+(defn- same-month [month ^java.time.LocalDate date]
   (= month (.getMonthValue date)))
 
-(defn find-all-dow-in-month 
+(defn- find-all-dow-in-month
   "Given a date, returns a vector of all days of month (1..31), in the same month 
    and with the same day of week.
    
@@ -46,19 +46,18 @@
          (take-while in-same-month?)
          (mapv #(.getDayOfMonth %)))))
 
-(defn teenth? [n] (> 20 n 12))
-(def not-teenth? (complement teenth?))
+(def ^:private teen (set (range 13 20)))
 
-(def selectors {:first   first
-                :second  second
-                :third   #(get % 2)
-                :fourth  #(get % 3)
-                :fifth   #(get % 4)
-                :last    last
-                :teenth  #(first (drop-while not-teenth? %))})
+(def ^:private selectors {:first   first
+                          :second  second
+                          :third   #(get % 2)
+                          :fourth  #(get % 3)
+                          :fifth   #(get % 4)
+                          :last    last
+                          :teenth  #(some teen %)})
 
 (defn meetup [month year day-of-week descriptor]
-  (let [first-day-of-wweek (find-first-dow year month day-of-week)
-        candidates         (find-all-dow-in-month first-day-of-wweek)
+  (let [first-day-of-week  (find-first-dow year month day-of-week)
+        candidates         (find-all-dow-in-month first-day-of-week)
         select-fn          (get selectors descriptor)]
     [year month (select-fn candidates)]))
