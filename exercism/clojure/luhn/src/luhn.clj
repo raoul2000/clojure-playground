@@ -1,60 +1,25 @@
 (ns luhn)
 
 
-
-(comment
-  (remove neg-int? (map #(Character/digit % 10) " 1 2 5 4"))
-
-  (->> "4539 3195 0343 6467"
-       (map #(Character/digit % 10))
-       (remove neg-int?)
-       (reverse)
-       (map-indexed #(if (odd? %1) (* 2 %2) %2))
-       (map #(if (> %1 9) (- %1 9) %1))
-       (apply +))
+(defn- double-digit-and-adjust [i]
+  (cond-> (* 2 i)
+    (> i 4) (- 9)))
 
 
+(defn- transform-digit-at-index [index i]
+  (if (odd? index) (double-digit-and-adjust i) i))
 
-  (->> " 5 9 "
-       (map #(Character/digit % 10))
-       (reverse)
-       (into [])
-       (map-indexed #(if (and (pos? %2) (odd? %1))
-                       (* 2 %2)
-                       %2))
-       (map #(if (> %1 9) (- %1 9) %1))
-       (remove neg?)
-       (apply +))
-
-  ;;
-  )
-
-(defn sum-of-digits [digit-xs]
+(defn- sum-of-digits [digit-xs]
   (->> digit-xs
-       (reverse)
-       (into [])
-       (map-indexed #(if (and (pos? %2) (odd? %1))
-                       (* 2 %2)
-                       %2))
-       (map #(if (> %1 9) (- %1 9) %1))
-       (remove neg?)
+       ((comp (partial into []) reverse))
+       (map-indexed transform-digit-at-index)
        (apply +)))
 
-(comment
-  (sum-of-digits '(5 9))
-  ;;
-  )
+(defn- parse-digit-xs [s]
+  (remove neg-int? (map #(Character/digit % 10) s)))
 
-
-(defn valid? [s] ;; <- arglist goes here
-  (and (boolean (re-matches #"[0-9 ]+" s))
-       (let [digit-xs (remove neg-int? (map #(Character/digit % 10) s))]
-         (if (= 1 (count digit-xs))
-           false
-           (zero? (rem (sum-of-digits digit-xs) 10))))))
-
-(comment
-  (valid? "046a 454 286")
-
-  ;;
-  )
+(defn valid? [s]
+  (boolean (and  (re-matches #"[0-9 ]+" s)
+                 (let [digit-xs (parse-digit-xs s)]
+                   (when (> (count digit-xs) 1)
+                     (zero? (rem (sum-of-digits digit-xs) 10)))))))
