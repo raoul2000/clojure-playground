@@ -12,12 +12,6 @@
          (Integer. rank))
      suit]))
 
-(defn card-rank [[rank _]]
-  rank)
-
-(defn card-suit [[_ suit]]
-  suit)
-
 (comment
   (normalize-card "3H")
   (normalize-card "JH")
@@ -29,7 +23,10 @@
 (defn sort-by-rank-desc [hand]
   (reverse (sort-by first hand)))
 
-(defn normalize-hand [s]
+(defn normalize-hand
+  "Given a string representing a list of cards, returns a vector sorted
+   by card rank where each card is represented a a pair [rank suit]"
+  [s]
   (->> (split s #" ")
        (map normalize-card)
        (sort-by-rank-desc)))
@@ -39,6 +36,34 @@
   (normalize-hand "JE 4S 3D KH")
   ;;
   )
+
+;; some helper functions
+(def card-rank first)
+(def card-suit last)
+
+;; 
+
+(def prime-val {2 2
+                3 3
+                4 5
+                5 7
+                6 9
+                7 11
+                8 13
+                9 17
+                })
+(defn score-highest-cards [hand]
+  (apply + (map #(* %2 (card-rank  %1)) (reverse hand) (range 1 (inc (count hand))))))
+
+(comment
+  (score-highest-cards [[4 "D"] [2 "_"]])
+  (score-highest-cards [[4 "D"] [2 "_"] [10 "_"]])
+  (score-highest-cards [[5 "D"] [1 "_"] [2 "_"]])
+
+  )
+
+(defn highest-cards-0 [hands]
+  (map #(vector (score-highest-cards %) %) hands))
 
 (defn highest-card-rank [hand]
   (->> hand
@@ -78,7 +103,7 @@
   (def h1 [5 4 2])
   (def h2 [5 4 2])
 
-  (select-highest [[1 4 5] 
+  (select-highest [[1 5 4]
                    [2 3 5]
                    [1 4 5]])
   (reduce
