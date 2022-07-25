@@ -1,6 +1,10 @@
 (ns poker
   (:require [clojure.string :refer [split join]]))
 
+(def suit-key {"H" :heart
+               "S" :spade
+               "C" :club
+               "D" :diamond})
 
 (def figure-vals {"J" 11
                   "Q" 12
@@ -10,13 +14,14 @@
   (let [[_ rank suit] (re-matches #"([0-9JQK]+)(.)" card)]
     [(or (figure-vals rank)
          (Integer. rank))
-     suit]))
+     (get suit-key suit)]))
 
 (comment
   (normalize-card "3H")
   (normalize-card "JH")
   (normalize-card "KH")
   (normalize-card "10H")
+  (normalize-card "AC")
   ;;
   )
 
@@ -24,8 +29,8 @@
   (reverse (sort-by first hand)))
 
 (defn normalize-hand
-  "Given a string representing a list of cards, returns a vector sorted
-   by card rank where each card is represented a a pair [rank suit]"
+  "Given a string representing a list of cards, returns a vector in descending order
+   by card rank, where each card is represented as a pair [rank suit]"
   [s]
   (->> (split s #" ")
        (map normalize-card)
@@ -37,101 +42,105 @@
   ;;
   )
 
-;; some helper functions
-(def card-rank first)
-(def card-suit last)
-
-;; 
-
-(def prime-val {2 2
-                3 3
-                4 5
-                5 7
-                6 9
-                7 11
-                8 13
-                9 17
-                })
-(defn score-highest-cards [hand]
-  (apply + (map #(* %2 (card-rank  %1)) (reverse hand) (range 1 (inc (count hand))))))
-
-(comment
-  (score-highest-cards [[4 "D"] [2 "_"]])
-  (score-highest-cards [[4 "D"] [2 "_"] [10 "_"]])
-  (score-highest-cards [[5 "D"] [1 "_"] [2 "_"]])
-
-  )
-
-(defn highest-cards-0 [hands]
-  (map #(vector (score-highest-cards %) %) hands))
-
-(defn highest-card-rank [hand]
+(defn pair-count
+  "Given a *hand* returns the number of pair(s)"
+  [hand]
   (->> hand
        (map first)
-       (apply max)))
+       (frequencies)
+       (vals)
+       (filter #{2})
+       (count)))
 
 (comment
-  (highest-card-rank (normalize-hand "4D 5S 6S 8D 3C"))
-  (highest-card-rank (normalize-hand "4D QS 6S 8D KC")))
+  (pair-count [[1 :e] [3 :b] [2 :r]])
+  (pair-count [[1 :e] [2 :b] [1 :r]])
+  (pair-count [[1 :e] [2 :b] [1 :r] [2 :t]])
+  ;;
+  )
 
-(defn highest-cards [hands]
-  (reduce (fn [winners hand]
-            (if (or (empty? winners)
-                    (>= (ffirst hand) (first (ffirst winners))))
-              (conj winners hand)
-              winners))
-          ()
-          hands))
 
-(defn compare-hands-by-rank [h1 h2]
-  (loop [v1 (sort h1)
-         v2 (sort h2)]
-    (if (empty? v1)
-      0
-      (cond
-        (< (first v1) (first v2))  -1
-        (> (first v1) (first v2))  1
-        :else                     (recur (rest v1) (rest v2))))))
 
-(defn select-highest [hands]
-  (let [sorted-hands  (sort compare-hands-by-rank hands)
-        first-highest (first sorted-hands)]
-    (into [first-highest] (take-while #(= % first-highest) (rest sorted-hands)))))
+(defn n-of-a-kind? [n hand]
+  (->> hand
+       (map first)
+       (frequencies)
+       (vals)
+       (some #{n})))
 
+(def three-of-a-kind? (partial n-of-a-kind? 3))
+(def four-of-a-kind? (partial n-of-a-kind? 4))
 
 (comment
-  (def h1 [5 4 2])
-  (def h2 [5 4 2])
+  (three-of-a-kind? [[1 :e] [3 :b] [2 :r]])
+  (three-of-a-kind? [[1 :e] [2 :b] [1 :r]])
+  (three-of-a-kind? [[1 :e] [2 :b] [1 :r] [1 :t]])
 
-  (select-highest [[1 5 4]
-                   [2 3 5]
-                   [1 4 5]])
-  (reduce
-   (sort compare-hands-by-rank [h1 h2]))
-  ()
-  (loop [v1 h1
-         v2 h2]
-    (if (empty? v1)
-      0
-      (cond
-        (< (first v1) (first v2))  -1
-        (> (first v1) (first v2))  1
-        :else                     (recur (rest v1) (rest v2)))))
+  (n-of-a-kind? 3 [[1 :e] [2 :b] [1 :r] [3 :t]])
+  (four-of-a-kind?  [[1 :e] [2 :b] [1 :r] [3 :t] [1 :e] [1 :t]])
 
   ;;
   )
 
-(def hand-1 ["4D 5S 6S 8D 3C"
-             "2S 4C 7S 9H 10H"
-             "3S 4S 5D 6H JH"])
+(defn straight?
+  "Given a rank sorted *hand* returns `true` if it's a straight"
+  [hand]
+  (let [ranks (map first hand)]
+    (loop [rk ranks]
+      (cond
+        (empty? (rest rk))  true
+        (not= (first rk) (inc (fnext rk))) false
+        :else (recur (rest rk))))))
 
 (comment
-  (highest-cards (map normalize-hand hand-1))
 
+  (straight? [[1 :e] [3 :b] [2 :r]])
+  (straight? [[1 :e] [2 :b] [1 :r]])
+  (straight? [[1 :e] [2 :b] [1 :r] [1 :t]])
+  (straight? [[5 :e] [4 :b] [3 :r] [2 :t]])
+  (straight? [[5 :e] [4 :b] [3 :r] [2 :t] [1 :t]])
+  (straight? [[11 :e] [10 :b] [9 :r] [8 :t] [7 :t]])
   ;;
   )
 
-(defn best-hands [hands] ;; <- arglist goes here
-  (if (= 1 (count hands))
-    hands
-    (cond)))
+(defn flush? [hand]
+  (let [suits (map second hand)]
+    (every? #{(first suits)} suits)))
+
+(comment
+  (flush? [[1 :e] [3 :b] [2 :r]])
+  (flush? [[1 :e] [2 :e] [1 :e] [1 :e]])
+  ;;
+  )
+
+(defn full-house? [hand]
+  (->> hand
+       (map first)
+       (frequencies)
+       (vals)
+       (sort)
+       (= [2 3])))
+
+(comment
+  (full-house? [[1 :e] [3 :b] [2 :r]])
+  (full-house? [[1 :e] [2 :e] [1 :e] [1 :e]])
+  (full-house? [[1 :e] [2 :e] [1 :e] [1 :e] [2 :t]])
+  ;;
+  )
+
+(defn straight-flush? [hand]
+ (and (straight? hand)
+      (flush? hand)) )
+
+(comment
+  (straight-flush? [[5 :a] [4 :a] [3 :a] [2 :a] [1 :a]])
+  (straight-flush? [[5 :a] [4 :a] [3 :a] [2 :a] [1 :b]])
+  ;;
+  )
+
+;; -----------------
+
+(comment
+  
+  (normalize-hand "4S 5H 5S 5D 5C")
+  )
