@@ -4,7 +4,8 @@
          org.clojure/data.csv  {:mvn/version "1.0.1"}
          babashka/fs           {:mvn/version "0.1.4"}
          org.clojure/data.json {:mvn/version "2.4.0"}
-         org.clojure/tools.cli {:mvn/version "1.0.206"}}
+         org.clojure/tools.cli {:mvn/version "1.0.206"}
+         clj-ssh/clj-ssh       {:mvn/version "0.5.14"}}
 
  :aliases {:run-m {:main-opts ["-m" "toolbox.tools"]}
 
