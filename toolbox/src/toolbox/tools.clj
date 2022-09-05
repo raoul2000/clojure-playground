@@ -1,5 +1,5 @@
 (ns toolbox.tools
-  (:require [clojure.string :refer [blank? join]]
+  (:require [clojure.string :refer [join]]
             [clojure.tools.cli :refer [parse-opts]]
             [babashka.fs :as fs]
             [toolbox.depend.cli :as cli-depend]
@@ -42,7 +42,7 @@
       (= cli-depend/action-name action)        (cli-depend/run action-opts)
       (= cli-events/action-name action)        (cli-events/run action-opts)
       (= cli-dispatch-cmd/action-name action)  (cli-dispatch-cmd/run action-opts)
-      :else                              (printf "unknown action: %s. Use --help to show usage\n" action))
+      :else                                    (printf "unknown action: %s. Use --help to show usage\n" action))
     (flush)))
 
 (comment

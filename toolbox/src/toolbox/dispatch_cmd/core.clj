@@ -26,7 +26,7 @@
   (future (run-remote-cmd {:strict-host-key-checking :no
                            :username                 username
                            :password                 password
-                           :port                     port}
+                           :port                     (Integer/parseInt port)}
                           cmd
                           host
                           (or label
@@ -37,5 +37,11 @@
    (let [future-out (doall
                      (map (partial create-future-cmd-result cmd) target-list))]
      (map deref future-out))))
+
+(comment
+  
+
+  ;;
+  )
 
 
