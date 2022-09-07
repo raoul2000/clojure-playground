@@ -8,8 +8,9 @@
 (def default-target-host-list-separator ",")
 
 (defn valid-port?  [s]
-  (when (re-matches #"\d+" s)
-    (< 0 (Integer/parseInt s) 0x10000)))
+  (boolean (and  (string? s)
+                 (re-matches #"\d+" s)
+                 (< 0 (Integer/parseInt s) 0x10000))))
 
 
 (def cli-options
@@ -83,7 +84,9 @@
           chars   (.readPassword console "%s" (into-array [prompt]))]
       (apply str chars))))
 
-(defn read-password-or-skip [prompt]
+(defn read-password-or-skip
+  "Returns user input string or *nil* if blank."
+  [prompt]
   (let [text (read-password prompt)]
     (when-not (s/blank? text) text)))
 
@@ -111,14 +114,14 @@
    "
   [s]
   (let [[_ user+maybe-password host+maybe-port] (re-matches #"(.*)@([^@]+)$" s)
-        [_ host _ port]                         (when host+maybe-port  (re-matches #"([^:]+)(:(\d+))?$" host+maybe-port))
-        [_ _ password username]                 (when user+maybe-password (re-matches #"((.+):)?(.+)" user+maybe-password))]
+        [_ host _ port]                         (when host+maybe-port     (re-matches #"([^:]+)(:(\d+))?$" host+maybe-port))
+        [_ _ password username]                 (when user+maybe-password (re-matches #"((.+):)?(.+)"      user+maybe-password))]
     {:label    (str username "@" host)
      :host     host
      :port     port
      :username username
      :password password
-     :value    s}  ;; always set
+     :value    s}  ;; always set TODO: remove because risk expose password
     ))
 
 (comment
@@ -127,10 +130,25 @@
   (parse-connexion-string "pwd:name@jump1@jump2")
   (parse-connexion-string "name@jump1@jump2")
   (parse-connexion-string "name@jump1@jump2:33")
+  (parse-connexion-string ":username@host:22")
+
   ;;
   )
 
+(defn parse-cnx-string [s]
+  (let [[password user+host port] (s/split s #":")])
 
+
+  ;;
+  )
+
+(comment
+  (s/split "pwd:@host:22" #":")
+  (s/split "pwd:@host" #":")
+  (s/split "username@host:22" #":")
+  (s/split "username@host" #":")
+  ;;
+  )
 
 (defn parse-target-list
   "Given a comma separated list of target connexion strings, returns a list of
@@ -141,11 +159,11 @@
 (comment
   (list? nil)
   (parse-target-list nil)
-  (parse-target-list "some string")
-  (parse-target-list "aa@bb,cc@dd")
-  (parse-target-list "aabbcc@dd")
-  (parse-target-list "aa@bb,ccdd")
-  (parse-target-list "aa@bb,dlkk:user@jump1@jump2@jump3")
+  (parse-target-list ["some string"])
+  (parse-target-list ["aa@bb" "cc@dd"])
+  (parse-target-list ["aabbcc@dd"])
+  (parse-target-list ["aa@bb" "ccdd"])
+  (parse-target-list ["aa@bb" "dlkk:user@jump1@jump2@jump3"])
   ;;
   )
 
@@ -167,7 +185,6 @@
   ;;
   )
 
-
 (defn prompt-missing-password [coll]
   (map (fn [target]
          (update target :password (fn [cur-pwd]
@@ -185,7 +202,7 @@
   )
 
 (defn missing-password?
-  "Given a *coll* of target map, returns TRUE is at least one target has no password value"
+  "Given a *coll* of target map, returns TRUE if at least one target has no password value"
   [coll]
   (some (comp s/blank? :password) coll))
 
@@ -202,11 +219,11 @@
                            (read-password-or-skip (str "enter default password (ENTER to skip)"))
                            password-opt)]
     (->> (apply-default target-list default-password port)
-         (prompt-missing-password)
-         )))
+         (prompt-missing-password))))
 
 (comment
   (fill-missing-keys [{:label "A" :password ""}] "" 22)
+  (fill-missing-keys [{:label "A" :password nil}] "" 22)
 
   ;;
   )
@@ -230,7 +247,6 @@
 (comment
   (validate-target-reducer [] {:host "non" :value "username@non"})
   (validate-target-reducer [] {:host "non" :username "bob" :password "pwd" :port "22" :value "username@non"})
-
   ;;
   )
 
@@ -239,13 +255,12 @@
         {:keys [port password targets]}      (:options parsed-opts)
         cmd                                  (:arguments parsed-opts)
         target-list                          (parse-target-list targets)]
-    ;;(prn parsed-opts)
     (cond
       (:errors parsed-opts)      (println (s/join \newline (:errors parsed-opts)))
       (help-option? parsed-opts) (println (usage parsed-opts))
       (empty? cmd)               (println "missing command")
       (empty? target-list)       (println "missing or invalid target list")
-      :else                      (let [final-target-list  (apply-default target-list password port)
+      :else                      (let [final-target-list  (fill-missing-keys target-list password port)
                                        target-list-errors (validate-target-list final-target-list)]
                                    (if-not (empty? target-list-errors)
                                      (doseq [error-message target-list-errors]
@@ -265,6 +280,8 @@
 
 
   (run ["--targets" "meth01@10.18.4.25" "ls"])
+  (run ["--targets" "meth01:meth01@10.18.4.25,meth01@10.18.4.25" "ls"])
+  (run ["--password" "meth01"  "--targets" "meth01@10.18.4.25" "ls"])
 
 
 

@@ -22,6 +22,7 @@
            (cli/parse-connexion-string "pwd:username@host:22"))))
 
   (testing "when port is missing or invalid"
+    
     (is (= {:label "username@host",
             :host nil ,
             :port nil,
@@ -29,6 +30,7 @@
             :password "pwd",
             :value "pwd:username@host"}
            (cli/parse-connexion-string "pwd:username@host:port")) "port is not an int string")
+    
     (is (= {:label "username@host",
             :host "host",
             :port nil,
@@ -36,6 +38,7 @@
             :password "pwd",
             :value "pwd:username@host"}
            (cli/parse-connexion-string "pwd:username@host")) "port is missing")
+    
     (is (= {:label "username@host",
             :host "host",
             :port nil,
