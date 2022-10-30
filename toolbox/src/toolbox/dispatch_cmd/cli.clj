@@ -19,11 +19,11 @@
     :default "22"
     :validate [valid-port? "must be a number between 0 and 65536"]]
 
-   [nil "--password pwd"  "ssh login password used for all targets that don't have a specific password"
+   [nil "--password pwd"  "default password used for all targets that don't have a specific password"
     :default nil]
 
-   ["-t" "--targets list" "list of connexion string to target host where the command is executed"
-    :parse-fn #(s/split % #",")
+   ["-t" "--targets list" "Comma separated list of connexion strings to target hosts where the command will be executed"
+    :parse-fn #(map s/trim (s/split % #","))
     :validate [#(pos-int? (count %)) "no target host provided"]]
 
    ["-h" "--help"]])
@@ -118,7 +118,7 @@
         [_ _ password username]                 (when user+maybe-password (re-matches #"((.+):)?(.+)"      user+maybe-password))]
     {:label    (str username "@" host)
      :host     host
-     :port     port
+     :port    (when port (Integer/parseInt port))
      :username username
      :password password
      :value    s}  ;; always set TODO: remove because risk expose password
@@ -256,8 +256,8 @@
         cmd                                  (:arguments parsed-opts)
         target-list                          (parse-target-list targets)]
     (cond
-      (:errors parsed-opts)      (println (s/join \newline (:errors parsed-opts)))
       (help-option? parsed-opts) (println (usage parsed-opts))
+      (:errors parsed-opts)      (println (s/join \newline (:errors parsed-opts)))
       (empty? cmd)               (println "missing command")
       (empty? target-list)       (println "missing or invalid target list")
       :else                      (let [final-target-list  (fill-missing-keys target-list password port)
