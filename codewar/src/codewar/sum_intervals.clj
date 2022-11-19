@@ -4,6 +4,7 @@
 
 
 
+
   ;; --------min-1------------max-1-------------
   ;; --min-2------------max-2----
 (defn partial-overlap? [[min-1 max-1] [min-2 max-2]]
@@ -35,10 +36,9 @@
                                         {:result []
                                          :merged false}
                                         coll)]
-    {:merged merged
-     :result (if merged
-               result
-               (conj coll new-interval))}))
+    (if merged
+      result
+      (conj coll new-interval))))
 
 (defn reduce-interval-coll [coll]
   (loop [intr-coll  coll
@@ -46,7 +46,7 @@
     (if (empty? intr-coll)
       result
       (recur (rest intr-coll)
-             (:result (add-interval (first intr-coll) result))))))
+              (add-interval (first intr-coll) result)))))
 
 
 (defn reduce-overlaping-intervals [c1]
@@ -68,10 +68,10 @@
   (sum-intervals [[1 5]])
   (sum-intervals [[1 5] [6 10]])
   (sum-intervals [[1 4] [7 10] [3 5]])
-  
+
   (sum-intervals [[-1000000000 1000000000]])
   (sum-intervals [[0 20] [-100000000 10] [30 40]])
-  
+
   ;;
   )
 
