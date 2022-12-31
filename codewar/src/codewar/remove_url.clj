@@ -4,6 +4,8 @@
 (defn remove-url-anchor [url]
   (first (split url #"#")))
 
+;; first commit in 2023 !!! yuuupui !!
+
 
 (comment
   (re-matches #"(.*)#.+" "www.kata.com/path#params")
