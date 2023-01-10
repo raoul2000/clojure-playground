@@ -35,3 +35,10 @@
 
   (testing "throws when path does not exists"
     (is (thrown? Exception (#'fs/path-seq "some/path")))))
+
+(deftest read-folder-meta-test
+  (testing "Returns folder metadata"
+    (is (= {:attribute1 "string value"}
+           (#'fs/read-folder-meta (make-path-string
+                              (bfs/path base-path "root" "folder-1")))))
+    (is (nil? (#'fs/read-folder-meta "not/found")))))

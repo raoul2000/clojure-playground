@@ -1,0 +1,6 @@
+{
+    "color": "green",
+    "age": 12,
+    "sold": false,
+    "fruits": ["apple", "orange", "banana"]
+}
