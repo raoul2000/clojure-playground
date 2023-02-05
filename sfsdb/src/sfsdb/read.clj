@@ -98,10 +98,22 @@
                                 :or   {root-path (fs/cwd)}}]
   (when (and (fs/exists?    folder-path)
              (fs/directory? folder-path))
-    (vector (read-folder-content folder-path root-path)
-            (when with-meta?
-              (read-meta folder-path)))))
+    (cond-> {:folder? true
+             :content (read-folder-content folder-path root-path)} 
+      with-meta? (assoc ,,,, :meta (read-meta folder-path))
+            
+            )
 
+    #_(vector (read-folder-content folder-path root-path)
+            (when with-meta?
+              (read-meta folder-path))))
+  
+  )
+(comment
+  (cond->  1
+    true (inc))
+  ;;
+  )
 
 (comment
 
