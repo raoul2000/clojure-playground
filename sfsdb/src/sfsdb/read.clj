@@ -1,13 +1,14 @@
 (ns sfsdb.read
   (:require [babashka.fs :as fs]
             [clojure.string :as s]
-            [clojure.data.json :as json]))
+            [clojure.data.json :as json]
+            [portal.console :as log]))
 
 
 (def metadata-extension "extension for metadata file" ".meta")
 (def re-path-splitter (re-pattern  (str "\\" fs/file-separator)))
 
-;; note that on windows, fs/component skips the drive letter
+;; note that on windows, fs/components skips the drive letter
 ;; and we don't want that
 (defn- split-paths
   "Splits string *path-str* representing a path using local filesystem settings,
@@ -15,11 +16,28 @@
   [^String path-str]
   (s/split path-str re-path-splitter))
 
+(comment
+  (fs/components "c:\\folder\\subfolder\\file.txt")
+  (split-paths "c:\\folder\\subfolder\\file.txt")
+
+  (fs/unixify (fs/file "c:\\folder\\subfolder\\file.txt"))
+
+  ;;
+  )
+
+
 (defn- normalize-path [^String path]
-  (let [norm-path (str (fs/normalize path))]
-    (if (s/includes? norm-path "\\")
-      (s/replace norm-path #"\\" "/")
-      norm-path)))
+  (when path
+    (let [norm-path (str (fs/normalize path))]
+      (if (s/includes? norm-path "\\")
+        (s/replace norm-path #"\\" "/")
+        norm-path))))
+
+(comment
+  (normalize-path nil)
+  (normalize-path "")
+  ;;
+  )
 
 (defn- ensure-absolute-path [path]
   (if (fs/relative? path) (fs/absolutize path) path))
@@ -48,7 +66,7 @@
          (map (comp normalize-path
                     relativize-to-root)))))
 
-(defn make-metadata-path 
+(defn make-metadata-path
   "Given a *path* returns the path to the metadata file describing *path*.
    The returned path is not garanteed to exsits on the file system."
   [path]
@@ -56,7 +74,7 @@
     (fs/path path metadata-extension)
     (fs/path (str path metadata-extension))))
 
-(defn- read-meta 
+(defn- read-meta
   "Returns the metadata map describing *path* which can be a file or a folder.
    When *path* doesn't exist or when no metadata exists for this *path*, returns `nil`."
   [path]
@@ -65,7 +83,7 @@
                (fs/regular-file? meta-path))
       (json/read-str (slurp (fs/file meta-path)) :key-fn keyword))))
 
-(defn read-folder-content 
+(defn read-folder-content
   "Returns a seq of normalized path (file or folder) contained by *folder-path*. Metadata
    files are ignored.
    
@@ -88,6 +106,7 @@
 (comment
 
   (def root-path (fs/path (fs/cwd)))
+  (tap> root-path)
 
   (def base-path (fs/path (fs/cwd) "test/fixture/fs/root/folder-1"))
   (def base-path (fs/path (fs/cwd) "test/fixture/fs/root/folder-2"))

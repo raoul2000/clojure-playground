@@ -11,6 +11,9 @@
 (deftest normalize-path-test
   (testing "Normalizing path"
     (are [result path] (= result (#'fs/normalize-path path))
+      nil         nil
+      ""         ""
+      "some-path" "some-path"
       "/aa/bb/cc" "/aa/bb/cc"
       "aa/bb/cc"  "aa/bb/cc"
       "aa/bb/cc"  "aa\\bb\\cc"
