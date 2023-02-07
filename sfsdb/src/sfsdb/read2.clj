@@ -78,7 +78,7 @@
 
 (comment
   (def root-path (fs/cwd))
-  (read-file (fs/path (fs/cwd) "test/fixture/fs/root/folder-1/.meta") 
+  (read-file (fs/path (fs/cwd) "test/fixture/fs/root/folder-1/.meta")
              root-path
              true)
   (read-file (fs/path (fs/cwd) "test/fixture/fs/root/folder-1/folder-1-A/file-1A-1.txt")
@@ -87,8 +87,14 @@
   ;;
   )
 
-(defn read [db-path {:keys [with-meta? root-path]
-                     :or   {root-path (fs/cwd)}}]
+(defn read
+  "Returns a map describing the file or a folder at `db-path`. Option maps:
+   - `:with-meta?` : read object metadata
+   - `:root-path` : base folder base used to resolve `db-path`. If not set, *current 
+   working dir* is used
+   "
+  [db-path {:keys [with-meta? root-path]
+            :or   {root-path (fs/cwd)}}]
   (let [path (fs/path root-path db-path)]
     (when (fs/exists? path)
       (if (fs/directory? path)
@@ -100,5 +106,36 @@
 
   (read "test/fixture/fs/root/folder-1" {:with-meta? true})
   (read "test/fixture/fs/root/folder-1/folder-1-A" {:with-meta? true})
+  (read "test/fixture/fs/root/folder-1/folder-1-A/file-1A-1.txt" {:with-meta? true})
+  ;;
+  )
+
+(defn list-all-dirs
+  "Given folder at `root-path`, returns a seq of maps, each one describing a sub-folder of
+   `root-path` with metadata when `with-meta?` is true.
+   
+   If `root-path` is not absolute, it is assumed to be relative to *current working dir*.
+   
+   Return *nil* when `root-path`doesn't exists or is not a directory."
+  [root-path with-meta?]
+
+  (let [path-coll (volatile! [])
+        abs-path (fs/absolutize root-path)]
+    (when (and (fs/exists? abs-path)
+               (fs/directory? abs-path))
+      (fs/walk-file-tree abs-path {:pre-visit-dir (fn [path _attr]
+                                                    (when-not (= path abs-path)
+                                                      (vswap! path-coll conj path))
+                                                    :continue)})
+      (map #(path->obj % abs-path with-meta?) @path-coll))))
+
+(comment
+  (def root-path (fs/path (fs/cwd) "test"))
+
+  (list-all-dirs root-path true)
+  (list-all-dirs "test" true)
+  (list-all-dirs "NOT_FOUND" true)
+  (list-all-dirs "test/fixture/fs/root/folder-1/folder-1-A/file-1A-1.txt" true)
+
   ;;
   )
