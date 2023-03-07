@@ -99,7 +99,7 @@
    Throws is `db-path` is not relative.
    "
   [db-path {:keys [with-meta? root-path]
-            :or   {root-path (fs/cwd)}}] 
+            :or   {root-path (fs/cwd)}}]
   (let [path (fs/path root-path db-path)]
     (when (fs/exists? path)
       (if (fs/directory? path)
@@ -143,6 +143,90 @@
   (list-all-dirs "test" true)
   (list-all-dirs "NOT_FOUND" true)
   (list-all-dirs "test/fixture/fs/root/folder-1/folder-1-A/file-1A-1.txt" true)
+
+  ;;
+  ;; build a nested map describing a tree folder structure
+  ;;
+  
+  (def root-fs1 {"folder1"        {:meta         {:prop1      "value1"
+                                                  :prop2      12}
+
+                                   "file1.json"  {:meta       {:prop1 "prop value 1"}
+                                                  :content    "{\"prop\": 12 }"}
+
+                                   "sub-folder1" {:meta       {:prop1 "value2"}
+                                                  "file1.txt" {:meta {:type "f"}
+                                                               :content "file content"}
+                                                  "file2.txt" {:content "content for file 2"}}}
+
+                 "file0.xml"      {:meta         {:file-info "some value"}
+                                   :content      "<root>value</root>"}
+                 "empty-folder"   {}
+                 "empty-file.txt" {:content      ""}})
+
+  ;; reading meta
+  ;; read folder or file meta
+  (get-in root-fs1 ["folder1" :meta])
+  (get-in root-fs1 ["folder1" "sub-folder1" :meta])
+  (get-in root-fs1 ["folder1" "sub-folder1" "file1.txt" :meta])
+  ;; file or folder has no meta
+  (get-in root-fs1 ["folder1" "sub-folder1" "file2.txt" :meta])
+  (get-in root-fs1 ["file0.xml" :meta])
+  (get-in root-fs1 ["empty-folder" :meta])
+
+  (defn read-meta [root-fs path-v]
+    (get-in root-fs (conj path-v :meta)))
+
+  (read-meta root-fs1 ["folder1" "sub-folder1" "file1.txt"])
+  (read-meta root-fs1 ["folder1" "sub-folder1" "file2.txt"])
+
+  ;; read  file content
+  (defn read-file-content [root-fs path-v]
+    (get-in root-fs (conj path-v :content)))
+
+  (get-in root-fs1 ["file0.xml" :content])
+  (read-file-content root-fs1 ["file0.xml"])
+  (read-file-content root-fs1 ["folder1" "sub-folder1" "file2.txt"])
+
+  ;; ls folder
+  (defn ls [root-fs folder-v]
+    (remove (partial = :meta) (keys (get-in root-fs folder-v))))
+  (ls root-fs1 ["folder1"])
+  (ls root-fs1 ["folder1" "sub-folder1"])
+
+  ;; file-exists?
+  (defn file-exists? [root-fs path-v]
+    (contains? (get-in root-fs (conj path-v)) :content))
+
+  (get-in root-fs1 (conj ["folder1" "file1.json"] :content))
+  (file-exists? root-fs1 ["folder1" "file1.json"])
+  (file-exists? root-fs1 ["folder1" "not_found"])
+
+  ;; dir-exists?
+  
+
+
+  (def result (volatile! []))
+
+  (defn explore-folder [folder-path]
+    {:name folder-path
+     :content (fs/walk-file-tree folder-path
+                                 {:pre-visit-dir (fn [path _attr]
+                                                   (println "pre : %s" path)
+                                                   (vswap! result conj (str path))
+
+                                                   :continue
+                                                   ;;:skip-subtree
+                                                   )
+                                  :post-visit-dir (fn [path _attr]
+                                                    (println "post : %s" path)
+                                                    :continue)})})
+
+  (explore-folder (fs/path (fs/cwd) "test/fixture/fs/root"))
+
+
+  (fs/walk-file-tree (fs/path (fs/cwd) "test/fixture/fs/root")
+                     {:pre-visit-dir (fn [path _attr] :skip-subtree)})
 
   ;;
   )
