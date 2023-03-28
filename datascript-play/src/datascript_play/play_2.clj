@@ -65,34 +65,53 @@
   ;;    +------- file2.txt
   ;; folder B
   ;;    +------- file1.txt
-  ;;             folder 3
+  ;;             folder C
   ;;                 +------ file 3.txt
 
-  (def schema {:path/name {:db/unique :db.unique/identity
-                           :db/doc "a file system path normalized"}})
   (def conn (d/create-conn  {}))
 
   (d/transact! conn [{:db/id -1
                       :folder/name "A"
                       :folder/parent 0}
+                     
                      {:file/name "file1.txt"
                       :folder/parent  -1}
+                     
                      {:file/name "file2.txt"
                       :folder/parent  -1}
+                     
                      {:db/id -2
                       :folder/name "B"
                       :folder/parent 0}
+                     
                      {:file/name "file2.txt"
                       :folder/parent  -2}
+                     
                      {:db/id -3
                       :folder/name "C"
                       :folder/parent -2}
+                     
                      {:file/name "file3.txt"
                       :folder/parent  -3}])
   
-  (d/q '[:find ?parent-folder :where
+  (d/q '[:find ?p
+         :where
+         [?p :folder/name "A"]
+         ]
+       @conn)
+  (d/q '[:find ?c
+         :where
+         [?p :folder/name "A"]
+         [?e :folder/parent ]
+         [?e :file/name ?c]
+         ]
+       @conn)
+  
+  
+  (d/q '[:find ?parent-folder 
+         :where
          [?parent-folder :folder/name "A"]
-         ;;[?file :folder/parent ?parent-folder]
+         [?file :folder/parent ?parent-folder]
          ;;[?file :file/name ?filename]
          
          ] @conn)
