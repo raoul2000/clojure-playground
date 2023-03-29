@@ -5,10 +5,30 @@
             [portal.console :as log]))
 
 (def metadata-extension "extension for metadata file" "meta")
+(def dot-meta-ext (str "." metadata-extension))
 
-(defn- meta-file? [path]
-  (when path
-    (= metadata-extension (fs/extension path))))
+(defn- meta-file?
+  "Given a file relatvie/absolute *path* returns TRUE if it refers to a metadata
+   file, FALSE otherwise.
+   
+   *path* must be coercible to String"
+  [path]
+  (when-let [str-path (str path)]
+    (str/ends-with? str-path dot-meta-ext)))
+
+
+(comment
+  (str/ends-with? nil "ee")
+  (last (fs/list-dir "test/fixture/fs/root/folder-1"))
+  (meta-file? "a\\d\\.meta")
+  (meta-file? (first  (fs/list-dir "test/fixture/fs/root/folder-1")))
+  (fs/path "a/b/.meta")
+  (meta-file? (fs/path "a/b/.meta"))
+  (meta-file? (fs/path ".meta"))
+  (meta-file? "a/b/.meta")
+  (meta-file? ".meta")
+
+  (fs/extension "a\\b\\.meta"))
 
 (defn- make-metadata-path
   "Given a *path* returns the path to the metadata file describing *path*.
@@ -20,12 +40,16 @@
 
 (defn- read-meta
   "Returns the metadata map describing *path* which can be a file or a folder.
-   When *path* doesn't exist or when no metadata exists for this *path*, returns `nil`."
+   
+   When *path* doesn't exist or when no metadata exists for this *path*, returns `nil`.
+   When the meta value is not valid JSON, a string describing the error is returned "
   [path]
   (let [meta-path (make-metadata-path path)]
     (when (and (fs/exists?       meta-path)
                (fs/regular-file? meta-path))
-      (json/read-str (slurp (fs/file meta-path)) :key-fn keyword))))
+      (try
+        (json/read-str (slurp (fs/file meta-path)) :key-fn keyword)
+        (catch Exception e (str "caught exception: " (.getMessage e)))))))
 
 (defn- path->db-path [root-path path]
   (->> (fs/relativize root-path path)
@@ -147,7 +171,7 @@
   ;;
   ;; build a nested map describing a tree folder structure
   ;;
-  
+
   (def root-fs1 {"folder1"        {:meta         {:prop1      "value1"
                                                   :prop2      12}
 
@@ -174,11 +198,11 @@
   (get-in root-fs1 ["file0.xml" :meta])
   (get-in root-fs1 ["empty-folder" :meta])
 
-  (defn read-meta [root-fs path-v]
-    (get-in root-fs (conj path-v :meta)))
+  #_(defn read-meta [root-fs path-v]
+      (get-in root-fs (conj path-v :meta)))
 
-  (read-meta root-fs1 ["folder1" "sub-folder1" "file1.txt"])
-  (read-meta root-fs1 ["folder1" "sub-folder1" "file2.txt"])
+  #_(read-meta root-fs1 ["folder1" "sub-folder1" "file1.txt"])
+  #_(read-meta root-fs1 ["folder1" "sub-folder1" "file2.txt"])
 
   ;; read  file content
   (defn read-file-content [root-fs path-v]
@@ -203,7 +227,7 @@
   (file-exists? root-fs1 ["folder1" "not_found"])
 
   ;; dir-exists?
-  
+
 
 
   (def result (volatile! []))
