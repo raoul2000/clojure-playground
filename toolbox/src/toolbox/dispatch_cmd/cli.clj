@@ -23,7 +23,9 @@
     :default nil]
 
    ["-t" "--targets list" "Comma separated list of connexion strings to target hosts where the command will be executed"
-    :parse-fn #(map s/trim (s/split % #","))
+    :parse-fn #(->> (s/split % #",")
+                    (map s/trim)
+                    (remove s/blank?))
     :validate [#(pos-int? (count %)) "no target host provided"]]
 
    ["-h" "--help"]])

@@ -26,7 +26,7 @@
   (future (run-remote-cmd {:strict-host-key-checking :no
                            :username                 username
                            :password                 password
-                           :port                     (Integer/parseInt port)}
+                           :port                     port}
                           cmd
                           host
                           (or label
