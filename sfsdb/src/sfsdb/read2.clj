@@ -17,8 +17,10 @@
     (str/ends-with? str-path dot-meta-ext)))
 
 
+
 (comment
-  (str/ends-with? nil "ee")
+  
+
   (last (fs/list-dir "test/fixture/fs/root/folder-1"))
   (meta-file? "a\\d\\.meta")
   (meta-file? (first  (fs/list-dir "test/fixture/fs/root/folder-1")))
