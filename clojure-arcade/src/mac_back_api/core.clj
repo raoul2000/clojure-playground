@@ -10,6 +10,7 @@
 
 
 ;; Level 0 ---------------------------------------------------
+
 (defn level-0 [data]
   (when (drop-while #(not (= "." %)) (first (:current data)))
     (move :right)))
@@ -33,11 +34,11 @@
   (let [dy (case direction
              :up   (dec y)
              :down (inc y)
-             x)
+             y)
         dx (case direction
              :left  (dec x)
              :right (inc x)
-             y)]
+             x)]
     (at-position dx dy matrix)))
 
 (defn possible-steps [matrix]
@@ -50,11 +51,19 @@
 
 (defn level-1 [data]
   (->> data
+       :current
        possible-steps
        first
        move))
 
 ;; Game Engine -----------------------------------------------------------
+
+;; "P"  = pacman
+;; "."  = food
+;; " "  = nothing (food eaten)
+;; "GB" = ghost Blue (can be eaten)
+;; "GI" = ghost invicible
+
 
 (defn process-incoming []
   (go-loop []
@@ -64,64 +73,26 @@
         (do
           (clojure.pprint/pprint data)
 
-          (level-1 data)
+          #_(level-1 data)
 
-          (println "Deeze Moves")
           (recur))))))
 (comment
-
-  (defn at-position [x y matrix]
-    (-> matrix
-        (nth y)
-        (nth x)))
-
-  (def m  [["■" "■" "■" "■" "■" "■" "■"]
-           ["■" "P" "." "." "." "." "■"]
-           ["■" "■" "■" "■" "■" "■" "■"]])
-
-  (at-position 2 1 m)
-
-  (keep-indexed #(when (= %2 "P") %1) (flatten [["X" "■" "■" "■" "■" "■" "■"]
-                                                ["■" "." "." "P" "." "." "■"]
-                                                ["■" "■" "■" "■" "■" "■" "■"]]))
-  (defn pacman-position [matrix]
-    (let [index (->> matrix
-                     flatten
-                     (keep-indexed #(when (= %2 "P") %1))
-                     first)
-          col-count (count (first matrix))]
-      [(mod index col-count) (quot index col-count)]))
-
-  (defn at [[x y] matrix direction]
-    (let [dy (case direction
-               :up   (dec y)
-               :down (inc y)
-               x)
-          dx (case direction
-               :left  (dec x)
-               :right (inc x)
-               y)]
-      (at-position dx dy matrix)))
-
-  (defn possible-steps [matrix]
-    (let [current-pos (pacman-position matrix)
-          item-at     (partial at current-pos matrix)]
-      (filter #(= "." (item-at %)) [:up :down :left :right])))
-
-
-  (def m  [["■" "■" "■" "■" "■" "■" "■"]
-           ["■" "P" "." "." "." "." "■"]
-           ["■" "■" "■" "■" "■" "■" "■"]])
-
-  (possible-steps [["■" "." "■" "■" "■" "■" "■"]
-                   ["." "P" "." "." "." "." "■"]
-                   ["■" "." "■" "■" "■" "■" "■"]])
-
-  (pacman-position [["X" "■" "■" "■" "■" "■" "■"]
-                    ["■" "X" "." "X" "." "." "■"]
-                    ["■" "■" "■" "■" "■" "■" "P"]])
-
-
+(def pos1 {:previous nil,
+           :current
+           [["■" "■" "■" "■" "■" "■" "■"]
+            ["■" " " "." "." "." "." "■"]
+            ["■" "P" "■" "■" "■" "." "■"]
+            ["■" "." "." "." "." "." "■"]
+            ["■" "■" "■" "■" "■" "■" "■"]]})
+  
+  (level-1 pos1)
+  (->> pos1
+       :current
+       possible-steps
+       ;;first
+       )
+  
+  (def pos2 )
 
   ;;
   )
@@ -146,6 +117,7 @@
   ;; Valid :direction values are :up :down :left :right
   (go (>! mac-outgoing {:action :step :direction :right}))
   (go (>! mac-outgoing {:action :step :direction :down}))
+  (move :down)
 
   ;; == Other functions
   ;; Iterate and improve how you are processing where to move the player.
@@ -154,6 +126,7 @@
 
   ;; Update your move calculating logic then restart to loop
   (process-incoming)
+  
 
   ;; Move, laugh, cry, get ended by ghosts and then start all over
   (go (>! mac-outgoing {:action :restart}))
