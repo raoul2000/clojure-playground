@@ -3,6 +3,8 @@
    [mac-back-api.server :refer [mac-incoming mac-outgoing run-server stop-server]]
    [clojure.core.async :refer [>! go chan go-loop alts!!]]))
 
+;; From https://clojure-arcade.com
+
 (def loop-stopper (chan))
 
 (defn move [direction]
@@ -55,6 +57,39 @@
        possible-steps
        first
        move))
+;; level 2 --------------------------------------------------------------
+
+(def level-2-moves (atom [:right :right :right :right
+                          :down
+                          :down
+                          :left :left :left :left
+                          :up :up]))
+
+(defn level-2 [_]
+  (let [next-move (first @level-2-moves)]
+    (swap! level-2-moves rest)
+    (println (str "-----> move " next-move))
+    (move next-move)))
+
+;; level-3 --------------------------------------------------------------
+
+(def level-3-moves (atom (concat (repeat 6 :right)
+                                 (repeat 4 :down)
+                                 (repeat 6 :left)
+                                 (repeat 3 :up)
+                                 (repeat 1 :down)
+                                 (repeat 5 :right)
+                                 (repeat 2 :left)
+                                 (repeat 1 :up)
+                                 (repeat 3 :down)
+                                 
+                                 )))
+
+(defn level-3 [_]
+  (let [next-move (first @level-3-moves)]
+    (swap! level-3-moves rest)
+    (println (str "-----> move " next-move))
+    (move next-move)))
 
 ;; Game Engine -----------------------------------------------------------
 
@@ -66,6 +101,7 @@
 
 
 (defn process-incoming []
+  (println "processing incomming ...")
   (go-loop []
     (let [[data the-chan] (alts!! [mac-incoming loop-stopper])]
       (if (= loop-stopper the-chan)
@@ -74,28 +110,11 @@
           (clojure.pprint/pprint data)
 
           #_(level-1 data)
+          #_(level-2 data)
+          (level-3 data)
 
           (recur))))))
-(comment
-(def pos1 {:previous nil,
-           :current
-           [["■" "■" "■" "■" "■" "■" "■"]
-            ["■" " " "." "." "." "." "■"]
-            ["■" "P" "■" "■" "■" "." "■"]
-            ["■" "." "." "." "." "." "■"]
-            ["■" "■" "■" "■" "■" "■" "■"]]})
-  
-  (level-1 pos1)
-  (->> pos1
-       :current
-       possible-steps
-       ;;first
-       )
-  
-  (def pos2 )
 
-  ;;
-  )
 
 (comment
   ;; === Step 1
@@ -117,7 +136,7 @@
   ;; Valid :direction values are :up :down :left :right
   (go (>! mac-outgoing {:action :step :direction :right}))
   (go (>! mac-outgoing {:action :step :direction :down}))
-  (move :down)
+  (move :right)
 
   ;; == Other functions
   ;; Iterate and improve how you are processing where to move the player.
@@ -126,7 +145,7 @@
 
   ;; Update your move calculating logic then restart to loop
   (process-incoming)
-  
+
 
   ;; Move, laugh, cry, get ended by ghosts and then start all over
   (go (>! mac-outgoing {:action :restart}))
