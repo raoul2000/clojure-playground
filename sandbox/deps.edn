@@ -1,6 +1,7 @@
 {:path ["src"]
 
- :deps {org.clojure/clojure          {:mvn/version "1.11.1"}}
+ :deps {org.clojure/clojure          {:mvn/version "1.11.1"}
+        babashka/fs                  {:mvn/version "0.1.6"}}
  
  :aliases {
 
