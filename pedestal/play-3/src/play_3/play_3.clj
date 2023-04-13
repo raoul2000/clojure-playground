@@ -2,7 +2,8 @@
   (:require [clojure.data.json :as json]
             [io.pedestal.http :as http]
             [io.pedestal.http.route :as route]
-            [io.pedestal.http.content-negotiation :as conneg]))
+            [io.pedestal.http.content-negotiation :as conneg]
+            [play-3.handler :as h]))
 
 (defn response [status body & {:as headers}]
   {:status status :body body :headers headers})
@@ -56,15 +57,11 @@
 
 ;; handlers ---------------------------------------------
 
-(defn greeting-for [name]
-  (cond
-    (nil? name)            "hello, stranger !!"
-    (#{"bob" "max"} name)  nil
-    :else                  (str "hello, " name)))
+
 
 (defn respond-hello [request]
   (let [name (get-in request [:query-params :name])
-        resp {:reply (greeting-for name)}]
+        resp {:reply (h/greeting-for name)}]
     (if resp
       (ok resp)
       {:status 404 :body "Not found or forbidden name\n"})))
@@ -72,8 +69,8 @@
 
 ;; Route ---------------------------------------------------------
 
-(defn routes []
-  (println "loading route ...")
+(def routes 
+  
   (route/expand-routes
    #{["/greet"                    :get    [coerce-body
                                            content-neg-intc
@@ -85,15 +82,25 @@
 
 (defn service-map []
   (println "loading service-map...")
-  {::http/routes            (routes)
+  {::http/routes            routes
    ::http/resource-path     "/public"
    ::http/type              :jetty
    ::http/port              8890})
 
-(defn start []
+(defn start [_]
   (http/start (http/create-server
                (assoc (service-map)
                       ::http/join? false))))
 
 (defn stop [server-state]
   (http/stop server-state))
+
+(comment
+  (require '[clojure.tools.namespace.repl :refer [refresh]])
+  (def my_srv (start nil))
+  (stop my_srv)
+  (refresh)
+
+
+  ;;
+  )
