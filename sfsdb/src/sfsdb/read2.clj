@@ -16,7 +16,12 @@
   (when-let [str-path (str path)]
     (str/ends-with? str-path dot-meta-ext)))
 
-
+(defn in-db? [db-path]
+  (not (->> db-path
+            (fs/normalize)
+            (fs/components)
+            (map str)
+            (some #(= ".." %)))))
 
 (comment
   
