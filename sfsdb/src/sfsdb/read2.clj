@@ -1,8 +1,7 @@
 (ns sfsdb.read2
   (:require [babashka.fs :as fs]
             [clojure.string :as str]
-            [clojure.data.json :as json]
-            [portal.console :as log]))
+            [clojure.data.json :as json]))
 
 (def metadata-extension "extension for metadata file" "meta")
 (def dot-meta-ext (str "." metadata-extension))
@@ -16,15 +15,17 @@
   (when-let [str-path (str path)]
     (str/ends-with? str-path dot-meta-ext)))
 
-(defn in-db? [db-path]
-  (not (->> db-path
-            (fs/normalize)
-            (fs/components)
-            (map str)
-            (some #(= ".." %)))))
+(defn- in-db? 
+  "True if *db-path* describes an object inside the db"
+  [db-path]
+  (and (not (str/starts-with? db-path "/"))
+       (not (->> db-path
+                 (fs/normalize)
+                 (fs/components)
+                 (map str)
+                 (some #(= ".." %))))))
 
 (comment
-  
 
   (last (fs/list-dir "test/fixture/fs/root/folder-1"))
   (meta-file? "a\\d\\.meta")
@@ -58,13 +59,28 @@
         (json/read-str (slurp (fs/file meta-path)) :key-fn keyword)
         (catch Exception e (str "caught exception: " (.getMessage e)))))))
 
-(defn- path->db-path [root-path path]
+(defn- path->db-path 
+  "Converts *path* an OS file system absolute path into a db path. The db *root-path*
+   is an absolute path to the DB root folder.
+   
+   Example:
+   ```clojure
+   (path->db-path \"c:\\folder1\\db\" \"c:\\folder1\\db\\folder2\\folder3\")
+   => \"folder2/folder3\"
+
+   "
+  [root-path path]
+  {:pre [root-path path (fs/absolute? root-path) (fs/absolute? path)]
+   :post [(in-db? %)]}
   (->> (fs/relativize root-path path)
        fs/components
        (str/join "/")))
 
 (comment
   (path->db-path (fs/path "c:\\folder1") (fs/path "c:\\folder1\\folder2"))
+  (path->db-path (fs/path "/folder1") (fs/path "/folder1/folder2"))
+  (path->db-path (fs/path "c:\\folder1") (fs/path ".\\folder1\\folder2"))
+  (path->db-path (fs/path "c:\\folder1")  "c:\\folder8\\folder2")
   (path->db-path (fs/path "c:\\folder1") (fs/path "c:\\folder1\\folder2\\folder3"))
   (path->db-path (fs/path (fs/cwd)) (fs/path (fs/cwd) "aaa"))
   (fs/components (fs/relativize (fs/path (fs/cwd)) (fs/path (fs/cwd) "aaa/bbb")))
@@ -153,7 +169,7 @@
    
    If `root-path` is not absolute, it is assumed to be relative to *current working dir*.
    
-   Return *nil* when `root-path`doesn't exists or is not a directory.
+   Return *nil* when `root-path` doesn't exists or is not a directory.
    "
   [root-path with-meta?]
 

@@ -56,3 +56,43 @@
   (testing "when JSON meta file parse fails, returns error message"
     (is (= "caught exception: JSON error (unexpected character): I"
            (read-meta (fs/path base-path "folder-2/invalid-meta-1.txt"))))))
+
+(deftest in-db?-test
+  (testing "test predicate"
+    (are [pred db-path] (pred (#'fsdb/in-db? db-path))
+      true?  ""
+      true?  "a"
+      true?  "a/b"
+      true?  "a/b/c"
+      true?  "a/../b"
+      true?  "a/../b/../c"
+      true?  "./b"
+      true?  "./b/../c"
+
+      false?  ".."
+      false?  "a/../../a"
+      false?  "a/../../b"
+      false?  "./../a"
+      false?  "a/b/../../.."
+      false?  "/a/b"
+      false?  "/../a")))
+
+
+(deftest path->db-path-test
+  (testing "Converts file system path to db path"
+    (when (fs/windows?)
+      (is (= ""
+             (#'fsdb/path->db-path "c:\\folder1" "c:\\folder1")))
+      (is (= ""
+             (#'fsdb/path->db-path "c:\\folder1" "c:\\folder1\\")))
+      (is (= "folder2"
+             (#'fsdb/path->db-path "c:\\folder1" "c:\\folder1\\folder2")))
+      (is (= "folder2/folder3"
+             (#'fsdb/path->db-path "c:\\folder1" "c:\\folder1\\folder2\\folder3")))
+
+      (is (thrown? AssertionError  (#'fsdb/path->db-path "c:\\folder1" "c:\\"))
+          "throws when path is not in db")
+      (is (thrown? AssertionError  (#'fsdb/path->db-path "folder1" "c:\\folder1"))
+          "throws when root-path is not relative")
+      (is (thrown? AssertionError  (#'fsdb/path->db-path "c:\\folder1" "c:\\folder1\\.."))
+          "throws when path is not in db"))))
