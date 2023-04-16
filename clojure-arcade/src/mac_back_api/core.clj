@@ -57,23 +57,24 @@
        possible-steps
        first
        move))
-;; level 2 --------------------------------------------------------------
 
-(def level-2-moves (atom [:right :right :right :right
+;; level 3 --------------------------------------------------------------
+
+(def level-3-moves (atom [:right :right :right :right
                           :down
                           :down
                           :left :left :left :left
                           :up :up]))
 
-(defn level-2 [_]
-  (let [next-move (first @level-2-moves)]
-    (swap! level-2-moves rest)
+(defn level-3 [_]
+  (let [next-move (first @level-3-moves)]
+    (swap! level-3-moves rest)
     (println (str "-----> move " next-move))
     (move next-move)))
 
-;; level-3 --------------------------------------------------------------
+;; level-4 --------------------------------------------------------------
 
-(def level-3-moves (atom (concat (repeat 6 :right)
+(def level-4-moves (atom (concat (repeat 6 :right)
                                  (repeat 4 :down)
                                  (repeat 6 :left)
                                  (repeat 3 :up)
@@ -81,15 +82,15 @@
                                  (repeat 5 :right)
                                  (repeat 2 :left)
                                  (repeat 1 :up)
-                                 (repeat 3 :down)
-                                 
-                                 )))
+                                 (repeat 3 :down))))
 
-(defn level-3 [_]
-  (let [next-move (first @level-3-moves)]
-    (swap! level-3-moves rest)
+(defn level-4 [_]
+  (let [next-move (first @level-4-moves)]
+    (swap! level-4-moves rest)
     (println (str "-----> move " next-move))
     (move next-move)))
+
+;; level-5 --------------------------------------------------------------
 
 ;; Game Engine -----------------------------------------------------------
 
@@ -109,9 +110,11 @@
         (do
           (clojure.pprint/pprint data)
 
-          #_(level-1 data)
-          #_(level-2 data)
-          (level-3 data)
+          #_(level-0 data)
+          #_(level-1 data) ;; works on level-2
+          
+          #_(level-3 data)
+          (level-4 data)
 
           (recur))))))
 
