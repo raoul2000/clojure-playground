@@ -10,9 +10,12 @@
   (game/start-engine)
   (game/start-loop level-0)
   (game/start-action)
-  (game/restart-action)
 
   (game/stop-loop)
+  ;; eval level if needed
+  (game/start-loop level-0)
+  (game/restart-action)
+
 
   (game/stop-engine)
   ;;
