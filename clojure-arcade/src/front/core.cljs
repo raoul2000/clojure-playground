@@ -1,11 +1,11 @@
 (ns core
   (:require
    [re-frame.core :as rf]
-   [maze :as maze]))
+   [app :as app]))
 
 
 (defn run []
-  (maze/render "root"))
+  (app/render "root"))
 
 (def debug? ^boolean goog.DEBUG)
 
