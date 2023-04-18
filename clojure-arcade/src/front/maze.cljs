@@ -21,14 +21,6 @@
            (nth x))
        (catch js/Error _ nil)))
 
-(defn pacman-position [matrix]
-  (let [index (->> matrix
-                   flatten
-                   (keep-indexed #(when (= %2 "P") %1))
-                   first)
-        col-count (count (first matrix))]
-    [(mod index col-count) (quot index col-count)]))
-
 (defn find-in-grid [grid v]
   (let [index (->> grid
                    flatten
@@ -37,6 +29,23 @@
         col-count (count (first grid))]
     (when index
       [(mod index col-count) (quot index col-count)])))
+
+(comment
+  (def grid [[:a :b :c :d]
+             [:e :f :g :a]
+             [:i :j :k :a]])
+  ;; FIXME: find does not work
+  (def grid2 (repeat 6 [1 2 3 4]))
+  (->> grid2
+       flatten
+       (keep-indexed #(when (= %2 4) %1))
+
+       (map #(vector
+              (quot % (inc (count (first grid2)))) (quot % (dec (count grid2))))))
+  (quot 20 5)
+  
+  ;;
+  )
 
 (defn adjacent-positions
   "Returns a vector of *[x y]* adjacent to *x1, y1*
