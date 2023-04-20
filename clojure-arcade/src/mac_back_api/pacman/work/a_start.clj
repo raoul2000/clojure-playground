@@ -76,10 +76,38 @@
   (not= "W" (at-position grid [x y])))
 
 (comment
-    (def grid-1 [[:a "W" :c :d]
-                 [1  2  3  4]
-                 [:W :X :Y :Z]])
-  
+  (def grid-1 [[:a "W" :c :d]
+               [1  2  3  4]
+               [:W :X :Y :Z]])
+
+  (rem 4 4)
+
+  (defn index->pos [grid index]
+    [(rem index (count (first grid)))
+     (quot index (count (first grid)))])
+
+  (quot 3 4)
+  (index->pos grid-1 4)
+  (index->pos grid-1 0)
+  (index->pos grid-1 1)
+  (index->pos grid-1 2)
+  (index->pos grid-1 3)
+  (index->pos grid-1 4)
+  (index->pos grid-1 5)
+
+  (->> grid-1
+       flatten
+       (keep-indexed #(when (= :Z %2) %1))
+       (map (partial index->pos grid-1)))
+
+
+
+
+  (#{1 2} 1)
+
+
+
+
   (possible-moves [1 1] (partial free-pos? grid-1))
   ;;
   )
