@@ -11,6 +11,11 @@
 (defn set-at-position [grid [x y] s]
   (update grid y assoc x s))
 
+(defn index->pos [grid index]
+  (let [line-length (count (first grid))]
+    [(rem index line-length)
+     (quot index line-length)]))
+
 (defn at-position
   "Given a *grid* returns item at position *coord*, an array [x y].
    
