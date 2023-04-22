@@ -1,42 +1,28 @@
 (ns sfsdb.read2
   (:require [babashka.fs :as fs]
-            [clojure.string :as str]
+            [clojure.string :as s]
             [clojure.data.json :as json]))
 
 (def metadata-extension "extension for metadata file" "meta")
-(def dot-meta-ext (str "." metadata-extension))
 
 (defn- meta-file?
-  "Given a file relatvie/absolute *path* returns TRUE if it refers to a metadata
+  "Given a file relative/absolute *path* returns TRUE if it refers to a metadata
    file, FALSE otherwise.
    
    *path* must be coercible to String"
   [path]
   (when-let [str-path (str path)]
-    (str/ends-with? str-path dot-meta-ext)))
+    (s/ends-with? str-path (str "." metadata-extension))))
 
-(defn- in-db? 
+(defn- in-db?
   "True if *db-path* describes an object inside the db"
   [db-path]
-  (and (not (str/starts-with? db-path "/"))
+  (and (not (s/starts-with? db-path "/"))
        (not (->> db-path
                  (fs/normalize)
                  (fs/components)
                  (map str)
                  (some #(= ".." %))))))
-
-(comment
-
-  (last (fs/list-dir "test/fixture/fs/root/folder-1"))
-  (meta-file? "a\\d\\.meta")
-  (meta-file? (first  (fs/list-dir "test/fixture/fs/root/folder-1")))
-  (fs/path "a/b/.meta")
-  (meta-file? (fs/path "a/b/.meta"))
-  (meta-file? (fs/path ".meta"))
-  (meta-file? "a/b/.meta")
-  (meta-file? ".meta")
-
-  (fs/extension "a\\b\\.meta"))
 
 (defn- make-metadata-path
   "Given a *path* returns the path to the metadata file describing *path*.
@@ -59,7 +45,7 @@
         (json/read-str (slurp (fs/file meta-path)) :key-fn keyword)
         (catch Exception e (str "caught exception: " (.getMessage e)))))))
 
-(defn- path->db-path 
+(defn- path->db-path
   "Converts *path* an OS file system absolute path into a db path. The db *root-path*
    is an absolute path to the DB root folder.
    
@@ -74,24 +60,8 @@
    :post [(in-db? %)]}
   (->> (fs/relativize root-path path)
        fs/components
-       (str/join "/")))
+       (s/join "/")))
 
-(comment
-  (path->db-path (fs/path "c:\\folder1") (fs/path "c:\\folder1\\folder2"))
-  (path->db-path (fs/path "/folder1") (fs/path "/folder1/folder2"))
-  (path->db-path (fs/path "c:\\folder1") (fs/path ".\\folder1\\folder2"))
-  (path->db-path (fs/path "c:\\folder1")  "c:\\folder8\\folder2")
-  (path->db-path (fs/path "c:\\folder1") (fs/path "c:\\folder1\\folder2\\folder3"))
-  (path->db-path (fs/path (fs/cwd)) (fs/path (fs/cwd) "aaa"))
-  (fs/components (fs/relativize (fs/path (fs/cwd)) (fs/path (fs/cwd) "aaa/bbb")))
-  (fs/split-paths (str (fs/relativize (fs/path (fs/cwd)) (fs/path (fs/cwd) "aaa\\bbb"))))
-  (fs/components (str (fs/relativize (fs/path (fs/cwd)) (fs/path (fs/cwd) "aaa\\bbb"))))
-
-  (str/join "/" (fs/components (str (fs/relativize (fs/path (fs/cwd)) (fs/path (fs/cwd) "aaa\\bbb")))))
-
-
-  ;;
-  )
 
 (defn- path->obj [path root-path with-meta?]
   (cond-> {:name (fs/file-name path)
@@ -143,7 +113,7 @@
    - `:root-path` : base folder base used to resolve `db-path`. If not set, *current 
    working dir* is used
    
-   Throws is `db-path` is not relative.
+   Throws if `db-path` is not relative.
    "
   [db-path {:keys [with-meta? root-path]
             :or   {root-path (fs/cwd)}}]
@@ -277,3 +247,41 @@
 
   ;;
   )
+
+(defn- parent-of
+  "Returns the parent db path of *db-path* or nil if *db-path* has no parent.
+   
+   Example:
+   ```clojure
+   (parent-of \"a/b/c\")
+   => \"a/b\"
+   (parent-of \"a\")
+   => nil
+   ``` 
+   "
+  [db-path]
+  (when-let [parent (butlast (s/split db-path #"/"))]
+    (s/join  "/" parent)))
+
+
+(defn select-ancestors
+  "Returns all objects ancestors of *db-path* where *selected? object* is true.
+   Ancestors are ordered from closest to farthest relatively to *db-path*.
+   
+   *options* is the same map as in `read-db-path` with possibly extra key:
+   - `:find-first?` : when true, returns only first ancestor
+   "
+  [db-path selected? {:keys [find-first?]
+                      :as   options}]
+  (loop [parent (parent-of db-path)
+         result []]
+    (if (or (nil? parent)
+            (and find-first?
+                 (not-empty result)))
+      result
+      (recur (parent-of parent)
+             (let [parent-obj (read-db-path parent options)]
+               (cond-> result
+                 (selected? parent-obj) (conj parent-obj)))))))
+
+
