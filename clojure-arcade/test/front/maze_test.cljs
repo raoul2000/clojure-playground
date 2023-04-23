@@ -44,35 +44,35 @@
                 [:d :e :f]
                 [:g :h :i]]]
       (are [x y] (= x y)
-        :a (maze/at-position grid [0 0])
-        :b (maze/at-position grid [1 0])
-        :i (maze/at-position grid [2 2]))))
+        :a (maze/get-at-position grid [0 0])
+        :b (maze/get-at-position grid [1 0])
+        :i (maze/get-at-position grid [2 2]))))
 
   #_(testing "throws when index out of bounds"
       (let [grid [[:a :b :c]
                   [:d :e :f]
                   [:g :h :i]]]
         (is (thrown? js/Error
-                     (maze/at-position grid [0 3])))
+                     (maze/get-at-position grid [0 3])))
         (is (thrown? js/Error
-                     (maze/at-position grid [3 0])))
+                     (maze/get-at-position grid [3 0])))
         (is (thrown? js/Error
-                     (maze/at-position grid [-1 0])))
+                     (maze/get-at-position grid [-1 0])))
         (is (thrown? js/Error
-                     (maze/at-position grid [0 -1])))))
+                     (maze/get-at-position grid [0 -1])))))
 
   (testing "returns nil when index out of bounds"
     (let [grid [[:a :b :c]
                 [:d :e :f]
                 [:g :h :i]]]
       (is (nil?
-           (maze/at-position grid [0 3])))
+           (maze/get-at-position grid [0 3])))
       (is (nil?
-           (maze/at-position grid [3 0])))
+           (maze/get-at-position grid [3 0])))
       (is (nil?
-           (maze/at-position grid [-1 0])))
+           (maze/get-at-position grid [-1 0])))
       (is (nil?
-           (maze/at-position grid [0 -1]))))))
+           (maze/get-at-position grid [0 -1]))))))
 
 (deftest in-grid?-test
   (testing "test a pos is in grid"
@@ -94,9 +94,9 @@
                 [0 0 0]
                 [0 0 0]]
           free-pos? (fn [pos]
-                      (zero? (maze/at-position grid pos)))
+                      (zero? (maze/get-at-position grid pos)))
           free-pos2? (fn [pos]
-                       (pos-int? (maze/at-position grid pos)))]
+                       (pos-int? (maze/get-at-position grid pos)))]
       (is (= [[1 0] [0 1]]
              (maze/possible-moves [0 0] free-pos?)))
       (is (= '([2 1] [0 1] [1 2] [1 0])
@@ -109,7 +109,7 @@
                 [0 0 0]
                 [0 0 0]]
           free-pos? (fn [pos]
-                      (zero? (maze/at-position grid pos)))]
+                      (zero? (maze/get-at-position grid pos)))]
       (is (= []
              (maze/possible-moves [3 3] free-pos?)))
       (is (= [[0 1]]
@@ -137,3 +137,21 @@
         [2 2] :k
         [3 2] :l
         nil   :not-found))))
+
+(deftest index->pos-test
+      (testing "when success"
+        (are [pos index] (= pos (maze/index->pos [[1 2 3 4]
+                                                  [1 2 3 4]
+                                                  [1 2 3 4]] index) )
+          [0 0] 0
+          [1 0] 1
+          [2 0] 2
+          [3 0] 3
+          [0 1] 4
+          [1 1] 5
+          [2 1] 6
+          [3 1] 7
+
+          [-1 0] -1
+          )
+        )) 

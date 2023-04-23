@@ -16,7 +16,7 @@ Follow the instructions in `mac-back-api.core`
 
 
 - start front
-```
- $ export PATH="/c/Program Files/Java/jdk-17.0.1/bin:$PATH"
- $ npx shadow-cljs watch app
+```shell
+$ export PATH="/c/Program Files/Java/jdk-17.0.1/bin:$PATH"
+$ npx shadow-cljs watch app
 ```

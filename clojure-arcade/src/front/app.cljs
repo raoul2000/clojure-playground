@@ -69,6 +69,31 @@
   (rf/dispatch [:update-pen new-pen]))
 
 
+(rf/reg-event-db
+ :reset
+ (fn [db _]
+   (merge db (create-initial-state))))
+
+(defn >reset []
+  (rf/dispatch [:reset]))
+
+
+(defn set-adjacent-pos [grid pos]
+  (if pos
+    (reduce (fn [acc pos]
+              (maze/set-at-position acc pos :target))
+            grid
+            (maze/possible-moves pos #(= :clear (maze/get-at-position grid %))))
+    grid))
+
+(rf/reg-event-db
+ :select-adjacent
+ (fn [db _]
+   (update db :maze set-adjacent-pos (maze/find-in-grid (:maze db) :origin))))
+
+(defn >select-adjacent []
+  (rf/dispatch [:select-adjacent]))
+
 ;; view ------------------------------------------------
 
 (defn render-col [y x col]
@@ -104,6 +129,11 @@
                                        :class (when (= pen k) "is-danger")}
                (str (pen-symbol k) " " (pen-label k))]]) pen-coll)]]))
 
+(defn action-bar []
+  [:div
+   [:button.button {:on-click #(>select-adjacent)} "Adjacent"]
+   [:button.button.is-danger {:on-click #(>reset)} "Reset "]])
+
 ;; main -------------------------------------------------
 
 
@@ -111,6 +141,8 @@
   [:div
    [:div.box
     [maze]]
+   [:div.box
+    [action-bar]]
    [:div.box
     [select-pen]]])
 

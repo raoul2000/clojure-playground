@@ -83,8 +83,9 @@
   (rem 4 4)
 
   (defn index->pos [grid index]
-    [(rem index (count (first grid)))
-     (quot index (count (first grid)))])
+    (let [line-length (count (first grid))]
+      [(rem index line-length)
+       (quot index line-length)]))
 
   (quot 3 4)
   (index->pos grid-1 4)
@@ -94,6 +95,7 @@
   (index->pos grid-1 3)
   (index->pos grid-1 4)
   (index->pos grid-1 5)
+  (index->pos grid-1 50)
 
   (->> grid-1
        flatten
