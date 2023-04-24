@@ -88,8 +88,8 @@
         false (maze/in-grid? grid [-1 0])
         false (maze/in-grid? grid [0 -1])))))
 
-(deftest possible-moves-test
-  (testing "Find possible positions for nect move"
+(deftest free-adjacent-positions-test
+  (testing "Find possible positions for next move"
     (let [grid [[0 0 0]
                 [0 0 0]
                 [0 0 0]]
@@ -98,11 +98,11 @@
           free-pos2? (fn [pos]
                        (pos-int? (maze/get-at-position grid pos)))]
       (is (= [[1 0] [0 1]]
-             (maze/possible-moves [0 0] free-pos?)))
+             (maze/free-adjacent-positions [0 0] free-pos?)))
       (is (= '([2 1] [0 1] [1 2] [1 0])
-             (maze/possible-moves [1 1] free-pos?)))
+             (maze/free-adjacent-positions [1 1] free-pos?)))
       (is (= []
-             (maze/possible-moves [1 1] free-pos2?)))))
+             (maze/free-adjacent-positions [1 1] free-pos2?)))))
 
   (testing "when pos is out of bounds"
     (let [grid [[0 0 0]
@@ -111,11 +111,11 @@
           free-pos? (fn [pos]
                       (zero? (maze/get-at-position grid pos)))]
       (is (= []
-             (maze/possible-moves [3 3] free-pos?)))
+             (maze/free-adjacent-positions [3 3] free-pos?)))
       (is (= [[0 1]]
-             (maze/possible-moves [-1 1] free-pos?)))
+             (maze/free-adjacent-positions [-1 1] free-pos?)))
       (is (= [[1 0]]
-             (maze/possible-moves [1 -1] free-pos?))))))
+             (maze/free-adjacent-positions [1 -1] free-pos?))))))
 
 (deftest find-in-grid-test
   (testing "find first pos of given value in grid"
@@ -139,19 +139,17 @@
         nil   :not-found))))
 
 (deftest index->pos-test
-      (testing "when success"
-        (are [pos index] (= pos (maze/index->pos [[1 2 3 4]
-                                                  [1 2 3 4]
-                                                  [1 2 3 4]] index) )
-          [0 0] 0
-          [1 0] 1
-          [2 0] 2
-          [3 0] 3
-          [0 1] 4
-          [1 1] 5
-          [2 1] 6
-          [3 1] 7
+  (testing "when success"
+    (are [pos index] (= pos (maze/index->pos [[1 2 3 4]
+                                              [1 2 3 4]
+                                              [1 2 3 4]] index))
+      [0 0] 0
+      [1 0] 1
+      [2 0] 2
+      [3 0] 3
+      [0 1] 4
+      [1 1] 5
+      [2 1] 6
+      [3 1] 7
 
-          [-1 0] -1
-          )
-        )) 
+      [-1 0] -1)))

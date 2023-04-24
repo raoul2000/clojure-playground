@@ -83,7 +83,7 @@
     (reduce (fn [acc pos]
               (maze/set-at-position acc pos :target))
             grid
-            (maze/possible-moves pos #(= :clear (maze/get-at-position grid %))))
+            (maze/free-adjacent-positions pos #(= :clear (maze/get-at-position grid %))))
     grid))
 
 (rf/reg-event-db

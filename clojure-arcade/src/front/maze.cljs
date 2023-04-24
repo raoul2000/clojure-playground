@@ -61,7 +61,7 @@
    [x1 (inc y1)]
    [x1 (dec y1)]])
 
-(defn possible-moves [[x y] free-pos?]
+(defn free-adjacent-positions [[x y] free-pos?]
   (->> (adjacent-positions [x y])
        (filter free-pos?)))
 
@@ -137,14 +137,26 @@
    :current    start
    :start-pos  start
    :end-pos    end
-   :grid       grid})
+   :grid       grid
+   :free-pos?  (fn [grid]
+                 (fn [pos]
+                   (= :clear (get-at-position grid pos))))})
 
-(defn find-adjacent-pos [grid pos]
-  (let [free-pos? (fn [pos])])
+(defn select-new-current [open-list]
+  (reduce (fn [res item]
+            (if (nil? res)
+              item
+              ())
+            ) nil open-list)
   )
 
-(defn update-state [state]
-  (let [adjacent (find-adjacent-pos (:grid state) (:current state) )])
+(comment
+  (max 1 2)
+
+  )
+
+(defn update-state [{:keys [grid free-pos? current] :as state}]
+  (let [adjacent-pos (free-adjacent-positions current (free-pos? grid))])
   state)
 
 (defn build-path [state]
