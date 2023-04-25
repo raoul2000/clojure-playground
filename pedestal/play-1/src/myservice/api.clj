@@ -24,7 +24,7 @@
 
 (defn greeting-for [name]
   (cond
-    (nil? name)            "hello, stranger"
+    (nil? name)            "hello, stranger !! :)"
     (#{"bob" "max"} name)  nil
     :else                  (str "hello, " name)))
 
@@ -90,7 +90,8 @@
 
 ;; to test route in the REPL
 ;; (route/try-routing-for hello/routes :prefix-tree "/greet" :get)
-(def routes
+(defn routes []
+  (println "loading route ...")
   (route/expand-routes
    #{["/greet"                    :get    [coerce-body
                                            content-neg-intc
@@ -110,8 +111,7 @@
      ;;
 
      ["/echo"                     :post   [(body-params/body-params)
-                                           echo]                   :route-name :echo-post]
-
+                                           echo]                   :route-name :echo-post] 
      ["/todo"                     :post   [todo/db-interceptor
                                            todo/list-create]       :route-name :list-create]
 
@@ -135,8 +135,9 @@
      ;;
      }))
 
-(def service-map
-  {::http/routes            routes
+(defn service-map []
+  (println "loading service-map...")
+  {::http/routes            (routes)
    ::http/resource-path     "/public"
    ::http/type              :jetty
    ::http/port              8890})
@@ -146,7 +147,7 @@
 
 (defn start-server []
   (http/start (http/create-server
-               (assoc service-map
+               (assoc (service-map)
                       ::http/join? false))))
 
 ;; interactive development ----------------------------------------------
@@ -165,8 +166,11 @@
 (defn start-dev []
   (reset! server (start-server)))
 
-(defn stop-dev []
-  (http/stop @server))
+(defn stop-dev
+  ([srv]
+   (http/stop srv))
+  ([]
+   (http/stop @server)))
 
 (defn restart []
   (stop-dev)
@@ -195,5 +199,5 @@
 (defn -main
   [& args]
   (greet {:name (first args)})
-  (println (str "now starting server at port " (service-map ::http/port)))
+  #_(println (str "now starting server at port " (service-map ::http/port)))
   (start-server))
