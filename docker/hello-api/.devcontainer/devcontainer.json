@@ -10,7 +10,18 @@
 	"dockerFile": "Dockerfile",
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [8890]
+	"forwardPorts": [
+		8890
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"betterthantomorrow.calva",
+				"mhutchie.git-graph",
+				"johnpapa.vscode-peacock"
+			]
+		}
+	}
 
 
 	// Uncomment the next line to run commands after the container is created - for example installing curl.
