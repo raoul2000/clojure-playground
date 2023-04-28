@@ -7,10 +7,12 @@
 
 ;; subs ---------------------------------------------
 (defn create-initial-state []
-  {:maze [[:clear :clear :clear]
-          [:clear :clear :clear]
-          [:clear :clear :clear]]
-   :pen   :wall})
+  (merge (maze/init-state [[:origin :clear :clear]
+                           [:clear :clear :clear]
+                           [:clear :clear :target]]
+                          [0 0]
+                          [2 2])
+         {:pen :wall}))
 
 (def pen-coll {:wall   {:symbol "🟦"    :label "Wall"}
                :origin {:symbol "🔰"    :label "origin"}
@@ -24,12 +26,12 @@
   (get-in pen-coll [k :label]))
 
 (rf/reg-sub
- :maze
+ :grid
  (fn [db _]
-   (:maze db)))
+   (:grid db)))
 
 (defn <maze []
-  @(rf/subscribe [:maze]))
+  @(rf/subscribe [:grid]))
 
 (rf/reg-sub
  :pen
@@ -51,7 +53,7 @@
 
 
 (defn set-at-pos-handler [db [_ pos]]
-  (update db :maze maze/set-at-position pos (:pen db)))
+  (update db :grid maze/set-at-position pos (:pen db)))
 
 (rf/reg-event-db
  :set-at-pos
@@ -89,7 +91,7 @@
 (rf/reg-event-db
  :select-adjacent
  (fn [db _]
-   (update db :maze set-adjacent-pos (maze/find-in-grid (:maze db) :origin))))
+   (update db :grid set-adjacent-pos (maze/find-in-grid (:grid db) :origin))))
 
 (defn >select-adjacent []
   (rf/dispatch [:select-adjacent]))
@@ -101,6 +103,8 @@
    {:key     x
     :data-x  x
     :data-y  y
+    :style {:background-color "yello"
+            :border  "2 px solid green"}
     :on-click (fn [e]
                 (let [dataset (-> e .-target .-dataset)
                       pos [(js/parseInt (.-x dataset))
@@ -117,7 +121,8 @@
   (let [grid (<maze)]
     [:div
      [:table.table.is-bordered
-      (map-indexed render-row grid)]]))
+      [:tbody
+       (map-indexed render-row grid)]]]))
 
 (defn select-pen []
   (let [pen (<pen)]

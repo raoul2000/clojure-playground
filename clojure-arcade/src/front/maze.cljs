@@ -138,22 +138,17 @@
    :start-pos  start
    :end-pos    end
    :grid       grid
-   :free-pos?  (fn [grid]
-                 (fn [pos]
-                   (= :clear (get-at-position grid pos))))})
+   :free-pos?  (fn [pos]
+                 (= :clear (get-at-position grid pos)))})
 
 (defn select-new-current [open-list]
   (reduce (fn [res item]
             (if (nil? res)
               item
-              ())
-            ) nil open-list)
-  )
+              ())) nil open-list))
 
 (comment
-  (max 1 2)
-
-  )
+  (max 1 2))
 
 (defn update-state [{:keys [grid free-pos? current] :as state}]
   (let [adjacent-pos (free-adjacent-positions current (free-pos? grid))])
