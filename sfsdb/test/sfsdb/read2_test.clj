@@ -6,6 +6,7 @@
 
 
 (def options {:with-meta? true
+              :with-content? true
               :root-path (fs/path (fs/path (fs/cwd) "test/fixture/fs/root"))})
 
 (def base-path (fs/path (fs/cwd) "test/fixture/fs/root"))

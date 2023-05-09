@@ -15,7 +15,18 @@
     (s/ends-with? str-path (str "." metadata-extension))))
 
 (defn- in-db?
-  "True if *db-path* describes an object inside the db"
+  "True if *db-path* describes an object inside the db
+   
+   Example:
+   ```clojure
+   (in-db? \"../item\")
+   => false
+   (in-db? \"item\")
+   => true
+   (in-db? \"item/../other-item\")
+   => true
+   ```
+   "
   [db-path]
   (and (not (s/starts-with? db-path "/"))
        (not (->> db-path
@@ -26,7 +37,7 @@
 
 (defn- make-metadata-path
   "Given a *path* returns the path to the metadata file describing *path*.
-   The returned path is not garanteed to exsits on the file system."
+   The returned path is not garanteed to exsit on the file system."
   [path]
   (if (fs/directory? path)
     (fs/path path (str "." metadata-extension))
@@ -53,7 +64,7 @@
    ```clojure
    (path->db-path \"c:\\folder1\\db\" \"c:\\folder1\\db\\folder2\\folder3\")
    => \"folder2/folder3\"
-
+   ```
    "
   [root-path path]
   {:pre [root-path path (fs/absolute? root-path) (fs/absolute? path)]
@@ -69,39 +80,47 @@
            :path (path->db-path root-path path)}
     with-meta? (assoc :meta (read-meta path))))
 
-(defn- read-directory [dir-path root-path with-meta?]
-  (-> (path->obj dir-path root-path with-meta?)
-      (assoc :content (->> (fs/list-dir dir-path)
-                           (remove meta-file?)
-                           (map #(path->obj % root-path with-meta?))))))
+(defn- read-directory [dir-path root-path with-meta? with-content?]
+  (cond-> (path->obj dir-path root-path with-meta?)
+    with-content?  (assoc :content (->> (fs/list-dir dir-path)
+                                        (remove meta-file?)
+                                        (map #(path->obj % root-path with-meta?))))))
 
 (comment
   (def root-path (fs/cwd))
   (read-directory (fs/path (fs/cwd) "test/fixture/fs/root/folder-1")
                   root-path
-                  true)
+                  true
+                  false)
   (read-directory (fs/path (fs/cwd) "test/fixture/fs/root/folder-1/folder-1-A")
                   root-path
-                  true)
+                  true
+                  false)
   (read-directory (fs/path (fs/cwd) "test/fixture/fs/root/folder-2")
                   root-path
+                  true
                   true)
   ;;
   )
 
-(defn- read-file [file-path root-path with-meta?]
+
+(defn- read-file [file-path root-path with-meta? with-content?]
   (when-not (meta-file? file-path)
-    (-> (path->obj file-path root-path with-meta?)
-        (assoc :content (slurp (str file-path))))))
+    (cond-> (path->obj file-path root-path with-meta?)
+      with-content? (assoc :content (slurp (str file-path))))))
 
 (comment
   (def root-path (fs/cwd))
   (read-file (fs/path (fs/cwd) "test/fixture/fs/root/folder-1/.meta")
              root-path
-             true)
+             true true)
   (read-file (fs/path (fs/cwd) "test/fixture/fs/root/folder-1/folder-1-A/file-1A-1.txt")
              root-path
-             true)
+             true true)
+  (read-file (fs/path (fs/cwd) "test/fixture/fs/root/folder-1/folder-1-A/file-1A-1.txt")
+             root-path
+             true
+             false)
   ;;
   )
 
@@ -109,19 +128,20 @@
   "Returns a map describing the file or a folder at `db-path`. 
    
    Option maps:
+   - `:with-content?` : read object content
    - `:with-meta?` : read object metadata
    - `:root-path` : base folder base used to resolve `db-path`. If not set, *current 
    working dir* is used
    
    Throws if `db-path` is not relative.
    "
-  [db-path {:keys [with-meta? root-path]
+  [db-path {:keys [with-meta? with-content? root-path]
             :or   {root-path (fs/cwd)}}]
   (let [path (fs/path root-path db-path)]
     (when (fs/exists? path)
       (if (fs/directory? path)
-        (read-directory path root-path with-meta?)
-        (read-file      path root-path with-meta?)))))
+        (read-directory path root-path with-meta? with-content?)
+        (read-file      path root-path with-meta? with-content?)))))
 
 (comment
   (def root-path (fs/path (fs/cwd)))
@@ -152,6 +172,11 @@
                                                       (vswap! path-coll conj path))
                                                     :continue)})
       (map #(path->obj % abs-path with-meta?) @path-coll))))
+
+(defn select-descendants  ;; TODO: implement me !
+  ""
+  [db-path selected? options])
+
 
 (comment
   (def root-path (fs/path (fs/cwd) "test"))
