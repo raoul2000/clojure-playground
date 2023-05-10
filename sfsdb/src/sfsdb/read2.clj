@@ -173,10 +173,66 @@
                                                     :continue)})
       (map #(path->obj % abs-path with-meta?) @path-coll))))
 
-(defn select-descendants  ;; TODO: implement me !
-  ""
-  [db-path selected? options])
+(defn- walk-and-select [dir-path selected? {:keys [root-path]
+                                            :as   options}]
+  (let [result    (volatile! [])
+        fn-filter (fn [path]
+                    (let [db-path (path->db-path root-path path)
+                          obj     (read-db-path  db-path options)]
+                      (when (selected? obj)
+                        (vswap! result conj obj))))]
+    (fs/walk-file-tree dir-path {:pre-visit-dir (fn [path _attr]
+                                                  (when-not (= path dir-path)
+                                                    (fn-filter path))
+                                                  :continue)
+                                 :visit-file    (fn [path _attr]
+                                                  (when-not (meta-file? path)
+                                                    (fn-filter path))
+                                                  :continue)})
+    @result))
 
+(comment
+  (defn pre1 [obj]
+    #_(tap> obj)
+    true)
+
+  (walk-and-select (fs/path (fs/cwd) "test/fixture/fs/root/folder-1")
+                   pre1
+                   {:root-path (fs/path (fs/cwd) "test/fixture/fs/root")})
+
+  (walk-and-select (fs/path (fs/cwd) "test/fixture/fs/root/folder-1")
+                   (fn [obj]
+                     (and
+                      (not (:dir? obj))
+                      (= "long folder name" (get-in obj [:meta :fullname]))))
+                   {:root-path (fs/path (fs/cwd) "test/fixture/fs/root")
+                    :with-meta? true
+                    :with-content? true})
+
+  ;;
+  )
+
+(defn select-descendants
+  "Selects all objects descendant of *db-path* where *selected? object* is true.
+   
+   *db-path* must refer to a dir.
+   *options* is the same map as in `read-db-path`.
+   "
+  [db-path selected? {:keys [root-path]
+                      :or   {root-path (fs/cwd)}
+                      :as   options}]
+  (let [path (fs/path root-path db-path)]
+    (when (fs/directory? path)
+      (walk-and-select path selected? options))))
+
+(comment
+
+  (select-descendants "folder-1" 
+                      (constantly true)
+                      {:root-path (fs/path (fs/cwd) "test/fixture/fs/root") 
+                       :with-meta? true})
+
+  )
 
 (comment
   (def root-path (fs/path (fs/cwd) "test"))
