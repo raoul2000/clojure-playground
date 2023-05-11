@@ -169,3 +169,35 @@
                                   (constantly true)
                                   (assoc options :find-first? false))))))
 
+
+(deftest walk-and-select-test
+  (testing "when items are selected"
+    (is (= [{:name ".gitkeep",           :dir? false, :path "folder-2/.gitkeep"}
+            {:name "invalid-meta-1.txt", :dir? false, :path "folder-2/invalid-meta-1.txt"}]
+           (#'fsdb/walk-and-select (fs/path base-path "folder-2")
+                                   (constantly true)
+                                   {:root-path base-path})))
+
+    (is (= [{:name ".gitkeep", :dir? false, :path "folder-1/folder-1-A/.gitkeep"}
+            {:name "file-1A-1.txt",  :dir? false, :path "folder-1/folder-1-A/file-1A-1.txt"}
+            {:name "file-1A-2.txt",  :dir? false, :path "folder-1/folder-1-A/file-1A-2.txt"}
+            {:name "folder-1-A-blue",:dir? true,  :path "folder-1/folder-1-A/folder-1-A-blue"}
+            {:name ".gitkeep",       :dir? false, :path "folder-1/folder-1-A/folder-1-A-blue/.gitkeep"}]
+           (#'fsdb/walk-and-select (fs/path base-path "folder-1/folder-1-A")
+                                   (constantly true)
+                                   {:root-path base-path}))))
+
+  (testing "when no item is selected"
+    (is (empty? (#'fsdb/walk-and-select (fs/path base-path "folder-1")
+                                        (constantly false)
+                                        {:root-path base-path}))))
+
+  (testing "throws when dir-path does not exist"
+    (is (thrown? Exception (#'fsdb/walk-and-select (fs/path base-path "not_found")
+                                                   (constantly false)
+                                                   {:root-path base-path}))))
+
+  (testing "return empty seq when dir-path refers to a file"
+    (is (empty? (#'fsdb/walk-and-select (fs/path base-path "folder-2/invalid-meta-1.txt")
+                                        (constantly false)
+                                        {:root-path base-path})))))
