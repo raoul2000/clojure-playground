@@ -10,7 +10,7 @@
               :root-path (fs/path (fs/path (fs/cwd) "test/fixture/fs/root"))})
 
 (def base-path (fs/path (fs/cwd) "test/fixture/fs/root"))
-
+(def read-meta #'fsdb/read-meta)
 
 (deftest meta-file?-test
   (testing "meta-file? predicate"
@@ -35,7 +35,6 @@
     (is (= (fs/path base-path "folder-1" "folder-1-A" (str "file.txt." fsdb/metadata-extension))
            (#'fsdb/make-metadata-path (fs/path base-path  "folder-1" "folder-1-A" "file.txt"))))))
 
-(def read-meta #'fsdb/read-meta)
 
 
 
@@ -66,8 +65,6 @@
            (read-meta (fs/path base-path "folder-2/invalid-meta-1.txt"))))))
 
 
-
-
 (deftest in-db?-test
   (testing "test predicate"
     (are [pred db-path] (pred (#'fsdb/in-db? db-path))
@@ -87,7 +84,6 @@
       false?  "a/b/../../.."
       false?  "/a/b"
       false?  "/../a")))
-
 
 
 (deftest path->db-path-test
@@ -110,7 +106,6 @@
           "throws when path is not in db"))))
 
 
-
 (deftest parent-of-test
   (testing "returns parent path "
     (are [parent db-path] (= parent (#'fsdb/parent-of db-path))
@@ -118,8 +113,6 @@
       "a"   "a/b"
       "a/b" "a/b/c"
       "a/b" "a/b/file.txt")))
-
-
 
 
 (deftest select-ancerstors-test
@@ -178,13 +171,18 @@
                                    (constantly true)
                                    {:root-path base-path})))
 
-    (is (= [{:name ".gitkeep", :dir? false, :path "folder-1/folder-1-A/.gitkeep"}
+    (is (= [{:name ".gitkeep",       :dir? false, :path "folder-1/folder-1-A/.gitkeep"}
             {:name "file-1A-1.txt",  :dir? false, :path "folder-1/folder-1-A/file-1A-1.txt"}
             {:name "file-1A-2.txt",  :dir? false, :path "folder-1/folder-1-A/file-1A-2.txt"}
             {:name "folder-1-A-blue",:dir? true,  :path "folder-1/folder-1-A/folder-1-A-blue"}
             {:name ".gitkeep",       :dir? false, :path "folder-1/folder-1-A/folder-1-A-blue/.gitkeep"}]
            (#'fsdb/walk-and-select (fs/path base-path "folder-1/folder-1-A")
                                    (constantly true)
+                                   {:root-path base-path})))
+
+    (is (= [{:name "file-1B-1.txt"   :dir? false  :path "folder-1/folder-1-B/file-1B-1.txt"}]
+           (#'fsdb/walk-and-select (fs/path base-path "folder-1/folder-1-B")
+                                   #(= (:name %) "file-1B-1.txt")
                                    {:root-path base-path}))))
 
   (testing "when no item is selected"
@@ -201,3 +199,57 @@
     (is (empty? (#'fsdb/walk-and-select (fs/path base-path "folder-2/invalid-meta-1.txt")
                                         (constantly false)
                                         {:root-path base-path})))))
+
+
+
+
+
+(deftest select-descendants-test
+  (testing "when descendants are found"
+    (is (seq (fsdb/select-descendants "folder-1"
+                                      (constantly true)
+                                      {:root-path base-path})))
+
+    (is (seq (fsdb/select-descendants ""
+                                      (constantly true)
+                                      {:root-path base-path}))))
+
+  (testing "when not descendants are found returns empty seq"
+    (is (empty? (fsdb/select-descendants "folder-1"
+                                         (constantly false)
+                                         {:root-path base-path}))))
+
+  (testing "returns nil when db-path is not found"
+    (is (nil? (fsdb/select-descendants "not_found" identity {}))))
+
+  (testing "throws assertion error when db-path is nil"
+    (is (thrown? AssertionError
+                 (fsdb/select-descendants nil identity {}))))
+
+  (testing "throws assertion error when selected? is not a function"
+    (is (thrown? AssertionError
+                 (fsdb/select-descendants "folder-1" true {}))))
+
+  (testing "throws assertion error when db-path is outside db-root"
+    (is (thrown? AssertionError
+                 (fsdb/select-descendants ".." true {}))))
+
+  (testing "when selector predicate uses metadata"
+    (is (= [{:name "file-1A-1.txt",
+             :dir? false,
+             :path "folder-1/folder-1-A/file-1A-1.txt",
+             :meta
+             {:color "green", :age 12, :sold false, :fruits ["apple" "orange" "banana"]}}]
+           (fsdb/select-descendants ""
+                                    #(= "green" (get-in % [:meta :color]))
+                                    {:root-path base-path
+                                     :with-meta? true}))))
+
+  (testing "when selector predicate uses content"
+    (is (= 5
+           (count (fsdb/select-descendants ""
+                                           #(and (not (:dir? %))
+                                                 (s/starts-with? (:content %) "Occaecat"))
+                                           {:root-path     base-path
+                                            :with-meta?    false
+                                            :with-content? true}))))))

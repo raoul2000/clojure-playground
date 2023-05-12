@@ -191,53 +191,33 @@
                                                   :continue)})
     @result))
 
-(comment
-  (defn pre1 [obj]
-    #_(tap> obj)
-    true)
-
-  (walk-and-select (fs/path (fs/cwd) "test/fixture/fs/root/folder-1")
-                   pre1
-                   {:root-path (fs/path (fs/cwd) "test/fixture/fs/root")})
-
-  (walk-and-select (fs/path (fs/cwd) "test/fixture/fs/root/folder-1")
-                   (fn [obj]
-                     (and
-                      (not (:dir? obj))
-                      (= "long folder name" (get-in obj [:meta :fullname]))))
-                   {:root-path (fs/path (fs/cwd) "test/fixture/fs/root")
-                    :with-meta? true
-                    :with-content? true})
-
-  ;;
-  )
 
 (defn select-descendants
   "Selects all objects descendant of *db-path* where *selected? object* is true.
    
-   *db-path* must refer to a dir.
-   *options* is the same map as in `read-db-path`.
+   - *db-path* must refer to an existing dir.
+   - *options* is the same map as in `read-db-path`.
    "
   [db-path selected? {:keys [root-path]
                       :or   {root-path (fs/cwd)}
                       :as   options}]
+  {:pre [db-path (fn? selected?)]}
   (let [path (fs/path root-path db-path)]
     (when (fs/directory? path)
       (walk-and-select path selected? options))))
 
-(comment
 
-  (select-descendants "folder-1" 
-                      (constantly true)
-                      {:root-path (fs/path (fs/cwd) "test/fixture/fs/root") 
-                       :with-meta? true})
-
-  )
-
-(comment
+#_(comment
   (def root-path (fs/path (fs/cwd) "test"))
 
   (list-all-dirs root-path true)
+
+    (->> (select-descendants ""
+                             #(:dir? %)
+                             {:root-path root-path
+                              :with-meta? true})
+         (map :path))
+  
   (list-all-dirs "test" true)
   (list-all-dirs "NOT_FOUND" true)
   (list-all-dirs "test/fixture/fs/root/folder-1/folder-1-A/file-1A-1.txt" true)
