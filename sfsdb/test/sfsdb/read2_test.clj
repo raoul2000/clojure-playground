@@ -30,7 +30,7 @@
 (deftest make-metadata-path-test
   (testing "create metadata path for folder"
     (is (= (fs/path base-path "folder-1" (str "." fsdb/metadata-extension))
-           (#'fsdb/make-metadata-path (fs/path base-path "folder-1")))))
+           (#'fsdb/make-metadata-path (fs/path base-path  "folder-1")))))
   (testing "create metadata path for file"
     (is (= (fs/path base-path "folder-1" "folder-1-A" (str "file.txt." fsdb/metadata-extension))
            (#'fsdb/make-metadata-path (fs/path base-path  "folder-1" "folder-1-A" "file.txt"))))))
@@ -86,24 +86,57 @@
       false?  "/../a")))
 
 
-(deftest path->db-path-test
+(deftest fs-path->db-path-test
   (testing "Converts file system path to db path"
     (when (fs/windows?)
       (is (= ""
-             (#'fsdb/path->db-path "c:\\folder1" "c:\\folder1")))
+             (#'fsdb/fs-path->db-path "c:\\folder1" "c:\\folder1")))
       (is (= ""
-             (#'fsdb/path->db-path "c:\\folder1" "c:\\folder1\\")))
+             (#'fsdb/fs-path->db-path "c:\\folder1" "c:\\folder1\\")))
       (is (= "folder2"
-             (#'fsdb/path->db-path "c:\\folder1" "c:\\folder1\\folder2")))
+             (#'fsdb/fs-path->db-path "c:\\folder1" "c:\\folder1\\folder2")))
       (is (= "folder2/folder3"
-             (#'fsdb/path->db-path "c:\\folder1" "c:\\folder1\\folder2\\folder3")))
+             (#'fsdb/fs-path->db-path "c:\\folder1" "c:\\folder1\\folder2\\folder3")))
 
-      (is (thrown? AssertionError  (#'fsdb/path->db-path "c:\\folder1" "c:\\"))
+      (is (thrown? AssertionError  (#'fsdb/fs-path->db-path "c:\\folder1" "c:\\"))
           "throws when path is not in db")
-      (is (thrown? AssertionError  (#'fsdb/path->db-path "folder1" "c:\\folder1"))
-          "throws when root-path is not relative")
-      (is (thrown? AssertionError  (#'fsdb/path->db-path "c:\\folder1" "c:\\folder1\\.."))
+      (is (thrown? AssertionError  (#'fsdb/fs-path->db-path "folder1" "c:\\folder1"))
+          "throws when root-path is not absolute")
+      (is (thrown? AssertionError  (#'fsdb/fs-path->db-path "c:\\folder1" "c:\\folder1\\.."))
           "throws when path is not in db"))))
+
+
+(deftest fs-path->obj-test
+  (testing "read object with meta"
+    (is (= {:name "folder-1",  :dir? true,  :path "folder-1",  :meta {:attribute1 "string value"}}
+           (#'fsdb/fs-path->obj (fs/path base-path "folder-1") base-path true)))
+
+    (is (= {:name "file-1A-1.txt",  :dir? false, :path "folder-1/folder-1-A/file-1A-1.txt",
+            :meta {:color "green",
+                   :age 12,
+                   :sold false,
+                   :fruits ["apple" "orange" "banana"]}}
+           (#'fsdb/fs-path->obj (fs/path base-path "folder-1/folder-1-A/file-1A-1.txt") base-path true))))
+
+  (testing "read object with no meta"
+    (is (= {:name "folder-1",  :dir? true,  :path "folder-1"}
+           (#'fsdb/fs-path->obj (fs/path base-path "folder-1") base-path false)))
+
+    (is (= {:name "file-1A-1.txt",  :dir? false, :path "folder-1/folder-1-A/file-1A-1.txt"}
+           (#'fsdb/fs-path->obj (fs/path base-path "folder-1/folder-1-A/file-1A-1.txt") base-path false))))
+
+  (testing "throws when object is not found"
+    (is (thrown? AssertionError
+                 (#'fsdb/fs-path->obj (fs/path base-path "not_found")
+                                      base-path
+                                      true))))
+
+  (testing "throws when root-path is not found"
+    (is (thrown? AssertionError
+                 (#'fsdb/fs-path->obj (fs/path base-path "folder-1")
+                                      (fs/path base-path "not_found")
+                                      true)))))
+
 
 
 (deftest parent-of-test
