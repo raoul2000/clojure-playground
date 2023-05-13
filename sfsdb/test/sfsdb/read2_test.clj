@@ -138,14 +138,16 @@
                                       true)))))
 
 
-
 (deftest parent-of-test
   (testing "returns parent path "
     (are [parent db-path] (= parent (#'fsdb/parent-of db-path))
+      nil  ""
       nil   "a"
       "a"   "a/b"
       "a/b" "a/b/c"
-      "a/b" "a/b/file.txt")))
+      "a/b" "a/b/file.txt"))
+  (testing "throws when db-path is nil"
+    (is (thrown? Exception (#'fsdb/parent-of nil)))))
 
 
 (deftest select-ancerstors-test
