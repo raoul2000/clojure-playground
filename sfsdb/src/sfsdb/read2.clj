@@ -48,45 +48,47 @@
    
    When *path* doesn't exist or when no metadata exists for this *path*, returns `nil`.
    When the meta value is not valid JSON, a string describing the error is returned "
-  [path]
-  (let [meta-path (make-metadata-path path)]
+  [fs-path]
+  (let [meta-path (make-metadata-path fs-path)]
     (when (and (fs/exists?       meta-path)
                (fs/regular-file? meta-path))
       (try
         (json/read-str (slurp (fs/file meta-path)) :key-fn keyword)
         (catch Exception e (str "caught exception: " (.getMessage e)))))))
 
-(defn- path->db-path
-  "Converts *path* an OS file system absolute path into a db path. The db *root-path*
+(defn- fs-path->db-path
+  "Converts *fs-path* an OS file system absolute path into a db path. The db *root-path*
    is an absolute path to the DB root folder.
    
    Example:
    ```clojure
-   (path->db-path \"c:\\folder1\\db\" \"c:\\folder1\\db\\folder2\\folder3\")
+   (fs-path->db-path \"c:\\folder1\\db\" \"c:\\folder1\\db\\folder2\\folder3\")
    => \"folder2/folder3\"
    ```
    "
-  [root-path path]
-  {:pre [root-path path (fs/absolute? root-path) (fs/absolute? path)]
+  [root-path fs-path]
+  {:pre [root-path fs-path (fs/absolute? root-path) (fs/absolute? fs-path)]
    :post [(in-db? %)]}
-  (->> (fs/relativize root-path path)
+  (->> (fs/relativize root-path fs-path)
        fs/components
        (s/join "/")))
 
 
-(defn- path->obj [path root-path with-meta?]
-  (cond-> {:name (fs/file-name path)
-           :dir? (fs/directory? path)
-           :path (path->db-path root-path path)}
-    with-meta? (assoc :meta (read-meta path))))
+(defn- fs-path->obj [fs-path root-path with-meta?]
+  {:pre [(fs/exists? fs-path)]}
+  (cond-> {:name (fs/file-name  fs-path)
+           :dir? (fs/directory? fs-path)
+           :path (fs-path->db-path root-path fs-path)}
+    with-meta? (assoc :meta (read-meta fs-path))))
 
 (defn- read-directory [dir-path root-path with-meta? with-content?]
-  (cond-> (path->obj dir-path root-path with-meta?)
+  (cond-> (fs-path->obj dir-path root-path with-meta?)
     with-content?  (assoc :content (->> (fs/list-dir dir-path)
                                         (remove meta-file?)
-                                        (map #(path->obj % root-path with-meta?))))))
+                                        (map #(fs-path->obj % root-path with-meta?))))))
 
 (comment
+  
   (def root-path (fs/cwd))
   (read-directory (fs/path (fs/cwd) "test/fixture/fs/root/folder-1")
                   root-path
@@ -106,7 +108,7 @@
 
 (defn- read-file [file-path root-path with-meta? with-content?]
   (when-not (meta-file? file-path)
-    (cond-> (path->obj file-path root-path with-meta?)
+    (cond-> (fs-path->obj file-path root-path with-meta?)
       with-content? (assoc :content (slurp (str file-path))))))
 
 (comment
@@ -171,13 +173,13 @@
                                                     (when-not (= path abs-path)
                                                       (vswap! path-coll conj path))
                                                     :continue)})
-      (map #(path->obj % abs-path with-meta?) @path-coll))))
+      (map #(fs-path->obj % abs-path with-meta?) @path-coll))))
 
 (defn- walk-and-select [dir-path selected? {:keys [root-path]
                                             :as   options}]
   (let [result    (volatile! [])
         fn-filter (fn [path]
-                    (let [db-path (path->db-path root-path path)
+                    (let [db-path (fs-path->db-path root-path path)
                           obj     (read-db-path  db-path options)]
                       (when (selected? obj)
                         (vswap! result conj obj))))]
