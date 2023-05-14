@@ -4,10 +4,11 @@
             [sfsdb.read2 :as fsdb]
             [babashka.fs :as fs]))
 
+(def metadata-extension (:metadata-extension fsdb/default-options))
 
-(def options {:with-meta? true
+(def options {:with-meta?    true
               :with-content? true
-              :root-path (fs/path (fs/path (fs/cwd) "test/fixture/fs/root"))})
+              :root-path     (fs/path (fs/path (fs/cwd) "test/fixture/fs/root"))})
 
 (def base-path (fs/path (fs/cwd) "test/fixture/fs/root"))
 (def read-meta #'fsdb/read-meta)
@@ -15,12 +16,12 @@
 (deftest meta-file?-test
   (testing "meta-file? predicate"
     (are [result path] (= result (#'fsdb/meta-file? path))
-      true       (str "." fsdb/metadata-extension)
-      true       (fs/path (str "." fsdb/metadata-extension))
-      true       (str "some-path." fsdb/metadata-extension)
-      true       (fs/path (str "some-path." fsdb/metadata-extension))
-      true       (str "/folder1/folder2/." fsdb/metadata-extension)
-      true       (fs/path (str "/folder1/folder2/." fsdb/metadata-extension))
+      true       (str "." metadata-extension)
+      true       (fs/path (str "." metadata-extension))
+      true       (str "some-path." metadata-extension)
+      true       (fs/path (str "some-path." metadata-extension))
+      true       (str "/folder1/folder2/." metadata-extension)
+      true       (fs/path (str "/folder1/folder2/." metadata-extension))
       false      nil
       false      ""
       false      "/folder1/folder2/"
@@ -29,10 +30,10 @@
 
 (deftest make-metadata-path-test
   (testing "create metadata path for folder"
-    (is (= (fs/path base-path "folder-1" (str "." fsdb/metadata-extension))
+    (is (= (fs/path base-path "folder-1" (str "." metadata-extension))
            (#'fsdb/make-metadata-path (fs/path base-path  "folder-1")))))
   (testing "create metadata path for file"
-    (is (= (fs/path base-path "folder-1" "folder-1-A" (str "file.txt." fsdb/metadata-extension))
+    (is (= (fs/path base-path "folder-1" "folder-1-A" (str "file.txt." metadata-extension))
            (#'fsdb/make-metadata-path (fs/path base-path  "folder-1" "folder-1-A" "file.txt"))))))
 
 
@@ -288,3 +289,51 @@
                                            {:root-path     base-path
                                             :with-meta?    false
                                             :with-content? true}))))))
+
+(def base-path-2 (fs/path (fs/cwd) "test/fixture/fs/root2"))
+
+(deftest read-db-path-test
+  (testing "reading file object with no extra"
+    (is (= {:name "file1.txt", :dir? false, :path "file1.txt"}
+           (fsdb/read-db-path "file1.txt" {:with-meta?    false
+                                           :with-content? false
+                                           :root-path     base-path-2}))))
+
+  (testing "read file object with metadata"
+    (is (= {:name "file1.txt", :dir? false, :path "file1.txt" :meta nil}
+           (fsdb/read-db-path "file1.txt" {:with-meta?    true
+                                           :with-content? false
+                                           :root-path     base-path-2}))
+        "return :meta nil when no metadata exists for file")
+
+    (is (= {:name "file2.txt", :dir? false, :path "file2.txt" :meta {:name "file2.txt"}}
+           (fsdb/read-db-path "file2.txt" {:with-meta?    true
+                                           :with-content? false
+                                           :root-path     base-path-2}))
+        "read and parse json metadata when found"))
+
+  (testing "read file object with metadata and content"
+    (is (= {:name "file1.txt", :dir? false, :path "file1.txt" :meta nil :content "some text content"}
+           (fsdb/read-db-path "file1.txt" {:with-meta?    true
+                                           :with-content? true
+                                           :root-path     base-path-2})))
+    (is (= {:name "file2.txt", :dir? false, :path "file2.txt" :meta {:name "file2.txt"} :content "file2.txt content"}
+           (fsdb/read-db-path "file2.txt" {:with-meta?    true
+                                           :with-content? true
+                                           :root-path     base-path-2}))))
+
+  (testing "read file object with content"
+    (is (= {:name "file1.txt", :dir? false, :path "file1.txt" :content "some text content"}
+           (fsdb/read-db-path "file1.txt" {:with-meta?    false
+                                           :with-content? true
+                                           :root-path     base-path-2}))))
+
+  (testing "reading folder object"
+    (is (= {:name "dir1", :dir? true, :path "dir1"}
+           (fsdb/read-db-path "dir1" {:with-meta?    false
+                                      :with-content? false
+                                      :root-path     base-path-2})))
+    (is (= {:name "dir1", :dir? true, :path "dir1" :meta {:prop "str value"}}
+           (fsdb/read-db-path "dir1" {:with-meta?    true
+                                      :with-content? false
+                                      :root-path     base-path-2})))))
