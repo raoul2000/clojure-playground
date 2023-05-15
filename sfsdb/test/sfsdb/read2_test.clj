@@ -326,14 +326,38 @@
     (is (= {:name "file1.txt", :dir? false, :path "file1.txt" :content "some text content"}
            (fsdb/read-db-path "file1.txt" {:with-meta?    false
                                            :with-content? true
-                                           :root-path     base-path-2}))))
+                                           :root-path     base-path-2})))
+    (is (= {:name "file3.txt", :dir? false, :path "file3.txt", :content ""}
+           (fsdb/read-db-path "file3.txt" {:with-meta?    false
+                                           :with-content? true
+                                           :root-path     base-path-2}))
+        "returns :content \"\" of empty files"))
 
-  (testing "reading folder object"
+  (testing "reading folder object with no extra"
     (is (= {:name "dir1", :dir? true, :path "dir1"}
            (fsdb/read-db-path "dir1" {:with-meta?    false
                                       :with-content? false
                                       :root-path     base-path-2})))
-    (is (= {:name "dir1", :dir? true, :path "dir1" :meta {:prop "str value"}}
-           (fsdb/read-db-path "dir1" {:with-meta?    true
-                                      :with-content? false
-                                      :root-path     base-path-2})))))
+    (testing "reading folder object with meta"
+      (is (= {:name "dir1", :dir? true, :path "dir1" :meta {:prop "str value"}}
+             (fsdb/read-db-path "dir1" {:with-meta?    true
+                                        :with-content? false
+                                        :root-path     base-path-2})))
+
+      (is (= {:name "dir2", :dir? true, :path "dir2", :meta nil}
+             (fsdb/read-db-path "dir2" {:with-meta?    true
+                                        :with-content? false
+                                        :root-path     base-path-2}))
+          "return :meta nil when no metadata exists for folder"))
+
+    (testing "read folder object with content"
+      (is (= {:name "dir1", :dir? true, :path "dir1", :content '({:name "f11.txt", :dir? false, :path "dir1/f11.txt"}
+                                                                 {:name "f12.txt", :dir? false, :path "dir1/f12.txt"})}
+             (fsdb/read-db-path "dir1" {:with-meta?    false
+                                        :with-content? true
+                                        :root-path     base-path-2})))
+      (is (= {:name "dir3", :dir? true, :path "dir3", :content '()}
+             (fsdb/read-db-path "dir3" {:with-meta?    false
+                                        :with-content? true
+                                        :root-path     base-path-2}))
+          "returns an empty seq when folder has no content"))))
