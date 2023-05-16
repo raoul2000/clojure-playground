@@ -2,157 +2,204 @@
   (:require [babashka.fs :as fs]
             [clojure.string :as s]
             [clojure.data.json :as json]
-            [portal.console :as log]))
+            [sfsdb.options :as opts]
+            [sfsdb.check :as check]
+            [sfsdb.convert :as convert]))
 
-
-(def metadata-extension "extension for metadata file" ".meta")
-(def re-path-splitter (re-pattern  (str "\\" fs/file-separator)))
-
-;; note that on windows, fs/components skips the drive letter
-;; and we don't want that
-(defn- split-paths
-  "Splits string *path-str* representing a path using local filesystem settings,
-   into an array of folder or file names."
-  [^String path-str]
-  (s/split path-str re-path-splitter))
-
-(comment
-  (fs/components "c:\\folder\\subfolder\\file.txt")
-  (split-paths "c:\\folder\\subfolder\\file.txt")
-
-  (fs/unixify (fs/file "c:\\folder\\subfolder\\file.txt"))
-
-  ;;
-  )
-
-
-(defn- normalize-path [^String path]
-  (when path
-    (let [norm-path (str (fs/normalize path))]
-      (if (s/includes? norm-path "\\")
-        (s/replace norm-path #"\\" "/")
-        norm-path))))
-
-(comment
-  (normalize-path nil)
-  (normalize-path "")
-  ;;
-  )
-
-(defn- ensure-absolute-path [path]
-  (if (fs/relative? path) (fs/absolutize path) path))
-
-(defn- path-seq
-  "Given *root-path* a folder path, returns a seq of strings representing all
-   folder path relative to *root-path*. The path separator is always '/'.
-   
-   example:
-   ```
-   (path-seq \"/a/b/c\")
-   => (\"d1\"
-       \"d1/e\"
-       \"d1/e/f\"
-       \"d1/e/f\"
-       \"d2\")
-   ```
-   If *root-path* is not an absolute path, it is assumed to be relative to
-   the current working dir.
-   "
-  [root-path]
-  (let [absolute-root-path (fs/normalize (ensure-absolute-path root-path))
-        relativize-to-root (partial fs/relativize absolute-root-path)]
-    (->> (fs/glob absolute-root-path "**")
-         (filter fs/directory?)
-         (map (comp normalize-path
-                    relativize-to-root)))))
-
-(defn make-metadata-path
+(defn- make-metadata-path
   "Given a *path* returns the path to the metadata file describing *path*.
-   The returned path is not garanteed to exsits on the file system."
-  [path]
-  (if (fs/directory? path)
-    (fs/path path metadata-extension)
-    (fs/path (str path metadata-extension))))
+   The returned path is not garanteed to exsit on the file system."
+  [fs-path]
+  (if (fs/directory? fs-path)
+    (fs/path fs-path (str "." (:metadata-extension opts/default)))
+    (fs/path (str fs-path "." (:metadata-extension opts/default)))))
 
 (defn- read-meta
   "Returns the metadata map describing *path* which can be a file or a folder.
-   When *path* doesn't exist or when no metadata exists for this *path*, returns `nil`."
-  [path]
-  (let [meta-path (make-metadata-path path)]
+   
+   When *path* doesn't exist or when no metadata exists for this *path*, returns `nil`.
+   When the meta value is not valid JSON, an error map is returned
+   
+   ```clojure
+   {:error \"failed to ...\"}
+   ```
+   "
+  [fs-path]
+  (let [meta-path (make-metadata-path fs-path)]
     (when (and (fs/exists?       meta-path)
                (fs/regular-file? meta-path))
-      (json/read-str (slurp (fs/file meta-path)) :key-fn keyword))))
+      (try
+        (json/read-str (slurp (fs/file meta-path)) :key-fn keyword)
+        (catch Exception ex {:error (str "failed to read metadata file " (str meta-path))})))))
 
-(defn read-folder-content
-  "Returns a seq of normalized path (file or folder) contained by *folder-path*. Metadata
-   files are ignored.
-   
-   Relativization is based on *root-path*.
-   "
-  [folder-path root-path]
-  (->> (fs/list-dir folder-path)
-       (remove #(s/ends-with? % metadata-extension))
-       (map  (comp normalize-path (partial fs/relativize root-path)))))
 
-(defn read-folder [folder-path {:keys [with-meta? root-path]
-                                :or   {root-path (fs/cwd)}}]
-  (when (and (fs/exists?    folder-path)
-             (fs/directory? folder-path))
-    (cond-> {:folder? true
-             :content (read-folder-content folder-path root-path)} 
-      with-meta? (assoc ,,,, :meta (read-meta folder-path))
-            
-            )
 
-    #_(vector (read-folder-content folder-path root-path)
-            (when with-meta?
-              (read-meta folder-path))))
-  
-  )
-(comment
-  (cond->  1
-    true (inc))
-  ;;
-  )
+
+(defn- fs-path->obj
+  "Read and returns a map describing the DB object given its absolute FS path *fs-path*. When
+   *with-meta?* is true, key `:meta` is set to contain the metadata of the object if found."
+  [fs-path root-path with-meta?]
+  {:pre [(fs/exists? fs-path)]}
+  (cond-> {:name (fs/file-name  fs-path)
+           :dir? (fs/directory? fs-path)
+           :path (convert/fs-path->db-path root-path fs-path)}
+    with-meta? (assoc :meta (read-meta fs-path))))
+
+(defn- read-directory [dir-path root-path with-meta? with-content?]
+  (cond-> (fs-path->obj dir-path root-path with-meta?)
+    with-content?  (assoc :content (->> (fs/list-dir dir-path)
+                                        (remove check/meta-file?)
+                                        (map #(fs-path->obj % root-path with-meta?))))))
+
+(defn- read-file [file-path root-path with-meta? with-content?]
+  (when-not (check/meta-file? file-path)
+    (cond-> (fs-path->obj file-path root-path with-meta?)
+      with-content? (assoc :content (slurp (str file-path))))))
+
+
+
 
 (comment
+  (defn f1 [p]
+    {:pre [(fs/exists? p)
+           (fs/directory? p)
+           (fs/readable? p)]}
+    "ok")
+
+  (try
+    (f1  "eee" #_(fs/cwd))
+    (catch Exception e {:msg (ex-message e)
+                        :data (ex-data e)}))
+
+
 
   (def root-path (fs/path (fs/cwd)))
-  (tap> root-path)
 
-  (def base-path (fs/path (fs/cwd) "test/fixture/fs/root/folder-1"))
-  (def base-path (fs/path (fs/cwd) "test/fixture/fs/root/folder-2"))
-  (def base-path  "test/fixture/fs/root/folder-2")
-
-  (fs/relativize root-path (fs/path (fs/cwd) "test/fixture/fs/root/folder-1"))
-
-  (read-folder (fs/path root-path "/test/fixture/fs/root/folder-2/")
-               {:with-meta? false
-                :root-path  root-path})
-  (read-folder (fs/path root-path "/test/fixture/fs/root/folder-1")
-               {:with-meta? true})
-
-  (fs/walk-file-tree (fs/path (fs/cwd) "test/fixture/fs/root")
-                     {:pre-visit-dir  (fn [path attr] (println path) :continue)
-                      :post-visit-dir (fn [path attr] (println path) :continue)
-                      :visit-file     (fn [path attr] (println path) :skip-siblings)})
-
+  (read-db-path "test/fixture/fs/root/folder-1" {:with-meta? true})
+  (read-db-path "c:\\tmp" {:with-meta? true})
+  (read-db-path "test/fixture/fs/root/folder-1/folder-1-A" {:with-meta? true})
+  (read-db-path "test/fixture/fs/root/folder-1/folder-1-A/file-1A-1.txt" {:with-meta? true})
   ;;
   )
 
 
-(defn read-file [file-path {:keys [with-meta?]}]
-  (when (and (fs/exists?       file-path)
-             (fs/regular-file? file-path))
-    (vector (slurp (fs/file file-path))
-            (when with-meta?
-              (read-meta file-path)))))
+(defn- parent-of
+  "Returns the parent db path of *db-path* or nil if *db-path* has no parent.
+   
+   Example:
+   ```clojure
+   (parent-of \"a/b/c\")
+   => \"a/b\"
+   (parent-of \"a\")
+   => nil
+   ``` 
+   "
+  [^String db-path]
+  (when-let [parent (butlast (s/split db-path #"/"))]
+    (s/join  "/" parent)))
 
-(comment
-  (read-file (fs/path (fs/cwd)  "test/fixture/fs/root/folder-1/folder-1-A/file-1A-1.txt")
-             {:with-meta? true})
+(defn read-db-path
+  "Returns a map describing the file or a folder at `db-path` or nil if it doesn't exist.
+   
+   Option maps:
+   - `:with-content?` : read object content
+   - `:with-meta?` : read object metadata
+   - `:root-path` : base folder base used to resolve `db-path`. If not set, *current 
+   working dir* is used
+   
+   Throws if `db-path` is absolute path or not in DB.
+   "
+  [db-path {:keys [with-meta? with-content? root-path]
+            :or   {root-path (:root-path opts/default)}}]
+  {:pre [db-path]}
+  (check/validate-root-path root-path)
+  (check/validate-db-path   db-path)
+  (let [fs-path (convert/db-path->fs-path db-path root-path)]
+    (when (fs/exists? fs-path)
+      (if (fs/directory? fs-path)
+        (read-directory fs-path root-path with-meta? with-content?)
+        (read-file      fs-path root-path with-meta? with-content?)))))
 
-  (fs/exists? (fs/path (fs/cwd)  "test/fixture/fs/root/folder-1/folder-1-A/file-1A-1.txt"))
-  ;;
-  )
+(defn- walk-and-select [dir-path selected? {:keys [root-path]
+                                            :as   options}]
+  (let [result    (volatile! [])
+        fn-filter (fn [fs-path]
+                    (let [db-path (convert/fs-path->db-path root-path fs-path)
+                          obj     (read-db-path  db-path options)]
+                      (when (selected? obj)
+                        (vswap! result conj obj))))]
+    (fs/walk-file-tree dir-path {:pre-visit-dir (fn [fs-path _attr]
+                                                  (when-not (= fs-path dir-path)
+                                                    (fn-filter fs-path))
+                                                  :continue)
+                                 :visit-file    (fn [fs-path _attr]
+                                                  (when-not (check/meta-file? fs-path)
+                                                    (fn-filter fs-path))
+                                                  :continue)})
+    @result))
+
+(defn list-all-dirs
+  "Given folder at `root-path`, returns a seq of maps, each one describing a descendant folder of
+   `root-path` with metadata when `with-meta?` is true.
+   
+   If `root-path` is not absolute, it is assumed to be relative to *current working dir*.
+   
+   Return *nil* when `root-path` doesn't exists or is not a directory.
+   "
+  [root-path with-meta?]
+  {:pre [root-path]}
+  (check/validate-root-path root-path)
+  (let [path-coll (volatile! [])
+        abs-path (fs/absolutize root-path)]
+    (when (and (fs/exists? abs-path)
+               (fs/directory? abs-path))
+      (fs/walk-file-tree abs-path {:pre-visit-dir (fn [path _attr]
+                                                    (when-not (= path abs-path)
+                                                      (vswap! path-coll conj path))
+                                                    :continue)})
+      (map #(fs-path->obj % abs-path with-meta?) @path-coll))))
+
+
+
+(defn select-descendants
+  "Selects all objects descendant of *db-path* where *(selected? object)* returns true.
+   
+   - *db-path* must refer to an existing dir.
+   - *options* is the same map as in `read-db-path`.
+   "
+  [db-path selected? {:keys [root-path]
+                      :or   {root-path (:root-path opts/default)}
+                      :as   options}]
+  {:pre [(fn? selected?)]}
+  (check/validate-root-path root-path)
+  (check/validate-db-path   db-path)
+  (let [path (fs/path root-path db-path)]
+    (when (fs/directory? path)
+      (walk-and-select path selected? options))))
+
+
+(defn select-ancestors
+  "Returns all objects ancestors of *db-path* where *selected? object* is true.
+   Ancestors are ordered from closest to farthest relatively to *db-path*.
+   
+   *options* is the same map as in `read-db-path` with possibly extra key:
+   - `:find-first?` : when true, returns only first ancestor
+   "
+  [db-path selected? {:keys [find-first? root-path]
+                      :or   {root-path (:root-path opts/default)}
+                      :as   options}]
+  {:pre [(fn? selected?)]}
+  (check/validate-root-path root-path)
+  (check/validate-db-path   db-path)
+  (loop [parent (parent-of db-path)
+         result []]
+    (if (or (nil? parent)
+            (and find-first?
+                 (not-empty result)))
+      result
+      (recur (parent-of parent)
+             (let [parent-obj (read-db-path parent options)]
+               (cond-> result
+                 (selected? parent-obj) (conj parent-obj)))))))
+
 
