@@ -37,8 +37,6 @@
            (#'fsdb/make-metadata-path (fs/path base-path  "folder-1" "folder-1-A" "file.txt"))))))
 
 
-
-
 (deftest read-meta-test
   (testing "meta JSON file can be read for a folder"
     (is (= {:attribute1 "string value"}
@@ -62,8 +60,9 @@
     (is (= nil
            (read-meta  (fs/path base-path "folder-1/folder-1-A/NOT_FOUND.txt")))))
   (testing "when JSON meta file parse fails, returns error message"
-    (is (= "caught exception: JSON error (unexpected character): I"
-           (read-meta (fs/path base-path "folder-2/invalid-meta-1.txt"))))))
+    (is (s/starts-with?
+         (:error (read-meta (fs/path base-path "folder-2/invalid-meta-1.txt")))
+         "failed to read metadata file"))))
 
 
 (deftest in-db?-test
@@ -258,17 +257,17 @@
   (testing "returns nil when db-path is not found"
     (is (nil? (fsdb/select-descendants "not_found" identity {}))))
 
-  (testing "throws assertion error when db-path is nil"
+  (testing "throws when db-path is nil"
     (is (thrown? Exception
                  (fsdb/select-descendants nil identity {}))))
 
-  (testing "throws assertion error when selected? is not a function"
+  (testing "throws when selected? is not a function"
     (is (thrown? AssertionError
                  (fsdb/select-descendants "folder-1" true {}))))
 
-  (testing "throws assertion error when db-path is outside db-root"
+  (testing "throws  when db-path is outside db-root"
     (is (thrown? Exception
-                 (fsdb/select-descendants ".." true {}))))
+                 (fsdb/select-descendants ".." identity {}))))
 
   (testing "when selector predicate uses metadata"
     (is (= [{:name "file-1A-1.txt",
@@ -363,7 +362,7 @@
           "returns an empty seq when folder has no content"))
 
     #_(testing "when base path is invalid"
-      (is (thrown?
-           (fsdb/read-db-path "dir3" {:with-meta?    false
-                                      :with-content? true
-                                      :root-path     "/not_found"}))))))
+        (is (thrown?
+             (fsdb/read-db-path "dir3" {:with-meta?    false
+                                        :with-content? true
+                                        :root-path     "/not_found"}))))))
