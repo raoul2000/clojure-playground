@@ -259,7 +259,7 @@
     (is (nil? (fsdb/select-descendants "not_found" identity {}))))
 
   (testing "throws assertion error when db-path is nil"
-    (is (thrown? AssertionError
+    (is (thrown? Exception
                  (fsdb/select-descendants nil identity {}))))
 
   (testing "throws assertion error when selected? is not a function"
@@ -267,7 +267,7 @@
                  (fsdb/select-descendants "folder-1" true {}))))
 
   (testing "throws assertion error when db-path is outside db-root"
-    (is (thrown? AssertionError
+    (is (thrown? Exception
                  (fsdb/select-descendants ".." true {}))))
 
   (testing "when selector predicate uses metadata"
@@ -360,4 +360,10 @@
              (fsdb/read-db-path "dir3" {:with-meta?    false
                                         :with-content? true
                                         :root-path     base-path-2}))
-          "returns an empty seq when folder has no content"))))
+          "returns an empty seq when folder has no content"))
+
+    #_(testing "when base path is invalid"
+      (is (thrown?
+           (fsdb/read-db-path "dir3" {:with-meta?    false
+                                      :with-content? true
+                                      :root-path     "/not_found"}))))))

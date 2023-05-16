@@ -132,6 +132,23 @@
   ;;
   )
 
+(defn- root-path? [fs-path]
+  (and (fs/exists? fs-path)
+       (fs/directory? fs-path)
+       (fs/readable? fs-path)))
+
+(defn- validate-root-path [fs-path]
+  (if-not (root-path? fs-path)
+    (throw (ex-info "Root DB path not found"
+                    {:path fs-path}))
+    true))
+
+(defn- validate-db-path [db-path]
+  (if-not (in-db? db-path)
+    (throw (ex-info "Invalid Db Path"
+                    {:path db-path}))
+    true))
+
 (defn read-db-path
   "Returns a map describing the file or a folder at `db-path` or nil if it doesn't exist.
    
@@ -145,8 +162,10 @@
    "
   [db-path {:keys [with-meta? with-content? root-path]
             :or   {root-path (:root-path default-options)}}]
-  (when-not (in-db? db-path)
-    (throw (ex-info "db-path not in db" {:db-path db-path})))
+  #_{:pre [(validate-root-path root-path)
+         (validate-db-path   db-path)]}
+  (validate-root-path root-path)
+  (validate-db-path   db-path)
   (let [fs-path (db-path->fs-path db-path root-path)]
     (when (fs/exists? fs-path)
       (if (fs/directory? fs-path)
@@ -154,6 +173,19 @@
         (read-file      fs-path root-path with-meta? with-content?)))))
 
 (comment
+  (defn f1 [p]
+    {:pre [(fs/exists? p)
+           (fs/directory? p)
+           (fs/readable? p)]}
+    "ok")
+
+  (try
+    (f1  "eee" #_(fs/cwd))
+    (catch Exception e {:msg (ex-message e)
+                        :data (ex-data e)}))
+
+
+
   (def root-path (fs/path (fs/cwd)))
 
   (read-db-path "test/fixture/fs/root/folder-1" {:with-meta? true})
@@ -172,6 +204,7 @@
    Return *nil* when `root-path` doesn't exists or is not a directory.
    "
   [root-path with-meta?]
+  {:pre [(validate-root-path root-path)]}
   (let [path-coll (volatile! [])
         abs-path (fs/absolutize root-path)]
     (when (and (fs/exists? abs-path)
@@ -211,7 +244,9 @@
   [db-path selected? {:keys [root-path]
                       :or   {root-path (:root-path default-options)}
                       :as   options}]
-  {:pre [db-path (fn? selected?)]}
+  {:pre [(fn? selected?)]}
+  (validate-root-path root-path)
+  (validate-db-path   db-path)
   (let [path (fs/path root-path db-path)]
     (when (fs/directory? path)
       (walk-and-select path selected? options))))
@@ -239,9 +274,12 @@
    *options* is the same map as in `read-db-path` with possibly extra key:
    - `:find-first?` : when true, returns only first ancestor
    "
-  [db-path selected? {:keys [find-first?]
+  [db-path selected? {:keys [find-first? root-path]
+                      :or   {root-path (:root-path default-options)}
                       :as   options}]
-  {:pre [db-path (fn? selected?)]}
+  {:pre [(validate-root-path root-path)
+         (validate-db-path   db-path)
+         (fn? selected?)]}
   (loop [parent (parent-of db-path)
          result []]
     (if (or (nil? parent)
