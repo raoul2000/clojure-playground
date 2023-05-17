@@ -5,10 +5,7 @@
             [babashka.fs :as fs]))
 
 
-
-(defn- copy-folder-with-meta [src dest]
-  (fs/glob src )
-  )
+;; maybe this function is not needed !!
 
 (defn export
   "copy object *db-path* to the folder on the local file system at *fs-dir-path*."
