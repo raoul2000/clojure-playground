@@ -7,7 +7,8 @@
             [sfsdb.convert :as convert]))
 
 (defn- make-metadata-path
-  "Given a *path* returns the path to the metadata file describing *path*.
+  "Returns the fs path of a metadata file describing file or folder at *fs-path*.
+   
    The returned path is not garanteed to exsit on the file system."
   [fs-path]
   (if (fs/directory? fs-path)
@@ -15,14 +16,9 @@
     (fs/path (str fs-path "." (:metadata-extension opts/default)))))
 
 (defn- read-meta
-  "Returns the metadata map describing *path* which can be a file or a folder.
+  "Returns the metadata map describing a file or folder at *fs-path* or nil if none is found.
    
-   When *path* doesn't exist or when no metadata exists for this *path*, returns `nil`.
-   When the meta value is not valid JSON, an error map is returned
-   
-   ```clojure
-   {:error \"failed to ...\"}
-   ```
+   Throws if the metadata file is not a valid JSON format.   
    "
   [fs-path]
   (let [meta-path (make-metadata-path fs-path)]
@@ -30,10 +26,11 @@
                (fs/regular-file? meta-path))
       (try
         (json/read-str (slurp (fs/file meta-path)) :key-fn keyword)
-        (catch Exception ex {:error (str "failed to read metadata file " (str meta-path))})))))
-
-
-
+        (catch Exception ex
+          (throw (ex-info "failed to read metadata file"
+                          {:path (str meta-path)
+                           :cause  (.getMessage ^Throwable ex)}
+                          ex)))))))
 
 (defn- fs-path->obj
   "Read and returns a map describing the DB object given its absolute FS path *fs-path*. When
@@ -57,8 +54,6 @@
       with-content? (assoc :content (slurp (str file-path))))))
 
 
-
-
 (comment
   (defn f1 [p]
     {:pre [(fs/exists? p)
@@ -71,8 +66,6 @@
     (catch Exception e {:msg (ex-message e)
                         :data (ex-data e)}))
 
-
-
   (def root-path (fs/path (fs/cwd)))
 
   (read-db-path "test/fixture/fs/root/folder-1" {:with-meta? true})
@@ -83,20 +76,6 @@
   )
 
 
-(defn- parent-of
-  "Returns the parent db path of *db-path* or nil if *db-path* has no parent.
-   
-   Example:
-   ```clojure
-   (parent-of \"a/b/c\")
-   => \"a/b\"
-   (parent-of \"a\")
-   => nil
-   ``` 
-   "
-  [^String db-path]
-  (when-let [parent (butlast (s/split db-path #"/"))]
-    (s/join  "/" parent)))
 
 (defn read-db-path
   "Returns a map describing the file or a folder at `db-path` or nil if it doesn't exist.
@@ -120,23 +99,6 @@
         (read-directory fs-path root-path with-meta? with-content?)
         (read-file      fs-path root-path with-meta? with-content?)))))
 
-(defn- walk-and-select [dir-path selected? {:keys [root-path]
-                                            :as   options}]
-  (let [result    (volatile! [])
-        fn-filter (fn [fs-path]
-                    (let [db-path (convert/fs-path->db-path root-path fs-path)
-                          obj     (read-db-path  db-path options)]
-                      (when (selected? obj)
-                        (vswap! result conj obj))))]
-    (fs/walk-file-tree dir-path {:pre-visit-dir (fn [fs-path _attr]
-                                                  (when-not (= fs-path dir-path)
-                                                    (fn-filter fs-path))
-                                                  :continue)
-                                 :visit-file    (fn [fs-path _attr]
-                                                  (when-not (check/meta-file? fs-path)
-                                                    (fn-filter fs-path))
-                                                  :continue)})
-    @result))
 
 (defn list-all-dirs
   "Given folder at `root-path`, returns a seq of maps, each one describing a descendant folder of
@@ -161,45 +123,7 @@
 
 
 
-(defn select-descendants
-  "Selects all objects descendant of *db-path* where *(selected? object)* returns true.
-   
-   - *db-path* must refer to an existing dir.
-   - *options* is the same map as in `read-db-path`.
-   "
-  [db-path selected? {:keys [root-path]
-                      :or   {root-path (:root-path opts/default)}
-                      :as   options}]
-  {:pre [(fn? selected?)]}
-  (check/validate-root-path root-path)
-  (check/validate-db-path   db-path)
-  (let [path (fs/path root-path db-path)]
-    (when (fs/directory? path)
-      (walk-and-select path selected? options))))
 
 
-(defn select-ancestors
-  "Returns all objects ancestors of *db-path* where *selected? object* is true.
-   Ancestors are ordered from closest to farthest relatively to *db-path*.
-   
-   *options* is the same map as in `read-db-path` with possibly extra key:
-   - `:find-first?` : when true, returns only first ancestor
-   "
-  [db-path selected? {:keys [find-first? root-path]
-                      :or   {root-path (:root-path opts/default)}
-                      :as   options}]
-  {:pre [(fn? selected?)]}
-  (check/validate-root-path root-path)
-  (check/validate-db-path   db-path)
-  (loop [parent (parent-of db-path)
-         result []]
-    (if (or (nil? parent)
-            (and find-first?
-                 (not-empty result)))
-      result
-      (recur (parent-of parent)
-             (let [parent-obj (read-db-path parent options)]
-               (cond-> result
-                 (selected? parent-obj) (conj parent-obj)))))))
 
 

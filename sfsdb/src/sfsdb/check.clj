@@ -4,12 +4,11 @@
             [sfsdb.options :as opts]))
 
 (defn meta-file?
-  "Given a file relative/absolute *path* returns TRUE if it refers to a metadata
-   file, FALSE otherwise.
+  "Return TRUE is *path* has the format of a metadata file path.
    
    *path* must be coercible to String"
-  [fs-path]
-  (when-let [str-path (str fs-path)]
+  [path]
+  (when-let [str-path (str path)]
     (s/ends-with? str-path (str "." (:metadata-extension opts/default)))))
 
 (defn in-db?
