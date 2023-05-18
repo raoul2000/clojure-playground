@@ -1,6 +1,5 @@
 (ns sfsdb.read
   (:require [babashka.fs :as fs]
-            [clojure.string :as s]
             [clojure.data.json :as json]
             [sfsdb.options :as opts]
             [sfsdb.check :as check]
@@ -54,29 +53,6 @@
       with-content? (assoc :content (slurp (str file-path))))))
 
 
-(comment
-  (defn f1 [p]
-    {:pre [(fs/exists? p)
-           (fs/directory? p)
-           (fs/readable? p)]}
-    "ok")
-
-  (try
-    (f1  "eee" #_(fs/cwd))
-    (catch Exception e {:msg (ex-message e)
-                        :data (ex-data e)}))
-
-  (def root-path (fs/path (fs/cwd)))
-
-  (read-db-path "test/fixture/fs/root/folder-1" {:with-meta? true})
-  (read-db-path "c:\\tmp" {:with-meta? true})
-  (read-db-path "test/fixture/fs/root/folder-1/folder-1-A" {:with-meta? true})
-  (read-db-path "test/fixture/fs/root/folder-1/folder-1-A/file-1A-1.txt" {:with-meta? true})
-  ;;
-  )
-
-
-
 (defn read-db-path
   "Returns a map describing the file or a folder at `db-path` or nil if it doesn't exist.
    
@@ -120,10 +96,3 @@
                                                       (vswap! path-coll conj path))
                                                     :continue)})
       (map #(fs-path->obj % abs-path with-meta?) @path-coll))))
-
-
-
-
-
-
-
