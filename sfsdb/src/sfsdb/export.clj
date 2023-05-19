@@ -22,10 +22,9 @@
                     {:path fs-dir-path})))
 
   (let [fs-path (convert/db-path->fs-path db-path root-path)]
-    (when (fs/exists? fs-dir-path)
       (cond
         (fs/directory? fs-path)      (fs/copy-tree fs-path fs-dir-path)
-        (fs/regular-file? fs-path)   (fs/copy      fs-path fs-dir-path)))))
+        (fs/regular-file? fs-path)   (fs/copy      fs-path fs-dir-path))))
 
 (comment
   (def base-path (fs/path (fs/cwd) "test/fixture/fs/root"))
