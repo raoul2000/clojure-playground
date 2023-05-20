@@ -39,7 +39,7 @@
 
 (defn validate-root-path [fs-path]
   (if-not (root-path? fs-path)
-    (throw (ex-info "Root DB path not found"
+    (throw (ex-info "Root DB dir path not found"
                     {:path fs-path}))
     true))
 

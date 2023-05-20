@@ -22,24 +22,6 @@
     (s/join  "/" parent)))
 
 
-(defn- walk-and-select [dir-path selected? {:keys [root-path]
-                                            :as   options}]
-  (let [result    (volatile! [])
-        fn-filter (fn [fs-path]
-                    (let [db-path (convert/fs-path->db-path root-path fs-path)
-                          obj     (read/read-db-path  db-path options)]
-                      (when (selected? obj)
-                        (vswap! result conj obj))))]
-    (fs/walk-file-tree dir-path {:pre-visit-dir (fn [fs-path _attr]
-                                                  (when-not (= fs-path dir-path)
-                                                    (fn-filter fs-path))
-                                                  :continue)
-                                 :visit-file    (fn [fs-path _attr]
-                                                  (when-not (check/meta-file? fs-path)
-                                                    (fn-filter fs-path))
-                                                  :continue)})
-    @result))
-
 (defn select-ancestors
   "Returns all objects ancestors of *db-path* where *selected? object* is true.
    Ancestors are ordered from closest to farthest relatively to *db-path*.
@@ -65,6 +47,23 @@
                  (selected? parent-obj) (conj parent-obj)))))))
 
 
+(defn- walk-and-select [dir-path selected? {:keys [root-path]
+                                            :as   options}]
+  (let [result    (volatile! [])
+        fn-filter (fn [fs-path]
+                    (let [db-path (convert/fs-path->db-path root-path fs-path)
+                          obj     (read/read-db-path  db-path options)]
+                      (when (selected? obj)
+                        (vswap! result conj obj))))]
+    (fs/walk-file-tree dir-path {:pre-visit-dir (fn [fs-path _attr]
+                                                  (when-not (= fs-path dir-path)
+                                                    (fn-filter fs-path))
+                                                  :continue)
+                                 :visit-file    (fn [fs-path _attr]
+                                                  (when-not (check/meta-file? fs-path)
+                                                    (fn-filter fs-path))
+                                                  :continue)})
+    @result))
 
 (defn select-descendants
   "Selects all objects descendant of *db-path* where *(selected? object)* returns true.
