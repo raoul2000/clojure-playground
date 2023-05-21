@@ -39,3 +39,16 @@
       false?  "a/b/../../.."
       false?  "/a/b"
       false?  "/../a")))
+
+(deftest relative-db-path-test
+      (testing "test relative db-path"
+        (are [pred db-path] (pred (check/relative-db-path? db-path))
+          true?  "."
+          true?  "./"
+          true?  "./a/b"
+          true?  "./a/b/../../../c" ;; true but outside db
+
+          false?  ""
+          false?  ".."
+          false?  "a"
+          false?  "a/b"))) 

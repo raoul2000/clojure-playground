@@ -5,6 +5,7 @@
 
 (defn meta-file?
   "Return TRUE is *path* has the format of a metadata file path.
+   *path* can be a FS or DB path.
    
    *path* must be coercible to String"
   [path]
@@ -43,8 +44,12 @@
                     {:path fs-path}))
     true))
 
-(defn validate-db-path [db-path]
+(defn validate-db-path [^String db-path]
   (if-not (in-db? db-path)
     (throw (ex-info "Invalid Db Path"
                     {:path db-path}))
     true))
+
+(defn relative-db-path? [^String db-path]
+  (or (= "." db-path)
+      (s/starts-with? db-path "./")))

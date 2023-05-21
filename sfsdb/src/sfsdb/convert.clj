@@ -25,3 +25,13 @@
        fs/components
        (s/join "/")))
 
+
+(defn absolutize-db-path [db-path parent-db-path]
+  (when-not (check/relative-db-path? db-path)
+    (throw (ex-info "not a relative db path"
+                    {:db-path db-path})))
+  (->> (fs/normalize (str parent-db-path "/" db-path))
+       (fs/components)
+       (s/join "/")))
+
+
