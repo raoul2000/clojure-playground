@@ -26,12 +26,20 @@
        (s/join "/")))
 
 
-(defn absolutize-db-path [db-path parent-db-path]
-  (when-not (check/relative-db-path? db-path)
-    (throw (ex-info "not a relative db path"
-                    {:db-path db-path})))
-  (->> (fs/normalize (str parent-db-path "/" db-path))
-       (fs/components)
-       (s/join "/")))
+(defn absolutize-db-path 
+  "Given *db-path* a relative Db path, returns the absolute Db path
+   relatively to *parent-db-path*.
+   
+   If *db-path* if not relative it is returned unchanged.
+
+   Note that the returned Db path is not garanteed to be `in-db?`.
+   "
+  [^String db-path ^String parent-db-path]
+  {:pre [(string? db-path) (string? parent-db-path)]}
+  (if (check/relative-db-path? db-path)
+    (->> (fs/normalize (str parent-db-path "/" db-path))
+         (fs/components)
+         (s/join "/"))
+    db-path))
 
 

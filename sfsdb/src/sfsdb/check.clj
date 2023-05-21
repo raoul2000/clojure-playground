@@ -50,6 +50,10 @@
                     {:path db-path}))
     true))
 
-(defn relative-db-path? [^String db-path]
+(defn relative-db-path? 
+  "Returns TRUE when *db-path* is a relative db path.
+   
+   A relative db path must start with `./` or be equal to `.`"
+  [^String db-path]
   (or (= "." db-path)
       (s/starts-with? db-path "./")))
