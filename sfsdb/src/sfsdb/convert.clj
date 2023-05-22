@@ -1,7 +1,8 @@
 (ns sfsdb.convert
   (:require [babashka.fs :as fs]
             [clojure.string :as s]
-            [sfsdb.check :as check]))
+            [sfsdb.check :as check]
+            [lambdaisland.uri :refer [uri join]]))
 
 (defn db-path->fs-path
   "Converts *db-path* to *fs-path* the corresponding file system path given *root-path*"
@@ -41,5 +42,26 @@
          (fs/components)
          (s/join "/"))
     db-path))
+
+(comment
+  (uri "fsdb:///./a/b/v#")
+  (uri "")
+  (str 
+   (assoc (uri "fsdb:///some/path")
+          :fragment "frag"))
+  
+  (str
+   (assoc (uri "")
+          :scheme "fsdb"
+          :path "a/b/c"
+          :fragment "frag"))
+  (type (uri ""))
+  
+  (uri "fsdb:a/b/c#frag")
+  (uri "fsdb:./a/b/c#frag")
+  (uri "./a/b/c")
+
+  ;;
+  )
 
 
