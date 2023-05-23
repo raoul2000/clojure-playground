@@ -16,4 +16,8 @@
   (testing "it exports a file given its db-path to a folder"
     (let [exported-fs-path (prepare-for-export "f11.txt")]
       (exp/export "dir1/f11.txt" export-path {:root-path base-path})
-      (is (fs/exists? exported-fs-path)))))
+      (is (fs/exists? exported-fs-path))))
+  
+  (testing "export a folder given its db-path to another folder"
+         )
+  )
