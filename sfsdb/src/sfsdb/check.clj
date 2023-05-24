@@ -13,7 +13,8 @@
     (s/ends-with? str-path (str "." (:metadata-extension opts/default)))))
 
 (defn in-db?
-  "True if *db-path* describes an object inside the db.
+  "True if *db-path* describes an object inside the db. The object is not 
+   garanteed to exists.
    
    Example:
    ```clojure

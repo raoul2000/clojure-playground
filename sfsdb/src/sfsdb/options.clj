@@ -4,6 +4,3 @@
 (def default {:root-path          (fs/cwd)
               :metadata-extension "meta"})
 
-(defn f[]
-  true)
-
