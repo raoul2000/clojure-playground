@@ -14,6 +14,16 @@
       ()
       ())))
 
+
+(defn- copy-file [source-path dest-path]
+  (try
+    (str (fs/copy source-path dest-path {:replace-existing true}))
+    (catch Exception ex
+      (throw (ex-info "failed to export file from db"
+                      {:reason      (ex-message ex)
+                       :source-path source-path
+                       :dest-path   dest-path})))))
+
 ;; maybe this function is not needed !!
 
 (defn export
@@ -34,7 +44,7 @@
   (let [fs-path (convert/db-path->fs-path db-path root-path)]
     (cond
       (fs/directory? fs-path)      (fs/copy-tree fs-path fs-dir-path)
-      (fs/regular-file? fs-path)   (fs/copy      fs-path fs-dir-path))))
+      (fs/regular-file? fs-path)   (copy-file    fs-path fs-dir-path))))
 
 (comment
   (def base-path (fs/path (fs/cwd) "test/fixture/fs/root"))

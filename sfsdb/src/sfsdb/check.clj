@@ -4,8 +4,7 @@
             [sfsdb.options :as opts]))
 
 (defn meta-file?
-  "Return TRUE is *path* has the format of a metadata file path.
-   *path* can be a FS or DB path.
+  "Return TRUE if the fs or db *path* has the format of a metadata file path.
    
    *path* must be coercible to String"
   [path]
