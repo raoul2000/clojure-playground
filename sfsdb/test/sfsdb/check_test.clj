@@ -41,14 +41,22 @@
       false?  "/../a")))
 
 (deftest relative-db-path-test
-      (testing "test relative db-path"
-        (are [pred db-path] (pred (check/relative-db-path? db-path))
-          true?  "."
-          true?  "./"
-          true?  "./a/b"
-          true?  "./a/b/../../../c" ;; true but outside db
+  (testing "test relative db-path"
+    (are [pred db-path] (pred (check/relative-db-path? db-path))
+      true?  "."
+      true?  "./"
+      true?  "./a/b"
+      true?  "./a/b/../../../c" ;; true but outside db
 
-          false?  ""
-          false?  ".."
-          false?  "a"
-          false?  "a/b"))) 
+      false?  ""
+      false?  ".."
+      false?  "a"
+      false?  "a/b")))
+
+(deftest writable-dir?-test
+  (testing "test predicate"
+    (are [pred path] (pred (check/writable-dir? path))
+      false?  ""
+      false?  "."
+      false?  (fs/path (fs/cwd) "not_found")
+      true?   (fs/cwd))))

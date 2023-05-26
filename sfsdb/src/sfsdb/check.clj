@@ -50,10 +50,18 @@
                     {:path db-path}))
     true))
 
-(defn relative-db-path? 
+(defn relative-db-path?
   "Returns TRUE when *db-path* is a relative db path.
    
    A relative db path must start with `./` or be equal to `.`"
   [^String db-path]
   (or (= "." db-path)
       (s/starts-with? db-path "./")))
+
+(defn writable-dir? 
+  "Returns TRUE when *path* is an absolute path to a writable folder"
+  [path]
+  (and (not (s/blank? (str path)))
+       (fs/absolute? path)
+       (fs/directory? path)
+       (fs/writable? path)))

@@ -35,9 +35,7 @@
   (check/validate-db-path db-path)
   (check/validate-root-path root-path)
 
-  (when-not (and (fs/exists? fs-dir-path)
-                 (fs/directory? fs-dir-path)
-                 (fs/writable? fs-dir-path))
+  (when-not (check/writable-dir? fs-dir-path)
     (throw (ex-info "invalid destination folder path"
                     {:path fs-dir-path})))
 
