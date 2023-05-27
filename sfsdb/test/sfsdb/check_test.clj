@@ -59,4 +59,6 @@
       false?  ""
       false?  "."
       false?  (fs/path (fs/cwd) "not_found")
-      true?   (fs/cwd))))
+      true?   (fs/cwd)
+      true?   (fs/path (fs/cwd) "test")
+      true?   (str (fs/path (fs/cwd) "test")))))
