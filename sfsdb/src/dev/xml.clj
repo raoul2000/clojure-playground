@@ -1,4 +1,4 @@
-(ns dev.play
+(ns dev.xml
   (:require [clojure.xml :as x]))
 
 ;; explore XML and zipper
