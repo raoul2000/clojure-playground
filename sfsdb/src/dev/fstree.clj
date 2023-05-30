@@ -1,6 +1,7 @@
 (ns dev.fstree
   (:require [babashka.fs :as fs]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [clojure.data.xml :as xml]))
 
 ;; create a memory representation (map) of the file system
 
@@ -126,7 +127,7 @@
                                            :continue)})
     @result)
 
-  ;; successful result : a tree map structure describine the dir tree
+  ;; successful result : a tree map structure describing the dir tree
   (def the-result {"" {:dir? true},
                    "folder-1"
                    {:dir? true,
@@ -157,8 +158,63 @@
        (filter (fn [[_file-name {:keys [dir?]}]]
                  (not dir?)))
        (into {}))
+  ;;
+  )
 
 
+(comment
+  ;; in the previous exploration we could get a nested map representing the file system. However, this doesn't 
+  ;; have the correct shape to be converted into XML.
+  ;; The correct shape would be:
+
+  (def doc-1 [:foo {:foo-attr "foo value"}
+              [:bar {:bar-attr "bar value"}
+               [:baz {:baz-attr "baz attr value"} "The baz value"]
+               [:body {} [:-cdata "not parsed <stuff"]]]])
+
+  (xml/sexp-as-element doc-1)
+  (print (xml/emit-str (xml/sexp-as-element doc-1)))
+  ;; In this case, the document is a nested array structure where each array is an element with at least one item,
+  ;; the element name as key. then we can have: 
+  ;; - attribute map
+  ;; - 1+ child element (arrayà
+  ;;
+  ;; [:element-name {:attr "value"} [:el1 ...] [:el2 ...]  ...]
+  ;;
+  ;; Could we create this struct by recursively reading a folder's content ?
+  ;;
+  (def root (fs/path (fs/cwd) "test/fixture/fs/root/folder-1/folder-1-A"))
+
+  (defn list-regular-files [path]
+    (filter fs/regular-file? (fs/list-dir path)))
+
+  (defn list-folders [path]
+    (filter fs/directory? (fs/list-dir path)))
+
+  (list-folders (fs/path (fs/cwd) "test/fixture/fs/root2/dir1"))
+
+  (map #(vector :file {:attr (str %)}) (list-regular-files root))
+
+  (defn deep-walk [path]
+    (let [el (vector :a {:path (str path)})
+          el2 (into el (map #(vector :file {:attr (str %)}) (list-regular-files root)))
+          sub-folders (list-folders root)]
+      (if (empty? sub-folders)
+        el2
+        (into el2 (map #(deep-walk %) sub-folders)))))
+
+  (deep-walk root)
+
+
+
+  (defn deep-walk2 [arg-path]
+    (loop [path arg-path]
+      (let [el  (vector :a {:path (str path)})
+            el2 (into el (map #(vector :file {:attr (str %)}) (list-regular-files root)))
+            sub-folders (list-folders root)]
+        (if (empty? sub-folders)
+          el2
+          (into el2 (map #(deep-walk %) sub-folders)))))) ;; TODO: continue ...
 
   ;;
   )
