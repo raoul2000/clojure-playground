@@ -177,7 +177,7 @@
   ;; In this case, the document is a nested array structure where each array is an element with at least one item,
   ;; the element name as key. then we can have: 
   ;; - attribute map
-  ;; - 1+ child element (arrayà
+  ;; - 1+ child element (array)
   ;;
   ;; [:element-name {:attr "value"} [:el1 ...] [:el2 ...]  ...]
   ;;
@@ -196,25 +196,18 @@
   (map #(vector :file {:attr (str %)}) (list-regular-files root))
 
   (defn deep-walk [path]
-    (let [el (vector :a {:path (str path)})
-          el2 (into el (map #(vector :file {:attr (str %)}) (list-regular-files root)))
-          sub-folders (list-folders root)]
+    (let [el (vector (fs/file-name path)
+                     {:path (str path)}
+                     (into [] (map #(vector (fs/file-name %) {:attr (str %)}) (list-regular-files root))))
+          sub-folders (list-folders path)]
       (if (empty? sub-folders)
-        el2
-        (into el2 (map #(deep-walk %) sub-folders)))))
+        el
+        (let [[folder attr children] el]
+          (vector folder attr (into children (map #(deep-walk %) sub-folders)))))))
 
   (deep-walk root)
 
-
-
-  (defn deep-walk2 [arg-path]
-    (loop [path arg-path]
-      (let [el  (vector :a {:path (str path)})
-            el2 (into el (map #(vector :file {:attr (str %)}) (list-regular-files root)))
-            sub-folders (list-folders root)]
-        (if (empty? sub-folders)
-          el2
-          (into el2 (map #(deep-walk %) sub-folders)))))) ;; TODO: continue ...
+  (update [1 2 3] 2 inc)
 
   ;;
   )
