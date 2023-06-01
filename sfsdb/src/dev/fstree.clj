@@ -197,17 +197,76 @@
 
   (defn deep-walk [path]
     (let [el (vector (fs/file-name path)
-                     {:path (str path)}
-                     (into [] (map #(vector (fs/file-name %) {:attr (str %)}) (list-regular-files root))))
+                     {:path (str path)})
+          file-list (into [] (map #(vector (fs/file-name %) {:attr (str %)}) (list-regular-files path)))
+
+          el2    (apply conj el file-list)
           sub-folders (list-folders path)]
       (if (empty? sub-folders)
-        el
-        (let [[folder attr children] el]
-          (vector folder attr (into children (map #(deep-walk %) sub-folders)))))))
+        el2
+        (reduce conj el2  (map #(deep-walk %) sub-folders)))))
 
   (deep-walk root)
 
-  (update [1 2 3] 2 inc)
+  (print (xml/emit-str (xml/sexp-as-element (deep-walk root))))
+  ;; the returned data structure
+  ["folder-1-A"
+   {:path "c:\\project\\clojure-playground\\sfsdb\\test\\fixture\\fs\\root\\folder-1\\folder-1-A"}
+   [".gitkeep"
+    {:attr "c:\\project\\clojure-playground\\sfsdb\\test\\fixture\\fs\\root\\folder-1\\folder-1-A\\.gitkeep"}]
+   [".meta" {:attr "c:\\project\\clojure-playground\\sfsdb\\test\\fixture\\fs\\root\\folder-1\\folder-1-A\\.meta"}]
+   ["file-1A-1.txt"
+    {:attr "c:\\project\\clojure-playground\\sfsdb\\test\\fixture\\fs\\root\\folder-1\\folder-1-A\\file-1A-1.txt"}]
+   ["file-1A-1.txt.meta"
+    {:attr
+     "c:\\project\\clojure-playground\\sfsdb\\test\\fixture\\fs\\root\\folder-1\\folder-1-A\\file-1A-1.txt.meta"}]
+   ["file-1A-2.txt"
+    {:attr "c:\\project\\clojure-playground\\sfsdb\\test\\fixture\\fs\\root\\folder-1\\folder-1-A\\file-1A-2.txt"}]
+   ["folder-1-A-blue"
+    {:path "c:\\project\\clojure-playground\\sfsdb\\test\\fixture\\fs\\root\\folder-1\\folder-1-A\\folder-1-A-blue"}
+    [".gitkeep"
+     {:attr
+      "c:\\project\\clojure-playground\\sfsdb\\test\\fixture\\fs\\root\\folder-1\\folder-1-A\\folder-1-A-blue\\.gitkeep"}]]]
 
+  ;;: it could be turned into XML, event if filename are not compliant with element names spec
+  (print (xml/emit-str (xml/sexp-as-element (deep-walk root))))
+  #_(<?xml version= "1.0" encoding= "UTF-8" ?>
+           <folder-1-A path= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A" >
+           <.gitkeep attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\.gitkeep" ></.gitkeep>
+           <.meta attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\.meta" ></.meta>
+           <file-1A-1.txt
+           attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\file-1A-1.txt" ></file-1A-1.txt>
+           <file-1A-1.txt.meta
+           attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\file-1A-1.txt.meta" ></file-1A-1.txt.meta>
+           <file-1A-2.txt
+           attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\file-1A-2.txt" ></file-1A-2.txt>
+           <folder-1-A-blue
+           path= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\folder-1-A-blue" >
+           <.gitkeep attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\folder-1-A-blue\.gitkeep" ></.gitkeep>
+           </folder-1-A-blue>
+           </folder-1-A>)
+
+  ;; let's modify the function to get more normalized data structure
+
+  (defn node-attributes [path]
+    {:name  (fs/file-name path)
+     :dir   (fs/directory? path)
+     :file  (fs/regular-file? path)
+     :path  (str path)})
+
+  (defn create-node [path]
+    [:node (node-attributes path)])
+
+  (defn deep-walk2 [path]
+    (let [file-list       (map create-node (list-regular-files path))
+          node            (apply conj (create-node path) file-list)
+          sub-folder-list (list-folders path)]
+      (if (empty? sub-folder-list)
+        node
+        (reduce conj node  (map #(deep-walk %) sub-folder-list)))))
+
+  (deep-walk2 root)
+  ;; the structure produced is compliant with XML
+   (print (xml/emit-str (xml/sexp-as-element (deep-walk2 root))))
   ;;
   )
