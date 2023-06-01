@@ -7,7 +7,9 @@
         lambdaisland/uri             {:mvn/version "1.15.125"}}
  :aliases
  {:dev {:extra-paths ["dev"]
-        :extra-deps {djblue/portal {:mvn/version "0.19.0"}}}
+        :extra-deps {djblue/portal          {:mvn/version "0.19.0"}
+                     io.github.nubank/morse {:git/tag "v2023.04.30.01" :git/sha "d99b09c"}}
+        }
   :run-m {:main-opts ["-m" "sfsdb.sfsdb"]}
   :run-x {:ns-default sfsdb.sfsdb
           :exec-fn greet
