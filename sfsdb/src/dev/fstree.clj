@@ -230,27 +230,12 @@
 
   ;;: it could be turned into XML, event if filename are not compliant with element names spec
   (print (xml/emit-str (xml/sexp-as-element (deep-walk root))))
-  #_(<?xml version= "1.0" encoding= "UTF-8" ?>
-           <folder-1-A path= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A" >
-           <.gitkeep attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\.gitkeep" ></.gitkeep>
-           <.meta attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\.meta" ></.meta>
-           <file-1A-1.txt
-           attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\file-1A-1.txt" ></file-1A-1.txt>
-           <file-1A-1.txt.meta
-           attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\file-1A-1.txt.meta" ></file-1A-1.txt.meta>
-           <file-1A-2.txt
-           attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\file-1A-2.txt" ></file-1A-2.txt>
-           <folder-1-A-blue
-           path= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\folder-1-A-blue" >
-           <.gitkeep attr= "c:\dev\ws\lab\clojure-playground\sfsdb\test\fixture\fs\root\folder-1\folder-1-A\folder-1-A-blue\.gitkeep" ></.gitkeep>
-           </folder-1-A-blue>
-           </folder-1-A>)
 
   ;; let's modify the function to get more normalized data structure
 
   (defn node-attributes [path]
-    {:name  (fs/file-name path)
-     :dir   (fs/directory? path)
+    {:name  (fs/file-name     path)
+     :dir   (fs/directory?    path)
      :file  (fs/regular-file? path)
      :path  (str path)})
 
@@ -258,8 +243,9 @@
     [:node (node-attributes path)])
 
   (defn deep-walk2 [path]
-    (let [file-list       (map create-node (list-regular-files path))
-          node            (apply conj (create-node path) file-list)
+    (let [node   (apply conj (create-node path) (->> path
+                                                     (list-regular-files)
+                                                     (map create-node)))
           sub-folder-list (list-folders path)]
       (if (empty? sub-folder-list)
         node
@@ -267,6 +253,42 @@
 
   (deep-walk2 root)
   ;; the structure produced is compliant with XML
-   (print (xml/emit-str (xml/sexp-as-element (deep-walk2 root))))
+  (print (xml/emit-str (xml/sexp-as-element (deep-walk2 root))))
+  ;;
+  )
+
+;; let's summarize what we've got so far to create an XML representation
+;; of a folder and its content
+(comment
+
+  (def root (fs/path (fs/cwd) "test/fixture/fs/root/folder-1/folder-1-A"))
+
+  (defn list-regular-files [path]
+    (filter fs/regular-file? (fs/list-dir path)))
+
+  (defn list-sub-folders [path]
+    (filter fs/directory? (fs/list-dir path)))
+
+  (defn node-attributes [path]
+    {:name  (fs/file-name     path)
+     :dir   (fs/directory?    path)
+     :file  (fs/regular-file? path)
+     :path  (str path)})
+
+  (defn create-node [path]
+    [:node (node-attributes path)])
+
+  (defn deep-walk [path]
+    (let [node   (apply conj (create-node path) (->> path
+                                                     (list-regular-files)
+                                                     (map create-node)))
+          sub-folder-list (list-sub-folders path)]
+      (if (empty? sub-folder-list)
+        node
+        (reduce conj node  (map #(deep-walk %) sub-folder-list)))))
+
+  (deep-walk root)
+  ;; print
+  (print (xml/emit-str (xml/sexp-as-element (deep-walk root))))
   ;;
   )
