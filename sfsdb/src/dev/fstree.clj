@@ -1,6 +1,5 @@
 (ns dev.fstree
   (:require [babashka.fs :as fs]
-            [clojure.string :as s]
             [clojure.data.xml :as xml]))
 
 ;; create a memory representation (map) of the file system
@@ -290,5 +289,13 @@
   (deep-walk root)
   ;; print
   (print (xml/emit-str (xml/sexp-as-element (deep-walk root))))
+  ;; we have a string representation of the folder : now we want to find a way
+  ;; to query this doc using XPath
+  ;; candidate libraries :
+  ;; - https://github.com/kyleburton/clj-xpath
+  ;; A non XPath options is :
+  ;; - https://github.com/redplanetlabs/specter
+  ;; And what about zipper ? Do they play well with XML
+  ;; - https://github.com/clojure/data.zip/
   ;;
   )
