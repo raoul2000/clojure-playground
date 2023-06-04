@@ -4,7 +4,8 @@
         org.clojure/data.xml         {:mvn/version "0.0.8"}
         babashka/fs                  {:mvn/version "0.2.14"}
         org.clojure/tools.cli        {:mvn/version "1.0.206"}
-        lambdaisland/uri             {:mvn/version "1.15.125"}}
+        lambdaisland/uri             {:mvn/version "1.15.125"}
+        com.github.kyleburton/clj-xpath {:mvn/version "1.4.13"}}
  :aliases
  {:dev {:extra-paths ["dev"]
         :extra-deps {djblue/portal          {:mvn/version "0.19.0"}
