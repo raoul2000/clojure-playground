@@ -23,7 +23,6 @@
   ;; eval and get the text node
   (xp/$x:text "/a/b" dom1)
 
-
   (def dom2 "<root>
              <item id=\"1\">
                 <child>c1</child>

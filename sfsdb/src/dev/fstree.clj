@@ -278,9 +278,9 @@
     [:node (node-attributes path)])
 
   (defn deep-walk [path]
-    (let [node   (apply conj (create-node path) (->> path
-                                                     (list-regular-files)
-                                                     (map create-node)))
+    (let [node            (apply conj (create-node path) (->> path
+                                                              (list-regular-files)
+                                                              (map create-node)))
           sub-folder-list (list-sub-folders path)]
       (if (empty? sub-folder-list)
         node
