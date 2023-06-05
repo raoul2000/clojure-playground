@@ -1,6 +1,7 @@
 (ns dev.fstree
   (:require [babashka.fs :as fs]
-            [clojure.data.xml :as xml]))
+            [clojure.data.xml :as xml]
+            [clj-xpath.core :as xp]))
 
 ;; create a memory representation (map) of the file system
 
@@ -260,7 +261,7 @@
 ;; of a folder and its content
 (comment
 
-  (def root (fs/path (fs/cwd) "test/fixture/fs/root/folder-1/folder-1-A"))
+  (def root (fs/path (fs/cwd) "test/fixture/fs/root/folder-1"))
 
   (defn list-regular-files [path]
     (filter fs/regular-file? (fs/list-dir path)))
@@ -297,5 +298,30 @@
   ;; - https://github.com/redplanetlabs/specter
   ;; And what about zipper ? Do they play well with XML
   ;; - https://github.com/clojure/data.zip/
+  ;;
+  ;; See xpath.clj for more
+
+  ;; using clj-xpath
+  (def xml-str (xml/emit-str (xml/sexp-as-element (deep-walk root))))
+
+  ;; select all files
+  (xp/$x "//*[@dir='false']" xml-str)
+
+  ;; output a list of all file's path, relatively to 'root'
+  (->> xml-str
+       (xp/$x "//node[@dir='false']")                            ;; select all files nodes
+       (map #(hash-map :file      %
+                       :ancestors (xp/$x "ancestor::*" %)))      ;; add ancestords to each file node
+       (map #(-> %
+                 (update :file      get-in [:attrs :name])
+                 (update :ancestors (fn [node-list]
+                                      (->> node-list
+                                           (map (comp :name :attrs))
+                                           (interpose "/")
+                                           (apply str))))))
+       (map (fn [{:keys [file ancestors]}]
+              (str ancestors "/" file))))
+
+
   ;;
   )
