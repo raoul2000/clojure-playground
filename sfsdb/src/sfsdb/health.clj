@@ -8,23 +8,21 @@
 
 ;; rules
 ;; level 1 : ERRORS
-;; - no orphean metadata file : a metadata file not related to an object
+;; X no orphean metadata file : a metadata file not related to an object
 ;; - invalid JSON metadata file : metadata file with invalid JSON content
 ;; - db contains symlinks: only dir and regular files are allowed
 ;; level 2 : WARNINGS
-;; - file with empty content
+;; X file with empty content
 ;; - dir with no content 
-;; - deep nested: configurable max depth check
+;; - deep nested: configurable max depth check (not sure)
 
 
-(defn file-pair 
+(defn- file-pair
   "Returns a map :
    - `:meta-file`: *meta-file-path*
    - `:data-file`: the data file assumed to be linked to *meta-file-path*
 
-   Pairing between data and metadata file is based on naming conventions
-
-   "
+   Pairing between data and metadata file is based on naming conventions"
   [meta-file-path]
   (hash-map :meta-file  meta-file-path
             :data-file  (->> meta-file-path
@@ -32,16 +30,29 @@
                              fs/strip-ext
                              (fs/path (fs/parent meta-file-path)))))
 
-(defn data-file-exist 
+(defn- data-file-exist
   "Add key `:data-file-exists?` and corresponding value to map."
   [{:keys [data-file]
-                        :as file-pair}]
+    :as file-pair}]
   (assoc file-pair :data-file-exist? (fs/regular-file? data-file)))
 
 
+(defn- safe-create-dir-path
+  "Given a *db-dir-path* a Db path to an existing dir object, and *root-path*, the DB FS root folder path,
+   return the FS folder path for the dir object. 
+   
+   throws if the fs path does not exit or is not a folder."
+  [db-dir-path root-path]
+  (let [dir-fs-path  (convert/db-path->fs-path db-dir-path root-path)]
+    (when-not (fs/directory? dir-fs-path)
+      (throw (ex-info (str "folder not found: " dir-fs-path)
+                      {:db-dir-path db-dir-path
+                       :fs-path     dir-fs-path})))
+    dir-fs-path))
+
 (defn find-metadata-orphan
-  "Given *dir-fs-path* a folder path, returns a list of all
-   metadata files not linked to any regular file.
+  "Given *db-path* a folder Db path, returns a list of all
+   metadata files not linked to any regular file contained in *db-path*.
    
    Returns a list of maps :
    - `:data-file`: path of the missing data file
@@ -53,14 +64,8 @@
   {:pre [db-path]}
   (check/validate-root-path root-path)
   (check/validate-db-path   db-path)
-  (let [dir-fs-path (convert/db-path->fs-path db-path root-path)
+  (let [dir-fs-path  (safe-create-dir-path db-path root-path)
         glob-pattern (str "**/?*." (:metadata-extension opts/default))]
-
-    (when-not (fs/directory? dir-fs-path)
-      (throw (ex-info "folder not found"
-                      {:db-path db-path
-                       :fs-path dir-fs-path})))
-    
     (->> (fs/glob dir-fs-path glob-pattern)
          (map file-pair)
          (map data-file-exist)
@@ -80,4 +85,30 @@
   ;;
   )
 
+(defn find-empty-file
+  "Returns a list of all the path to empty file found in the Dir object *db-path*."
+  [db-path {:keys [root-path]
+            :or   {root-path (:root-path opts/default)}}]
+  {:pre [db-path]}
+  (check/validate-root-path root-path)
+  (check/validate-db-path   db-path)
+  (let [dir-fs-path  (safe-create-dir-path db-path root-path)
+        glob-pattern "**"]
 
+    (->> (fs/glob dir-fs-path glob-pattern)
+         (remove #(or (fs/directory? %)
+                      (= "meta" (fs/extension %))))
+         (filter #(zero? (fs/size %)))
+         (map str))))
+
+(comment
+
+
+  (find-empty-file "" {:root-path (fs/path (fs/cwd) "test/fixture/fs/root3")})
+  (find-empty-file "a/alone.meta" {:root-path (fs/path (fs/cwd) "test/fixture/fs/root3")})
+  (find-empty-file "not_found" {:root-path (fs/path (fs/cwd) "test/fixture/fs/root3")})
+  (find-empty-file "" {:root-path (fs/path (fs/cwd) "test/fixture/fs/root")})
+
+
+  ;;
+  )
