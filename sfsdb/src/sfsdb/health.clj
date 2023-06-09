@@ -102,13 +102,33 @@
          (map str))))
 
 (comment
-
-
   (find-empty-file "" {:root-path (fs/path (fs/cwd) "test/fixture/fs/root3")})
   (find-empty-file "a/alone.meta" {:root-path (fs/path (fs/cwd) "test/fixture/fs/root3")})
   (find-empty-file "not_found" {:root-path (fs/path (fs/cwd) "test/fixture/fs/root3")})
   (find-empty-file "" {:root-path (fs/path (fs/cwd) "test/fixture/fs/root")})
-
-
   ;;
   )
+
+
+
+(def exams-catalog {:metadata-orphan {:help "find all metadata files linked with no data file"
+                                      :fn identity}
+                    :empty-data-file {:help "find all empty data files"
+                                      :fn identity}})
+
+
+(defn- apply-exam [exams-id-xs]
+  (fn [path]
+    (map (fn [exam-id]
+           (when-let [exam (get exams-catalog exam-id)]
+             (hash-map :exam-id exam-id
+                       :result  ((:fn exam) path)))) exams-id-xs)))
+
+(defn diagnose [db-path exam-seq {:keys [root-path]
+                                  :or   {root-path (:root-path opts/default)}}]
+  {:pre [db-path]}
+  (check/validate-root-path root-path)
+  (check/validate-db-path   db-path)
+  (let [dir-fs-path  (safe-create-dir-path db-path root-path)]
+
+    (map (apply-exam exam-seq) (fs/glob dir-fs-path "**"))))
