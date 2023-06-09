@@ -122,6 +122,7 @@
     (map (fn [exam-id]
            (when-let [exam (get exams-catalog exam-id)]
              (hash-map :exam-id exam-id
+                       :path    (str path)
                        :result  ((:fn exam) path)))) exams-id-xs)))
 
 (defn diagnose [db-path exam-seq {:keys [root-path]
@@ -132,3 +133,30 @@
   (let [dir-fs-path  (safe-create-dir-path db-path root-path)]
 
     (map (apply-exam exam-seq) (fs/glob dir-fs-path "**"))))
+
+(comment
+
+  (diagnose "" [:metadata-orphan :not_found :empty-data-file]  {:root-path (fs/path (fs/cwd) "test/fixture/fs/root3")})
+
+
+  (def m1 ['({:exam-id :metadata-orphan,
+              :result "r1"}
+             nil
+             {:exam-id :empty-data-file,
+              :result "r2"})
+           '({:exam-id :metadata-orphan,
+              :result "r3"}
+             nil
+             {:exam-id :empty-data-file,
+              :result "r4"})])
+  (flatten m1)
+
+  (group-by :exam-id (remove nil? (flatten m1)))
+  (->> m1
+       flatten
+       (remove nil?)
+       (group-by :exam-id)
+       (map (fn [[exam-id results]]
+              (hash-map exam-id (map #(dissoc % :exam-id) results)))))
+  ;;
+  )
