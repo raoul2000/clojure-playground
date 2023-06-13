@@ -158,5 +158,31 @@
        (group-by :exam-id)
        (map (fn [[exam-id results]]
               (hash-map exam-id (map #(dissoc % :exam-id) results)))))
+
+  (def m2 {:metadata-orphan {:help "describe metadata orphan exam"
+                             :apply? #(or (= % "item1")
+                                          (= % "item2"))
+                             :fn #(vector ["file1.txt" "file2.txt"])}
+           :empty-data-file {:help "describe empty data file"
+                             :apply? #(= % "item2")
+                             :fn #(vector ["fileA.txt" "fileB.txt"])}})
+
+  (def in2 ["item1" "item2" "item3"])
+
+  (->> (map (fn [item]
+              (map (fn [[exam-id exam]]
+                     (when ((:apply? exam) item)
+                       (hash-map :exam-id  exam-id
+                                 :result item))) m2)) in2)
+       (map #(remove nil? %))
+       (remove empty?)
+       (flatten)
+       (group-by :exam-id)
+       (map (fn [[k v]]
+              (hash-map k (map :result v)))))
+
+
+
+
   ;;
   )
