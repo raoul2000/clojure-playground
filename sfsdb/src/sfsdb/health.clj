@@ -165,6 +165,9 @@
                              :fn #(vector ["file1.txt" "file2.txt"])}
            :empty-data-file {:help "describe empty data file"
                              :apply? #(= % "item2")
+                             :fn #(vector ["fileA.txt" "fileB.txt"])}
+           :dummy           {:help "describe duùùy test"
+                             :apply? #(= % "item3")
                              :fn #(vector ["fileA.txt" "fileB.txt"])}})
 
   (def in2 ["item1" "item2" "item3"])
@@ -181,6 +184,24 @@
        (map (fn [[k v]]
               (hash-map k (map :result v)))))
 
+  (->> (map (fn [item]
+         (->> (map (fn [[exam-id exam]]
+                (when ((:apply? exam) item)
+                  (hash-map  exam-id item))) m2)
+              (remove nil?)
+              )) in2)
+       (flatten)    ;; ({:metadata-orphan "item1"} {:metadata-orphan "item2"} {:empty-data-file "item2"} {:dummy "item3"} ...)
+       (map (fn [[k v]] (vector k v)))
+       #_(reduce (fn [acc  k #_[k v]]
+                 (print k)
+                 #_(update acc k #(if (seq? %) (conj % v) (vector v)))
+                 acc
+                 ) {})
+       )
+  
+(vector 1)
+  (update {:f 1} :f (fn[v]
+                  (if (seq? v) (conj v "1") [])))
 
 
 
