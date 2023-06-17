@@ -203,10 +203,10 @@
 
 
 (defn- apply-exam-on [item]
-  (fn [[exam-id {:keys [can-pass-exam? pass-exam?]}]] 
-      (when (and (can-pass-exam?   item)
-                 (not (pass-exam?  item)))
-        (hash-map  exam-id item))))
+  (fn [[exam-id {:keys [can-pass-exam? pass-exam?]}]]
+    (when (and (can-pass-exam?   item)
+               (not (pass-exam?  item)))
+      (hash-map  exam-id item))))
 
 (defn- diagnose-item [exams-map]
   (fn [item]
@@ -219,7 +219,7 @@
     (update acc k #(if (vector? %) (conj % v) (vector v)))))
 
 (defn diagnose
-  "Apply all exams in *exams-map* to Db objects at *db-path* which must be a dir.
+  "Apply all exams in *exams-map* to Db objects starting from *db-path* which must be a dir.
    
    *exams-map* has following shape:
    - key: the exam identifier
@@ -252,7 +252,30 @@
   (diagnose "" exams-1  {:root-path (fs/path (fs/cwd) "test/fixture/fs/root3")})
 
 
+  ;;
+  )
 
+(comment
+  ;; let's try using a reducer
+  ;; still using the same exam map
+  (def exams-1 {:metadata-orphan {:help "describe metadata orphan exam"
+                                  :can-pass-exam? (constantly true)
+                                  :pass-exam?     (constantly true)}
+                :empty-data-file {:help "describe empty data file"
+                                  :can-pass-exam? (constantly true)
+                                  :pass-exam?     (constantly false)}
+                :dummy           {:help "describe duùùy test"
+                                  :can-pass-exam? (constantly true)
+                                  :pass-exam?     (constantly false)}})
 
+  ((diagnose-item exams-1) "item") ;; => ({:empty-data-file "item"} {:empty-data-file "item"}...)
+  
+  (reduce (fn [exam-results item]
+            (let [item-exam-results  ((diagnose-item exams-1) item)]
+              (update exam-results item conj item-exam-results)
+              #_(assoc exam-results item item-exam-results)
+              ) 
+            ) {}  ["item1" "item2" "item3"])
+  
   ;;
   )
