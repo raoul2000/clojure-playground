@@ -156,10 +156,40 @@
                 :empty-data-file {:help "describe empty data file"
                                   :can-pass-exam? (constantly true)
                                   :pass-exam?     (constantly false)}
-                :dummy           {:help "describe duùùy test"
+                :dummy           {:help "describe dummy test"
                                   :can-pass-exam? (constantly true)
                                   :pass-exam?     (constantly false)}})
 
   (diagnose "" exams-1  {:root-path (fs/path (fs/cwd) "test/fixture/fs/root3")})
   ;;
   )
+
+(comment
+  ;; another refacto
+
+  (def exams-2 {:exam-1 {:help "ex1"
+                         :selected? (constantly true)
+                         :examine (constantly {:result "ok"})
+                         :add-result conj}
+                :exam-2 {:help "ex2"
+                         :selected? (constantly true)
+                         :examine (constantly 1)
+                         :add-result (fnil + 0)}})
+
+  (defn run-single-exam [fs-path]
+    (fn [exam-report [exam-id {:keys [selected? examine add-result]}]]
+      (if (selected? fs-path)
+        (update exam-report exam-id (fn [old-exam-res]
+                                      (add-result old-exam-res (examine fs-path))))
+        exam-report)))
+
+  (defn examine [exams]
+    (fn [acc fs-path]
+      (reduce (run-single-exam fs-path) acc (seq exams))))
+
+  (reduce (examine exams-2) {} in-1)
+
+
+  ;;
+  )
+
