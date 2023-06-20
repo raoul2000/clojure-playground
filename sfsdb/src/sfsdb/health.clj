@@ -169,24 +169,24 @@
 
   (def exams-2 {:exam-1 {:help "ex1"
                          :selected? (constantly true)
-                         :examine (constantly {:result "ok"})
-                         :add-result conj}
+                         :examine (constantly {:result "ok"})}
                 :exam-2 {:help "ex2"
                          :selected? (constantly true)
-                         :examine (constantly 1)
-                         :add-result (fnil + 0)}})
+                         :examine (constantly true)}})
 
-  (defn run-single-exam [fs-path]
-    (fn [exam-report [exam-id {:keys [selected? examine add-result]}]]
-      (if (selected? fs-path)
+  (defn run-single-exam [subject]
+    (fn [exam-report [exam-id {:keys [selected? examine]}]]
+      (if (selected? subject)
         (update exam-report exam-id (fn [old-exam-res]
-                                      (add-result old-exam-res (examine fs-path))))
+                                      ((fnil conj []) old-exam-res {:subject subject
+                                                                    :result  (examine subject)})))
         exam-report)))
 
   (defn examine [exams]
     (fn [acc fs-path]
       (reduce (run-single-exam fs-path) acc (seq exams))))
 
+  (def in-1 ["item-1" "item-2" "item-3"])
   (reduce (examine exams-2) {} in-1)
 
 
