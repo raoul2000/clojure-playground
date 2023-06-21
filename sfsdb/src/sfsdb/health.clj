@@ -167,12 +167,15 @@
 (comment
   ;; another refacto
 
-  (def exams-2 {:exam-1 {:help "ex1"
-                         :selected? (constantly true)
-                         :examine (constantly {:result "ok"})}
-                :exam-2 {:help "ex2"
-                         :selected? (constantly true)
-                         :examine (constantly true)}})
+  (def exams-2 {:exam-1 {:help       "ex1"
+                         :selected?  (constantly true)
+                         :examine    (constantly {:result "ok"})}
+                :exam-2 {:help       "ex2"
+                         :selected?  (constantly true)
+                         :examine    (constantly true)}
+                :size   {:help       "data file size"
+                          :selected? (constantly true)
+                          :examine   (constantly (rand-int 10))}})
 
   (defn run-single-exam [subject]
     (fn [exam-report [exam-id {:keys [selected? examine]}]]
