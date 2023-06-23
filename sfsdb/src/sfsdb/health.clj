@@ -18,7 +18,9 @@
 
 
 (defn- file-pair
-  "Returns a map :
+  "Given *meta-file-path* a path to a metadata file, returns a map describing 
+   the pair data/meta file:
+   
    - `:meta-file`: *meta-file-path*
    - `:data-file`: the data file assumed to be linked to *meta-file-path*
 
@@ -195,7 +197,7 @@
 
   (def in-1 ["item-1" "item-2" "item-3"])
 
-  (defn examine 
+  (defn examine
     "Apply a map of exams to each item in *coll* and returns a exam result map
      
      - **key** : the exam id
@@ -205,12 +207,9 @@
      "
     [coll exams]
     (reduce (apply-exams exams) {} coll))
-  
 
   (examine in-1 exams-2)
 
-
-
-  ;;
+;;
   )
 
