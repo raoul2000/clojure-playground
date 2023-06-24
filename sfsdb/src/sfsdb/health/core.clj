@@ -11,8 +11,8 @@
                        :selected?  (constantly true)
                        :examine    (constantly true)}
               :size   {:help       "data file size"
-                       :selected? (constantly true)
-                       :examine   (constantly (rand-int 10))}})
+                       :selected?  (constantly true)
+                       :examine    (constantly (rand-int 10))}})
 
 (defn run-single-exam [subject]
   (fn [exam-report [exam-id {:keys [selected? examine]}]]
