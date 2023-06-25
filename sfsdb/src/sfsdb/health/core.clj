@@ -1,4 +1,9 @@
-(ns sfsdb.health.core)
+(ns sfsdb.health.core
+  (:require [sfsdb.check :refer [meta-file?]]
+            [babashka.fs :as fs]
+            [sfsdb.options :as opts]))
+
+
 
   ;; - :help : a string describing the exam
   ;; - :selected? : predicate function. argument is a Path. When it returns TRUE, the exam is applied to the item
@@ -14,12 +19,24 @@
                        :selected?  (constantly true)
                        :examine    (constantly (rand-int 10))}})
 
+
+;; --------------------------
+
+(defn meta-file-for-data-file?
+  "Returns *true* if *path* refers to a metadata file linked to a fs file."
+  [path]
+  (and (meta-file? path)
+       (not= (fs/file-name path) (str "." (:metadata-extension opts/default)))))
+
+
+;; --------------------------
 (defn run-single-exam [subject]
-  (fn [exam-report [exam-id {:keys [selected? examine]}]]
+  (fn [exam-report [exam-id {:keys [selected? examine accumulator]
+                             :or {accumulator (fnil conj [])}}]]
     (if (selected? subject)
       (update exam-report exam-id (fn [old-exam-res]
-                                    ((fnil conj []) old-exam-res {:subject subject
-                                                                  :result  (examine subject)})))
+                                    (accumulator old-exam-res {:subject subject
+                                                               :result  (examine subject)})))
       exam-report)))
 
 (defn apply-exams [exams]
