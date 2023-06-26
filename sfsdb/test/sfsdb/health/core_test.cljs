@@ -13,18 +13,6 @@
       false ".meta"
       false "/a/b/c/.meta")))
 
-
-
-(def exams-1 {:metadata-orphan {:help "describe metadata orphan exam"
-                                :can-pass-exam? (constantly true)
-                                :pass-exam?     (constantly true)}
-              :empty-data-file {:help "describe empty data file"
-                                :can-pass-exam? (constantly true)
-                                :pass-exam?     (constantly false)}
-              :dummy           {:help "describe dummy test"
-                                :can-pass-exam? (constantly true)
-                                :pass-exam?     (constantly false)}})
-
 (deftest run-single-exam-test
   (testing "Runs a simple single exam"
     (let [run-exam (c/run-single-exam "subject")]
