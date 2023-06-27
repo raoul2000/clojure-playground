@@ -3,8 +3,6 @@
             [babashka.fs :as fs]
             [sfsdb.options :as opts]))
 
-
-
   ;; - :help : a string describing the exam
   ;; - :selected? : predicate function. argument is a Path. When it returns TRUE, the exam is applied to the item
   ;; - :examine  : exam function that take one argument the Path to test and returns a result
@@ -23,7 +21,10 @@
 ;; --------------------------
 
 (defn meta-file-for-data-file?
-  "Returns *true* if *path* refers to a metadata file linked to a fs file."
+  "Returns *true* if *path* refers to a metadata file linked to a fs file.
+   
+   Note that the related data file is not garanteed to exists.
+   "
   [path]
   (and (meta-file? path)
        (not= (fs/file-name path) (str "." (:metadata-extension opts/default)))))
