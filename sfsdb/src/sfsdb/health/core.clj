@@ -3,19 +3,6 @@
             [babashka.fs :as fs]
             [sfsdb.options :as opts]))
 
-  ;; - :help : a string describing the exam
-  ;; - :selected? : predicate function. argument is a Path. When it returns TRUE, the exam is applied to the item
-  ;; - :examine  : exam function that take one argument the Path to test and returns a result
-
-(def exams-2 {:exam-1 {:help       "ex1"
-                       :selected?  (constantly true)
-                       :examine    (constantly {:result "ok"})}
-              :exam-2 {:help       "ex2"
-                       :selected?  (constantly true)
-                       :examine    (constantly true)}
-              :size   {:help       "data file size"
-                       :selected?  (constantly true)
-                       :examine    (constantly (rand-int 10))}})
 
 
 ;; --------------------------
@@ -28,6 +15,49 @@
   [path]
   (and (meta-file? path)
        (not= (fs/file-name path) (str "." (:metadata-extension opts/default)))))
+
+(comment
+
+
+  (defn data-file-name [meta-file-path]
+    (let [parent-dir (fs/parent meta-file-path)]
+      (->> meta-file-path
+           fs/file-name
+           fs/strip-ext
+           (fs/path parent-dir))))
+  
+  (data-file-name "/a/z/.meta")
+  (data-file-name "/a/z/xxx.meta")
+  (data-file-name "/a/z/xxx.txt.meta")
+  (data-file-name "/a/z/xxx.txt")
+
+  (fs/strip-ext "/a/e/dddd.txt.meta")
+
+  (-> "/zz/.file.txt.meta" fs/strip-ext fs/exists?)
+
+
+
+  (hash-map :aa 22)
+
+
+
+  ;;
+  )
+
+  ;; - :help : a string describing the exam
+  ;; - :selected? : predicate function. argument is a Path. When it returns TRUE, the exam is applied to the item
+  ;; - :examine  : exam function that take one argument the Path to test and returns a result
+
+(def exams-2 {:metadata-orphan {:help       "list all metadata files not related to a data file"
+                                :selected?  #(and (meta-file-for-data-file? %)
+                                                  fs/regular-file? %)
+                                :examine    #(hash-map :result (let [data-file])) #_(constantly {:result "ok"})}
+              :exam-2 {:help       "ex2"
+                       :selected?  (constantly true)
+                       :examine    (constantly true)}
+              :size   {:help       "data file size"
+                       :selected?  (constantly true)
+                       :examine    (constantly (rand-int 10))}})
 
 
 ;; --------------------------
