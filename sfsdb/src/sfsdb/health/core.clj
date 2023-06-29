@@ -50,7 +50,7 @@
 
 (def exams-2 {:metadata-orphan {:help       "list all metadata files not related to a data file"
                                 :selected?  #(and (meta-file-for-data-file? %)
-                                                  fs/regular-file? %)
+                                                  (fs/regular-file? %))
                                 :examine    #(hash-map :result (let [data-file])) #_(constantly {:result "ok"})}
               :exam-2 {:help       "ex2"
                        :selected?  (constantly true)
