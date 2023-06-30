@@ -8,7 +8,7 @@
 ;; --------------------------
 
 (defn meta-file-for-data-file?
-  "Returns *true* if *path* refers to a metadata file linked to a fs file.
+  "Returns *true* if *path* refers to a metadata file linked to a fs file (i.e not a dir).
    
    Note that the related data file is not garanteed to exists.
    "
@@ -25,7 +25,7 @@
            fs/file-name
            fs/strip-ext
            (fs/path parent-dir))))
-  
+
   (data-file-name "/a/z/.meta")
   (data-file-name "/a/z/xxx.meta")
   (data-file-name "/a/z/xxx.txt.meta")
@@ -36,10 +36,14 @@
   (-> "/zz/.file.txt.meta" fs/strip-ext fs/exists?)
 
 
+  (fs/path (fs/cwd) "test/fixture/fs/root2/file2.txt.meta")
+
+  (-> (fs/path (fs/cwd) "test/fixture/fs/root2/file2.txt.meta") fs/strip-ext fs/exists?)
+  (-> (fs/path (fs/cwd) "test/fixture/fs/root2/file4.txt.meta") fs/strip-ext fs/exists?)
+
+
 
   (hash-map :aa 22)
-
-
 
   ;;
   )
@@ -48,10 +52,13 @@
   ;; - :selected? : predicate function. argument is a Path. When it returns TRUE, the exam is applied to the item
   ;; - :examine  : exam function that take one argument the Path to test and returns a result
 
-(def exams-2 {:metadata-orphan {:help       "list all metadata files not related to a data file"
-                                :selected?  #(and (meta-file-for-data-file? %)
-                                                  (fs/regular-file? %))
-                                :examine    #(hash-map :result (let [data-file])) #_(constantly {:result "ok"})}
+(def exams-2 {:metadata-orphan {:help         "list all metadata files not related to a data file"
+                                :selected?    #(and (meta-file-for-data-file? %)
+                                                    (fs/regular-file? %))
+                                :examine      #(-> % fs/strip-ext fs/exists?)
+                                :accumulator  (fn [result-coll new-result]
+                                                (cond-> result-coll
+                                                  (not (:result new-result)) (conj result-coll new-result)))}
               :exam-2 {:help       "ex2"
                        :selected?  (constantly true)
                        :examine    (constantly true)}
@@ -88,12 +95,15 @@
   (reduce (apply-exams exams) {} coll))
 
 
+
 (comment
   ;; another refacto
 
+  (def root (fs/path (fs/cwd) "test/fixture/fs/root2"))
+  (fs/glob root "**")
+  (examine (fs/glob root "**") exams-2)
 
-
-  (examine in-1 exams-2)
+  (map meta-file-for-data-file? (fs/glob root "**"))
 
 ;;
   )
