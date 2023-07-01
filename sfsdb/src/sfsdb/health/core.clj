@@ -59,12 +59,16 @@
                                 :accumulator  (fn [result-coll new-result]
                                                 (cond-> result-coll
                                                   (not (:result new-result)) (conj result-coll new-result)))}
-              :exam-2 {:help       "ex2"
-                       :selected?  (constantly true)
-                       :examine    (constantly true)}
-              :size   {:help       "data file size"
-                       :selected?  (constantly true)
-                       :examine    (constantly (rand-int 10))}})
+              
+              :empty-data-file {:help         "Find all empty data files"
+                                :selected?    #(and (fs/regular-file? %)
+                                                    (not (meta-file? %)))
+                                :examine      #(zero? (fs/size %))
+                                :accumulator  (fn [result-coll new-result]
+                                                (cond-> result-coll
+                                                  (:result new-result) (conj result-coll new-result)))}
+              ;;
+              })
 
 
 ;; --------------------------
@@ -104,6 +108,12 @@
   (examine (fs/glob root "**") exams-2)
 
   (map meta-file-for-data-file? (fs/glob root "**"))
+
+  
+  (map meta-file-for-data-file? (fs/glob (fs/path (fs/cwd) "test/fixture/fs") "**"))
+
+  (examine (fs/glob (fs/path (fs/cwd) "test/fixture/fs") "**") exams-2)
+
 
 ;;
   )
