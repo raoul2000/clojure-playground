@@ -114,6 +114,7 @@
 
   (examine (fs/glob (fs/path (fs/cwd) "test/fixture/fs") "**") exams-2)
 
+  ;; FIXME: unexpected results for exam :empty-data-file
 
 ;;
   )
