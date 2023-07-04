@@ -1,4 +1,5 @@
 (ns sfsdb.health.core
+  "module to perform health checks on the FS DB"
   (:require [sfsdb.check :refer [meta-file?]]
             [babashka.fs :as fs]
             [sfsdb.options :as opts]))
