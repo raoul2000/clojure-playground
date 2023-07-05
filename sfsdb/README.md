@@ -1,6 +1,6 @@
 # sfsdb
 
-FIXME: my new application.
+**Simple File System DB** is an attempt to use the file system as a DB.
 
 ## Installation
 
