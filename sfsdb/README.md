@@ -2,6 +2,8 @@
 
 **Simple File System DB** is an attempt to use the file system as a DB.
 
+**THIS IS A WORK IN PROGRESS**
+
 ## Installation
 
 Download from https://github.com/sfsdb/sfsdb
