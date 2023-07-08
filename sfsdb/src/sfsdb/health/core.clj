@@ -42,6 +42,24 @@
                                      :accumulator   (fn [total-size file-size]
                                                       ((fnil + 0)  total-size (:result file-size)))}
 
+              :stat       {:help          "Calculate various stats "
+                           :selected?     (constantly true)
+                           :examine       (fn [path]
+                                            {:is-dir? (fs/directory? path)
+                                             :files-count (when (fs/directory? path)
+                                                            (count (->> path
+                                                                        fs/list-dir
+                                                                        (filter #(fs/regular-file? %)))))
+                                             :size  (if (fs/directory? path)
+                                                      (->> path
+                                                           fs/list-dir
+                                                           (filter #(fs/regular-file? %))
+                                                           (map fs/size)
+                                                           (reduce +))
+                                                      (fs/size path))})
+                           :accumulator   (fn [results stat]
+                                            ((fnil conj [])  results stat))} 
+
               :list-dir-content     {:help          "Count files or dirs in all directories"
                                      :selected?     fs/directory?
                                      :examine       #(count (fs/list-dir %))}
@@ -79,6 +97,8 @@
   ;; another refacto
 
   (def root (fs/path (fs/cwd) "test/fixture/fs/root2"))
+
+
   (fs/glob root "**")
   (examine (fs/glob root "**") exams-2)
 
@@ -88,6 +108,9 @@
   (map meta-file-for-data-file? (fs/glob (fs/path (fs/cwd) "test/fixture/fs/root3") "**"))
 
   (examine (fs/glob (fs/path (fs/cwd) "test/fixture/fs") "**") exams-2)
+
+
+  (examine (fs/glob (fs/path (fs/cwd) "test/fixture/fs") "**") {:stat (:stat exams-2)})
 
 ;;
   )
