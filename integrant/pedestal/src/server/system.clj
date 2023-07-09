@@ -18,7 +18,6 @@
   [_ route-spec]
   (route/expand-routes route-spec))
 
-
 (defmethod ig/init-key  :server/server
   [_ service-map]
   (http/start (http/create-server service-map)))
