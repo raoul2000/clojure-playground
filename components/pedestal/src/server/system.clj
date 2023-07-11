@@ -6,13 +6,15 @@
   (:gen-class))
 
 #_(def config
-  {:server/routes rt/routes
+    {:server/routes rt/routes
 
-   :server/server {::http/routes            (ig/ref :server/routes)
-                   ::http/resource-path     "/public"
-                   ::http/type              :jetty
-                   ::http/port              8890
-                   ::http/join?             false}})
+     :server/server {::http/routes            (ig/ref :server/routes)
+                     ::http/resource-path     "/public"
+                     ::http/type              :jetty
+                     ::http/port              8890
+                     ::http/join?             false}})
+
+;;; The database -----------------------------------------------------
 
 (defrecord Database [host port connection]
   component/Lifecycle
@@ -30,25 +32,30 @@
 (defn new-database [host port]
   (map->Database {:host host :port port}))
 
+
+;;; The shceduler -----------------------------------------------------
+
 (defrecord SchedulerComponent [options]
- component/Lifecycle
+  component/Lifecycle
   (start [this]
     (println ";; Starting SchedulerComponent")
     this)
   (stop [this]
     (println ";; Stoping SchedulerComponent")
-    this
-    )
- )
+    this))
 
 (defn new-scheduler [options]
   (map->SchedulerComponent options))
 
-(defrecord ExampleComponent [options cache database scheduler]
+;;; The ExampleComponent -----------------------------------------------------
+
+(defrecord ExampleComponent [options cache database scheduler web-server]
   component/Lifecycle
 
   (start [this]
     (println ";; Starting ExampleComponent")
+    (println "web-server = ")
+    (println web-server)
     ;; In the 'start' method, a component may assume that its
     ;; dependencies are available and have already been started.
     (assoc this :admin database))
@@ -64,24 +71,50 @@
   (map->ExampleComponent {:options config-options
                           :cache (atom {})}))
 
+;;; The Web Server ------------------------------------------------------------
+
+(defn app-routes [app-component]
+  (rt/make-routes app-component))
+
+(defrecord WebServer [http-server config]
+  component/Lifecycle
+  (start [this]
+    (println ";; Starting WebServer")
+    (assoc this :http-server (http/start (http/create-server {::http/routes            (app-routes {})
+                                                              ::http/resource-path     "/public"
+                                                              ::http/type              :jetty
+                                                              ::http/port              8890
+                                                              ::http/join? false})))
+
+    )
+  (stop [this]
+    (println ";; Stoping WebServer")
+    (http/stop http-server)
+    this))
+
+(defn new-web-server [config-options]
+  (map->WebServer {:config config-options}))
+
+;;; The System ------------------------------------------------------------
+
 (defn example-system [config-options]
   (let [{:keys [host port]} config-options]
     (component/system-map
-     :db (new-database host port)
+     :db        (new-database host port)
      :scheduler (new-scheduler config-options)
-     :app (component/using
-           (example-component config-options)
-           {:database  :db
-            :scheduler :scheduler}))))
+     :web-server (new-web-server config-options)
+     :app       (component/using
+                 (example-component config-options)
+                 {:database  :db
+                  :scheduler :scheduler
+                  :web-server  :web-server}))))
 
 (defn -main [])
 
 (comment
-  
-(def system (component/start (example-system {:opt "value"})))
-  (component/stop system)
 
-  )
+  (def system (component/start (example-system {:opt "value"})))
+  (component/stop system))
 
 #_((defmethod ig/init-key :server/routes
      [_ route-spec]

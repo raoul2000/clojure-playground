@@ -1,13 +1,13 @@
 (ns user
   (:require [com.stuartsierra.component :as component]
             [clojure.tools.namespace.repl :refer (refresh)]
-            [examples :as app]))
+            [server.system :as sys]))
 
 (def system nil)
 
 (defn init []
   (alter-var-root #'system
-                  (constantly (app/example-system {:host "dbhost.com" :port 123}))))
+                  (constantly (sys/example-system {:host "dbhost.com" :port 123}))))
 
 (defn start []
   (alter-var-root #'system component/start))
