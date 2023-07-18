@@ -6,13 +6,22 @@
   (:gen-class))
 
 (def config
-  {:server/routes rt/routes
+  {:server/handlers  {:hello-options {:polite? true}}
+   
+   :server/routes   (ig/ref :server/handlers)
 
    :server/server {::http/routes            (ig/ref :server/routes)
                    ::http/resource-path     "/public"
                    ::http/type              :jetty
                    ::http/port              8890
                    ::http/join?             false}})
+
+(defmethod ig/init-key :server/handlers 
+ [_ options]
+  (tap> "options")
+  (tap> options)
+  (rt/create-routes options)
+ )
 
 (defmethod ig/init-key :server/routes
   [_ route-spec]

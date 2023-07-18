@@ -14,6 +14,7 @@
 
   ;; see https://github.com/weavejester/integrant-repl
   (go)
+  
   (halt)
   (reset)
   (reset-all)
@@ -26,5 +27,6 @@
   (add-tap #'portal/submit)
    ; Start tapping out values
   (tap> :hello)
+  (tap> system/config)
   ;;
   )
