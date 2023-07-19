@@ -3,7 +3,7 @@
             [server.system :as system]
             [portal.api :as portal]))
 
-(ig-repl/set-prep! (fn [] system/config))
+(ig-repl/set-prep! (fn [] (assoc-in system/config  [:app/config :polite?] true)))
 
 (def go ig-repl/go)
 (def halt ig-repl/halt)

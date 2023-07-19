@@ -6,26 +6,31 @@
   (:gen-class))
 
 (def config
-  {:server/handlers  {:hello-options {:polite? true}}
-   
-   :server/routes   (ig/ref :server/handlers)
+  ;; the default configuration - can be over written by user config
+  {:app/config      {:param1                   "value1"
+                     :param2                   {:nested-p1 true
+                                                :nested-p2 12
+                                                :nested-p3 "some string"}
+                     :polite?                  true
+                     :nice-goodbye?            false}
 
-   :server/server {::http/routes            (ig/ref :server/routes)
-                   ::http/resource-path     "/public"
-                   ::http/type              :jetty
-                   ::http/port              8890
-                   ::http/join?             false}})
+   :server/routes    {:config                  (ig/ref :app/config)}
 
-(defmethod ig/init-key :server/handlers 
- [_ options]
-  (tap> "options")
-  (tap> options)
-  (rt/create-routes options)
- )
+   :server/server    {::http/routes            (ig/ref :server/routes)
+                      ::http/resource-path     "/public"
+                      ::http/type              :jetty
+                      ::http/port              8890
+                      ::http/join?             false}})
+
+(defmethod ig/init-key :app/config
+  [_ config]
+  config)
 
 (defmethod ig/init-key :server/routes
-  [_ route-spec]
-  (route/expand-routes route-spec))
+  [_ {:keys [config]}]
+  (-> config
+      rt/create-routes
+      route/expand-routes))
 
 (defmethod ig/init-key  :server/server
   [_ service-map]
@@ -35,4 +40,7 @@
   (http/stop server))
 
 (defn -main []
-  (ig/init config))
+  (-> config
+      (assoc-in [:app/config :polite?] true)
+      ig/init))
+

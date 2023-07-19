@@ -2,12 +2,10 @@
   (:require [clojure.string :as s]))
 
 
-(defn greeting-for [name {:keys [polite?] :as opts}]
-  (tap> (str "name = " name))
-  (tap> opts)
+(defn greeting-for [name polite?]
   (cond
     (nil? name)            "hello, stranger ..."
-    (#{"bob" "max"} name)  (when polite? ", sorry I'm busy")
+    (#{"bob" "max"} name)  (when polite?  (str  ", sorry " name ", I'm busy"))
     :else                  (str "hello, " (if (s/blank? name)
                                             "mysterious"
                                             name))))

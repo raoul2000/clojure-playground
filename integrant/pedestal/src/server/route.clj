@@ -1,6 +1,7 @@
 (ns server.route
   (:require
-   [server.handler :as handler]
+   [server.handler.goodbye :as goodbye]
+   [server.handler.greeting :as greeting]
    [server.response :as response]))
 
 ;;; ----------------------------------------------------------------------------------
@@ -12,20 +13,18 @@
 
 
 (defn create-routes [options]
+  (tap> options)
   #{["/greet" :get
-     (interceptor-chain (handler/create-hello options))
+     (interceptor-chain (greeting/create-handler options))
      :route-name :greet]
 
-    ["/greet2" :get    [response/coerce-body
-                        response/content-neg-intc
-                        (handler/create-hello (:greet options))] :route-name :greet-2]})
+    ["/greet2" :get
+     (interceptor-chain (greeting/create-handler options))
+     :route-name :greet-2]
+
+    ["/bye" :get
+     (interceptor-chain  (goodbye/create-handler options))
+     :route-name :bye]})
 
 
-(def routes #{["/greet" :get    [response/coerce-body
-                                 response/content-neg-intc
-                                 handler/respond-hello] :route-name :greet]
-
-              ["/greet2" :get    [response/coerce-body
-                                  response/content-neg-intc
-                                  handler/respond-hello] :route-name :greet-2]})
 
