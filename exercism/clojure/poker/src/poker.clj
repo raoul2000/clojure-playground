@@ -39,7 +39,28 @@
   ;;
   )
 
-(defn hand->string [v])
+(defn hand->string
+  "Converts *v* a normalized form hand into a string"
+  [v]
+  (->> v
+       (map (fn [[rank suit]] (str rank suit)))
+       (join " ")))
+
+(comment
+  (hand->string (normalize-hand "4S 3D"))
+  ;;
+  )
+
+(defn find-highest-card
+  "Given *hand* a normalized form hand, returns the highest card"
+  [hand]
+  (first (sort-by first > hand)))
+
+(comment
+  (find-highest-card [[4 "D"] [5 "S"] [6 "S"] [8 "D"] [3 "C"]])
+
+  ;;
+  )
 
 (defn pair-count
   "Given a *hand* returns the number of pair(s)"
@@ -143,17 +164,39 @@
 (defn compare-hands [hand-a hand-b]
   1)
 
+(defn assign-score [hand]
+  [(first (find-highest-card hand)) hand])
+
+(comment
+
+  (assign-score (normalize-hand "4D 5S 6S 8D 3C"))
+  ;;
+  )
+
+(def hand-score first)
+
 (defn best-hands [hands]
   (if (= 1 (count hands))
     [(first hands)]
-    (sort-by normalize-hand compare-hands hands )))
+    (->> hands
+         (map normalize-hand)
+         (map assign-score)
+         (sort-by hand-score >)
+         first
+         second
+         hand->string
+         ;;
+         )))
 
 (comment
+  (best-hands ["4D 5S 6S 8D 3C"
+               "2S 4C 7S 9H 10H"
+               "3S 4S 5D 6H JH"])
   (defn f [xs ys] (= (sort (best-hands xs)) (sort ys)))
   (sort (best-hands  ["4D 5S 6S 8D 3C"
-                     "2S 4C 7S 9H 10H"
-                     "3S 4S 5D 6H JH"]))
+                      "2S 4C 7S 9H 10H"
+                      "3S 4S 5D 6H JH"]))
   (sort ["4S 5S 7H 8D JC"])
-  
+
   ;;
   )
