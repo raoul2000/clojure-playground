@@ -1,13 +1,17 @@
 (ns poker
-  (:require [clojure.string :refer [split join]]))
+  (:require [clojure.string :refer [split join]]
+            [clojure.set :refer [map-invert]]))
+
+(def figure-val   {"J" 11
+                   "Q" 12
+                   "K" 13})
+
+(def val-figure (map-invert figure-val))
 
 (defn normalize-card [^String card]
-  (let [[_ rank suit] (re-matches #"([0-9JQK]+)(.)" card)
-        figure-vals   {"J" 11
-                       "Q" 12
-                       "K" 13}]
+  (let [[_ rank suit] (re-matches #"([0-9JQK]+)(.)" card)]
     (try
-      [(or (figure-vals rank)
+      [(or (figure-val rank)
            (Integer. rank))
        suit]
       (catch Exception e
@@ -39,17 +43,35 @@
   ;;
   )
 
+(defn card->string
+  "Convert a normalized card into a string"
+  [[rank suit]]
+  (str (if (> rank 10)
+         (get val-figure rank)
+         rank) suit))
+
+(comment
+
+  (card->string [1 "D"])
+  (card->string [10 "D"])
+  (card->string [11 "D"])
+  (filter identity figure-val)
+  ;;
+  )
+
 (defn hand->string
   "Converts *v* a normalized form hand into a string"
   [v]
   (->> v
-       (map (fn [[rank suit]] (str rank suit)))
+       (map card->string)
        (join " ")))
 
 (comment
   (hand->string (normalize-hand "4S 3D"))
+  (hand->string (normalize-hand "4S KH JC"))
   ;;
   )
+
 
 (defn find-highest-card
   "Given *hand* a normalized form hand, returns the highest card"
@@ -72,9 +94,10 @@
        (filter #{2})
        (count)))
 
-(comment
+(comment 
   (pair-count [[1 "E"] [3 "B"] [2 "R"]])
   (pair-count [[1 :e] [2 :b] [1 :r] [2 :t]])
+  (pair-count (normalize-hand "4D 2S 4S 3C 2C"))
   ;;
   )
 
