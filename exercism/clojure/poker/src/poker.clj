@@ -32,7 +32,7 @@
 
 (defn normalize-hand
   "Given a string representing a list of cards, returns a vector, 
-   where each item is represents a card as a pair [rank suit]"
+   where each item is represented a card as a pair [rank suit] in a vector"
   [s]
   (->> (split s #" ")
        (map normalize-card)))
