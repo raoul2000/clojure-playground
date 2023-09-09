@@ -94,21 +94,23 @@
        (filter #{2})
        (count)))
 
-(comment 
+(comment
   (pair-count [[1 "E"] [3 "B"] [2 "R"]])
   (pair-count [[1 :e] [2 :b] [1 :r] [2 :t]])
   (pair-count (normalize-hand "4D 2S 4S 3C 2C"))
   ;;
   )
 
-
+(def two-pair? #(= 2 (pair-count %)))
+(def one-pair? #(= 1 (pair-count %)))
 
 (defn n-of-a-kind? [n hand]
   (->> hand
        (map first)
        (frequencies)
        (vals)
-       (some #{n})))
+       (some #{n})
+       boolean))
 
 (def three-of-a-kind? (partial n-of-a-kind? 3))
 (def four-of-a-kind? (partial n-of-a-kind? 4))
@@ -127,15 +129,16 @@
 (defn straight?
   "Given a rank sorted *hand* returns `true` if it's a straight"
   [hand]
-  (let [ranks (map first hand)]
-    (loop [rk ranks]
-      (cond
-        (empty? (rest rk))  true
-        (not= (first rk) (inc (fnext rk))) false
-        :else (recur (rest rk))))))
+  (when (seq hand)
+    (let [ranks (map first hand)]
+      (loop [rk ranks]
+        (cond
+          (empty? (rest rk))  true
+          (not= (first rk) (inc (fnext rk))) false
+          :else (recur (rest rk)))))))
 
 (comment
-
+  (straight? [])
   (straight? [[1 :e] [3 :b] [2 :r]])
   (straight? [[1 :e] [2 :b] [1 :r]])
   (straight? [[1 :e] [2 :b] [1 :r] [1 :t]])
@@ -146,10 +149,12 @@
   )
 
 (defn flush? [hand]
-  (let [suits (map second hand)]
-    (every? #{(first suits)} suits)))
+  (when (seq hand)
+    (let [suits (map second hand)]
+      (every? #{(first suits)} suits))))
 
 (comment
+  (flush? [])
   (flush? [[1 :e] [3 :b] [2 :r]])
   (flush? [[1 :e] [2 :e] [1 :e] [1 :e]])
   ;;
@@ -175,6 +180,7 @@
        (flush? hand)))
 
 (comment
+  (straight-flush? [[5 :a]])
   (straight-flush? [[5 :a] [4 :a] [3 :a] [2 :a] [1 :a]])
   (straight-flush? [[5 :a] [4 :a] [3 :a] [2 :a] [1 :b]])
 
@@ -187,11 +193,29 @@
 (defn compare-hands [hand-a hand-b]
   1)
 
+(def score-by-hand {straight-flush?   10
+                    four-of-a-kind?   9
+                    full-house?       8
+                    flush?            7
+                    straight?         6
+                    three-of-a-kind?  5
+                    two-pair?         4
+                    one-pair?         3})
+
 (defn assign-score [hand]
-  [(first (find-highest-card hand)) hand])
+  (some (fn [[score-for score]]
+          (when (score-for hand) score)) score-by-hand))
 
 (comment
-
+  (straight-flush? [])
+  (assign-score (normalize-hand "4D 4S 6S 8D 3C"))
+  (assign-score (normalize-hand "4D 4S 6S 8D 8C"))
+  (assign-score (normalize-hand "4D 8S 6S 8D 8C"))
+  (assign-score (normalize-hand "9D 8S 7S 6D 5C"))
+  (assign-score (normalize-hand "9S 8S 1S 2S 5S"))
+  (assign-score (normalize-hand "9S 9D 9H KS KH"))
+  (assign-score (normalize-hand "9S 9D 9H 9S KH"))
+  (assign-score (normalize-hand "9S 8S 7S 6S 5S"))
   (assign-score (normalize-hand "4D 5S 6S 8D 3C"))
   ;;
   )
@@ -204,10 +228,10 @@
     (->> hands
          (map normalize-hand)
          (map assign-score)
-         (sort-by hand-score >)
-         first
-         second
-         hand->string
+         #_(sort-by hand-score >)
+         #_first
+         #_second
+         #_hand->string
          ;;
          )))
 
