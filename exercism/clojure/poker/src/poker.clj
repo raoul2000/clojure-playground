@@ -8,7 +8,18 @@
 
 (def val-figure (map-invert figure-val))
 
-(defn normalize-card [^String card]
+(defn normalize-card
+  "Given the string representation of a single cards, returns the card model
+   as a vector where the first item is the card value as a number, and the second
+   the card suit as a string.
+   
+   example: 
+   ```
+   (normalize-card \"JC\")
+   => [11 \"C\"]
+   ```
+   "
+  [^String card]
   (let [[_ rank suit] (re-matches #"([0-9JQK]+)(.)" card)]
     (try
       [(or (figure-val rank)
@@ -18,30 +29,12 @@
         (throw (ex-info (str "failed to normalize card " card)
                         {:cause (.getMessage e)}))))))
 
-(comment
-  (normalize-card "3H")
-  (normalize-card "JH")
-  (normalize-card "2S")
-  (normalize-card "2C")
-  (normalize-card "KH")
-  (normalize-card "10H")
-  (normalize-card "AC")
-  ;;
-  )
-
-
 (defn normalize-hand
   "Given a string representing a list of cards, returns a vector, 
-   where each item is represented a card as a pair [rank suit] in a vector"
+   where each item is represented a card as a vector [rank suit]"
   [s]
   (->> (split s #" ")
        (map normalize-card)))
-
-(comment
-  (normalize-hand "4S 3D")
-  (normalize-hand "4S 3D KH 3C")
-  ;;
-  )
 
 (defn card->string
   "Convert a normalized card into a string"
@@ -51,7 +44,6 @@
          rank) suit))
 
 (comment
-
   (card->string [1 "D"])
   (card->string [10 "D"])
   (card->string [11 "D"])
@@ -60,7 +52,7 @@
   )
 
 (defn hand->string
-  "Converts *v* a normalized form hand into a string"
+  "Converts *v* a normalized cards hand into a string"
   [v]
   (->> v
        (map card->string)
@@ -71,6 +63,57 @@
   (hand->string (normalize-hand "4S KH JC"))
   ;;
   )
+
+(defn by-high-card
+  "Compare 2 high-card hands.
+   Each hand is provided in its normalized form.
+   "
+  [h2 h1]
+  (let [card-vals  (map vector (sort-by first > h1) (sort-by first > h2))]
+    (reduce (fn [acc [v1 v2]]
+              (let [cmp (compare v1 v2)]
+                (if-not (zero? cmp)
+                  (reduced cmp)
+                  acc))) 0 card-vals)))
+
+(comment
+  (sort by-high-card [[[2 :a] [4 :b]]
+                      [[2 :a] [4 :b]]
+                      [[2 :a] [5 :b]]
+                      [[7 :a] [2 :b]]])
+
+  (by-high-card [[2 :a] [4 :b]] [[2 :a] [4 :b]])
+  (by-high-card [[2 :a] [4 :b]] [[2 :a] [5 :b]])
+
+  ;;
+  )
+
+
+(defn rank-high-cards [hands]
+  (sort by-high-card hands))
+
+(comment
+  (rank-high-cards  [[[2 :a] [4 :b]]
+                     [[2 :a] [4 :b]]
+                     [[2 :a] [5 :b]]
+                     [[7 :a] [2 :b]]])
+
+  (def v '([[7 :a] [2 :b]] [[2 :a] [5 :b]] [[2 :a] [4 :b]] [[2 :a] [4 :b]]))
+
+  (partition-by (fn [h] 
+                  ((apply str (map first h)))) v)
+  (reduce (fn [acc hand]
+            (let [id (apply str (map first hand))]
+              (if (= id (first acc))
+                (reduced (second acc))
+                ()
+                )
+              )
+            ) [] v )
+
+  ;;
+  )
+
 
 
 (defn find-highest-card
@@ -89,20 +132,67 @@
   [hand]
   (->> hand
        (map first)
-       (frequencies)
-       (vals)
+       frequencies
+       vals
        (filter #{2})
-       (count)))
+       count))
 
 (comment
   (pair-count [[1 "E"] [3 "B"] [2 "R"]])
   (pair-count [[1 :e] [2 :b] [1 :r] [2 :t]])
   (pair-count (normalize-hand "4D 2S 4S 3C 2C"))
+
+  (frequencies (map first [[1 :e] [2 :b] [1 :r] [2 :t]]))
+  (frequencies (map first [[1 :e] [2 :b] [1 :r] [2 :t]]))
+  (->> (frequencies (map first [[1 :e] [2 :b] [1 :r] [4 :t]]))
+       (sort-by second)
+       #_first
+       #_last)
+
+  (defn by-freq-and-val [[v1 freq1] [v2 freq2]]
+    (let [cmp (compare freq1 freq2)]
+      (if (zero? cmp)
+        (compare v1 v2)
+        cmp)))
+
+  (by-freq-and-val [3 1] [2 10])
+
+  (compare 3 2)
+
+  (->> (frequencies (map first [[1 :e] [8 :b] [1 :r] [8 :t] [3 :y] [5 :r]]))
+       (sort by-freq-and-val)
+       reverse
+       (reduce (fn [acc [v freq]]
+                 (+ acc (* v (* 100 (dec freq))))) 0))
+
   ;;
   )
 
 (def two-pair? #(= 2 (pair-count %)))
 (def one-pair? #(= 1 (pair-count %)))
+
+(defn rank-pairs-hand
+  "Given a *hand* with one or two pair, returns a score suitable to compare this
+   hand with other one or two pair hands"
+  [hand]
+  (->> (frequencies (map first hand))
+       (sort by-freq-and-val)
+       (reduce (fn [acc [v freq]]
+                 (+ acc v (* v (* 100 (dec freq))))) 0)))
+
+
+(comment
+
+  (rank-pairs-hand (normalize-hand "4D 4S 6S 8D 3C"))
+  (rank-pairs-hand (normalize-hand "5D 5S 6S 8D 3C"))
+  (rank-pairs-hand (normalize-hand "5D 5S 6S 9D 3C"))
+
+  (rank-pairs-hand (normalize-hand "5D 5S 6S 9D 9C"))
+  (rank-pairs-hand (normalize-hand "8D 8S 6S 9D 9C"))
+  (rank-pairs-hand (normalize-hand "8D 8S 7S 9D 9C"))
+
+  ;;
+  )
 
 (defn n-of-a-kind? [n hand]
   (->> hand
@@ -190,8 +280,7 @@
 
 ;; -----------------
 
-(defn compare-hands [hand-a hand-b]
-  1)
+
 
 (def score-by-hand {straight-flush?   10
                     four-of-a-kind?   9
@@ -203,20 +292,19 @@
                     one-pair?         3})
 
 (defn assign-score [hand]
-  (some (fn [[score-for score]]
-          (when (score-for hand) score)) score-by-hand))
+  (or (some (fn [[score-for score]]
+              (when (score-for hand) score)) score-by-hand)
+      0))
+
+(defn keep-top-score-hands [scored-hands]
+  (->> scored-hands
+       (sort-by first >)
+       (partition-by first)
+       first))
 
 (comment
-  (straight-flush? [])
-  (assign-score (normalize-hand "4D 4S 6S 8D 3C"))
-  (assign-score (normalize-hand "4D 4S 6S 8D 8C"))
-  (assign-score (normalize-hand "4D 8S 6S 8D 8C"))
-  (assign-score (normalize-hand "9D 8S 7S 6D 5C"))
-  (assign-score (normalize-hand "9S 8S 1S 2S 5S"))
-  (assign-score (normalize-hand "9S 9D 9H KS KH"))
-  (assign-score (normalize-hand "9S 9D 9H 9S KH"))
-  (assign-score (normalize-hand "9S 8S 7S 6S 5S"))
-  (assign-score (normalize-hand "4D 5S 6S 8D 3C"))
+
+  (keep-top-score-hands [[1 :hand-a]  [3 :hand-b] [1 :hand-c] [3 :hand-d]])
   ;;
   )
 
@@ -227,7 +315,8 @@
     [(first hands)]
     (->> hands
          (map normalize-hand)
-         (map assign-score)
+         (map (juxt assign-score identity))
+         keep-top-score-hands
          #_(sort-by hand-score >)
          #_first
          #_second
@@ -238,7 +327,9 @@
 (comment
   (best-hands ["4D 5S 6S 8D 3C"
                "2S 4C 7S 9H 10H"
-               "3S 4S 5D 6H JH"])
+               "5D 2S 6S 2D 5C"
+               "3S 4S 5D 6H JH"
+               "4D 4S 6S 8D 8C"])
   (defn f [xs ys] (= (sort (best-hands xs)) (sort ys)))
   (sort (best-hands  ["4D 5S 6S 8D 3C"
                       "2S 4C 7S 9H 10H"
