@@ -84,33 +84,69 @@
 
   (by-high-card [[2 :a] [4 :b]] [[2 :a] [4 :b]])
   (by-high-card [[2 :a] [4 :b]] [[2 :a] [5 :b]])
+  (by-high-card [[2 :a] [5 :c] [3 :a]] [[2 :a] [5 :b] [1 :a]])
 
   ;;
   )
 
+(defn hand-vals
+  "Given a normalized *hand* returns a string composed of
+   ascending sorted values.
+   
+   Example:
+   ```clojure
+   (hand-vals [[3 :a] [1 :b]])
+   => \"31\"
+   ```
+   "
+  [hand]
+  (apply str (sort > (map first hand))))
 
-(defn rank-high-cards [hands]
-  (sort by-high-card hands))
+(defn rank-high-cards
+  "Given a coll of high-cards *hands*, returns a seq of hands with highest score.
+   
+   Example:
+   ```clojure
+   (rank-high-cards [[[2 :a] [4 :b]]
+                     [[2 :A] [4 :B]]
+                     [[2 :Y] [7 :X]]
+                     [[2 :a] [5 :b]]
+                     [[7 :a] [2 :b]]])
+   => ([[7 :a] [2 :b]] [[2 :Y] [7 :X]])
+   ```
+   "
+  [hands]
+  (->> hands
+       (sort by-high-card)
+       (partition-by hand-vals)
+       first))
 
 (comment
   (rank-high-cards  [[[2 :a] [4 :b]]
                      [[2 :a] [4 :b]]
+                     [[2 :Y] [7 :X]]
                      [[2 :a] [5 :b]]
                      [[7 :a] [2 :b]]])
 
+
   (def v '([[7 :a] [2 :b]] [[2 :a] [5 :b]] [[2 :a] [4 :b]] [[2 :a] [4 :b]]))
 
-  (partition-by (fn [h] 
+  (partition-by (fn [h]
                   ((apply str (map first h)))) v)
   (reduce (fn [acc hand]
             (let [id (apply str (map first hand))]
               (if (= id (first acc))
                 (reduced (second acc))
-                ()
-                )
-              )
-            ) [] v )
+                ()))) [] v)
 
+  (defn hand-vals [hand]
+    (apply str (sort > (map first hand))))
+
+
+  (hand-vals [[2 :e] [3 :b]])
+  (partition-by hand-vals [[[1 :a] [5 :b]]
+                           [[5 :C] [1 :D]]
+                           [[4 :a] [2 :b]]])
   ;;
   )
 
@@ -149,11 +185,7 @@
        #_first
        #_last)
 
-  (defn by-freq-and-val [[v1 freq1] [v2 freq2]]
-    (let [cmp (compare freq1 freq2)]
-      (if (zero? cmp)
-        (compare v1 v2)
-        cmp)))
+
 
   (by-freq-and-val [3 1] [2 10])
 
@@ -170,6 +202,12 @@
 
 (def two-pair? #(= 2 (pair-count %)))
 (def one-pair? #(= 1 (pair-count %)))
+
+(defn by-freq-and-val [[v1 freq1] [v2 freq2]]
+  (let [cmp (compare freq1 freq2)]
+    (if (zero? cmp)
+      (compare v1 v2)
+      cmp)))
 
 (defn rank-pairs-hand
   "Given a *hand* with one or two pair, returns a score suitable to compare this

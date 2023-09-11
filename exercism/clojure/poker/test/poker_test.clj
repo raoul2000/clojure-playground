@@ -65,4 +65,14 @@
            (p/keep-top-score-hands [[1 :hand-a]  [4 :hand-b] [1 :hand-c] [3 :hand-d]])))
 
     (is (= '([3 :hand-a] [3 :hand-b] [3 :hand-c] [3 :hand-d])
-           (p/keep-top-score-hands [[3 :hand-a]  [3 :hand-b] [3 :hand-c] [3 :hand-d]]))))) 
+           (p/keep-top-score-hands [[3 :hand-a]  [3 :hand-b] [3 :hand-c] [3 :hand-d]])))))
+
+
+(deftest rank-high-cards-test
+  (testing "Returns highest high cards in a coll of hands"
+    (is (= '([[7 :a] [2 :b]] [[2 :Y] [7 :X]])
+           (p/rank-high-cards [[[2 :a] [4 :b]]
+                               [[2 :a] [4 :b]]
+                               [[2 :Y] [7 :X]]
+                               [[2 :a] [5 :b]]
+                               [[7 :a] [2 :b]]]))))) 
