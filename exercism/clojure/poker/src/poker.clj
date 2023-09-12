@@ -43,14 +43,6 @@
          (get val-figure rank)
          rank) suit))
 
-(comment
-  (card->string [1 "D"])
-  (card->string [10 "D"])
-  (card->string [11 "D"])
-  (filter identity figure-val)
-  ;;
-  )
-
 (defn hand->string
   "Converts *v* a normalized cards hand into a string"
   [v]
@@ -58,11 +50,7 @@
        (map card->string)
        (join " ")))
 
-(comment
-  (hand->string (normalize-hand "4S 3D"))
-  (hand->string (normalize-hand "4S KH JC"))
-  ;;
-  )
+;; --- ranking ----------------------------------------------------------
 
 (defn by-high-card
   "Compare 2 high-card hands.
@@ -209,9 +197,9 @@
       (compare v1 v2)
       cmp)))
 
-(defn rank-pairs-hand
+(defn compute-score-for-pair-hands
   "Given a *hand* with one or two pair, returns a score suitable to compare this
-   hand with other one or two pair hands"
+   hand with other hands having the same pair count"
   [hand]
   (->> (frequencies (map first hand))
        (sort by-freq-and-val)
@@ -219,15 +207,38 @@
                  (+ acc v (* v (* 100 (dec freq))))) 0)))
 
 
+(defn rank-pair-hands
+  "Given  *hands* of one or two pair hands, returns the list of highed ranked hands.
+   Use this function for hands with the **same count of pairs**.
+
+   Comparing a one pair with a two pair hand is NOT the prupose of this function, and should be done
+   by caller. Hands must contain only one or only two pair hands (but not a mix).
+   "
+  [hands]
+  (->> hands
+       (map (juxt compute-score-for-pair-hands identity))
+       (sort-by first >)
+       (partition-by first)
+       first
+       (map second)))
+
 (comment
 
-  (rank-pairs-hand (normalize-hand "4D 4S 6S 8D 3C"))
-  (rank-pairs-hand (normalize-hand "5D 5S 6S 8D 3C"))
-  (rank-pairs-hand (normalize-hand "5D 5S 6S 9D 3C"))
+  (rank-pair-hands [[[2 :a] [2 :b] [4 :c] [6 :d]]
+                    [[2 :a] [2 :b] [4 :c] [5 :d]]
+                    [[2 :a] [2 :b] [4 :c] [6 :d]]
+                    ])
 
-  (rank-pairs-hand (normalize-hand "5D 5S 6S 9D 9C"))
-  (rank-pairs-hand (normalize-hand "8D 8S 6S 9D 9C"))
-  (rank-pairs-hand (normalize-hand "8D 8S 7S 9D 9C"))
+
+  (compute-score-for-pair-hands (normalize-hand "4D 8S 6S 8D 3C"))
+
+  (compute-score-for-pair-hands (normalize-hand "4D 4S 6S 8D 3C"))
+  (compute-score-for-pair-hands (normalize-hand "5D 5S 6S 8D 3C"))
+  (compute-score-for-pair-hands (normalize-hand "5D 5S 6S 9D 3C"))
+
+  (compute-score-for-pair-hands (normalize-hand "5D 5S 6S 9D 9C"))
+  (compute-score-for-pair-hands (normalize-hand "8D 8S 6S 9D 9C"))
+  (compute-score-for-pair-hands (normalize-hand "8D 8S 7S 9D 9C"))
 
   ;;
   )

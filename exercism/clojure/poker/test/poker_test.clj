@@ -67,6 +67,10 @@
     (is (= '([3 :hand-a] [3 :hand-b] [3 :hand-c] [3 :hand-d])
            (p/keep-top-score-hands [[3 :hand-a]  [3 :hand-b] [3 :hand-c] [3 :hand-d]])))))
 
+(deftest hand-vals-test
+  (testing "concat cards val to string"
+    (is (= "32"
+           (p/hand-vals [[2 :A] [3 :B]])))))
 
 (deftest rank-high-cards-test
   (testing "Returns highest high cards in a coll of hands"
@@ -75,4 +79,29 @@
                                [[2 :a] [4 :b]]
                                [[2 :Y] [7 :X]]
                                [[2 :a] [5 :b]]
-                               [[7 :a] [2 :b]]]))))) 
+                               [[7 :a] [2 :b]]])))
+
+    (is (= '([[7 :a] [2 :b]])
+           (p/rank-high-cards [[[2 :a] [4 :b]]
+                               [[2 :a] [4 :b]]
+                               [[2 :a] [5 :b]]
+                               [[7 :a] [2 :b]]])))))
+
+(deftest compute-score-for-pair-hands-test
+  (testing "compute rank for one or two pair hands"
+    (is (= 209
+           (p/compute-score-for-pair-hands [[2 :a] [2 :b] [3 :c] [4 :d]])))
+    (is (= 505
+           (p/compute-score-for-pair-hands [[2 :a] [2 :b] [3 :c] [3 :d]]))))
+
+  (testing "score define complete order over same pair count hands"
+    (are [x y] (< x y)
+      ;; two pairs
+      (p/compute-score-for-pair-hands [[2 :a] [2 :b] [3 :c] [3 :d]])  (p/compute-score-for-pair-hands [[2 :a] [2 :b] [4 :c] [4 :d]])
+      (p/compute-score-for-pair-hands [[1 :a] [1 :b] [3 :c] [3 :d]])  (p/compute-score-for-pair-hands [[2 :a] [2 :b] [4 :c] [4 :d]])
+      (p/compute-score-for-pair-hands [[3 :a] [3 :b] [5 :c] [5 :d]])  (p/compute-score-for-pair-hands [[3 :a] [3 :b] [6 :c] [6 :d]])
+      (p/compute-score-for-pair-hands [[5 :c] [5 :d] [3 :a] [3 :b]])  (p/compute-score-for-pair-hands [[3 :a] [3 :b] [6 :c] [6 :d]])
+
+      ;; one pair
+      (p/compute-score-for-pair-hands [[5 :c] [5 :d] [3 :a] [2 :b]])  (p/compute-score-for-pair-hands [[1 :a] [3 :b] [6 :c] [6 :d]])
+      (p/compute-score-for-pair-hands [[1 :c] [5 :d] [3 :a] [3 :b]])  (p/compute-score-for-pair-hands [[1 :a] [5 :b] [6 :c] [6 :d]]))))
