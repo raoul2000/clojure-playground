@@ -109,48 +109,6 @@
        (partition-by hand-vals)
        first))
 
-(comment
-  (rank-high-cards  [[[2 :a] [4 :b]]
-                     [[2 :a] [4 :b]]
-                     [[2 :Y] [7 :X]]
-                     [[2 :a] [5 :b]]
-                     [[7 :a] [2 :b]]])
-
-
-  (def v '([[7 :a] [2 :b]] [[2 :a] [5 :b]] [[2 :a] [4 :b]] [[2 :a] [4 :b]]))
-
-  (partition-by (fn [h]
-                  ((apply str (map first h)))) v)
-  (reduce (fn [acc hand]
-            (let [id (apply str (map first hand))]
-              (if (= id (first acc))
-                (reduced (second acc))
-                ()))) [] v)
-
-  (defn hand-vals [hand]
-    (apply str (sort > (map first hand))))
-
-
-  (hand-vals [[2 :e] [3 :b]])
-  (partition-by hand-vals [[[1 :a] [5 :b]]
-                           [[5 :C] [1 :D]]
-                           [[4 :a] [2 :b]]])
-  ;;
-  )
-
-
-
-(defn find-highest-card
-  "Given *hand* a normalized form hand, returns the highest card"
-  [hand]
-  (first (sort-by first > hand)))
-
-(comment
-  (find-highest-card [[4 "D"] [5 "S"] [6 "S"] [8 "D"] [3 "C"]])
-
-  ;;
-  )
-
 (defn pair-count
   "Given a *hand* returns the number of pair(s)"
   [hand]
@@ -160,33 +118,6 @@
        vals
        (filter #{2})
        count))
-
-(comment
-  (pair-count [[1 "E"] [3 "B"] [2 "R"]])
-  (pair-count [[1 :e] [2 :b] [1 :r] [2 :t]])
-  (pair-count (normalize-hand "4D 2S 4S 3C 2C"))
-
-  (frequencies (map first [[1 :e] [2 :b] [1 :r] [2 :t]]))
-  (frequencies (map first [[1 :e] [2 :b] [1 :r] [2 :t]]))
-  (->> (frequencies (map first [[1 :e] [2 :b] [1 :r] [4 :t]]))
-       (sort-by second)
-       #_first
-       #_last)
-
-
-
-  (by-freq-and-val [3 1] [2 10])
-
-  (compare 3 2)
-
-  (->> (frequencies (map first [[1 :e] [8 :b] [1 :r] [8 :t] [3 :y] [5 :r]]))
-       (sort by-freq-and-val)
-       reverse
-       (reduce (fn [acc [v freq]]
-                 (+ acc (* v (* 100 (dec freq))))) 0))
-
-  ;;
-  )
 
 (def two-pair? #(= 2 (pair-count %)))
 (def one-pair? #(= 1 (pair-count %)))
@@ -205,7 +136,6 @@
        (sort by-freq-and-val)
        (reduce (fn [acc [v freq]]
                  (+ acc v (* v (* 100 (dec freq))))) 0)))
-
 
 (defn rank-pair-hands
   "Given  *hands* of one or two pair hands, returns the list of highed ranked hands.
@@ -226,8 +156,7 @@
 
   (rank-pair-hands [[[2 :a] [2 :b] [4 :c] [6 :d]]
                     [[2 :a] [2 :b] [4 :c] [5 :d]]
-                    [[2 :a] [2 :b] [4 :c] [6 :d]]
-                    ])
+                    [[2 :a] [2 :b] [4 :c] [6 :d]]])
 
 
   (compute-score-for-pair-hands (normalize-hand "4D 8S 6S 8D 3C"))
@@ -331,18 +260,29 @@
 
 
 
-(def score-by-hand {straight-flush?   10
-                    four-of-a-kind?   9
-                    full-house?       8
-                    flush?            7
-                    straight?         6
-                    three-of-a-kind?  5
-                    two-pair?         4
-                    one-pair?         3})
+(def score-by-combo {straight-flush?   10
+                     four-of-a-kind?   9
+                     full-house?       8
+                     flush?            7
+                     straight?         6
+                     three-of-a-kind?  5
+                     two-pair?         4
+                     one-pair?         3})
 
-(defn assign-score [hand]
+(defn assign-score
+  "Given a normalized form *hand*, returns a number that is the 
+   score for the highest combo found in the hand.
+   
+   For example:
+   ```clojure
+   (assign-score [[1 :a] [1 :b] [7 :a] [1 :d] [1 :e]])
+   => 9
+   ```
+   Returns 0 when no combo is found.
+   "
+  [hand]
   (or (some (fn [[score-for score]]
-              (when (score-for hand) score)) score-by-hand)
+              (when (score-for hand) score)) score-by-combo)
       0))
 
 (defn keep-top-score-hands [scored-hands]
@@ -357,6 +297,40 @@
   ;;
   )
 
+(def rank-combo {0 rank-high-cards
+                 3 rank-pair-hands
+                 4 rank-pair-hands})
+
+
+
+(defn keep-best-hand
+  "Given a seq of `[score hand]` with all score being equals (same combo), returns 
+   the best hand based on high cards values.
+   
+   When *hands* contains only one item, return it.
+   "
+  [hands]
+  (if (= 1 (count hands))
+    (second (first hands))
+    (let [combo-score (ffirst hands)
+          rank-fn     (get rank-combo combo-score)]
+
+      (->> hands
+           (map second)
+           rank-fn ;; FIXME: : NO, should keep score and returns possibly more than one hand on draw
+           (first)
+           ))))
+
+(comment
+  (keep-best-hand '([3 ([4 "D"] [5 "S"] [6 "S"] [4 "S"] [7 "H"])]
+                    [3 ([10 "D"] [5 "S"] [10 "S"] [4 "S"] [7 "H"])]))
+
+  (keep-best-hand '([3 ([10 "D"] [5 "S"] [10 "S"] [4 "S"] [9 "H"])]
+                    [3 ([10 "D"] [5 "S"] [10 "S"] [4 "S"] [8 "H"])]))
+
+  ;;
+  )
+
 (def hand-score first)
 
 (defn best-hands [hands]
@@ -366,14 +340,28 @@
          (map normalize-hand)
          (map (juxt assign-score identity))
          keep-top-score-hands
-         #_(sort-by hand-score >)
-         #_first
-         #_second
-         #_hand->string
+         keep-best-hand
+         hand->string
          ;;
          )))
 
+
 (comment
+  (def nothing-1    "4D 5S 6S 1S 7H")
+  (def one-pair-1   "4D 5S 6S 4S 7H")
+  (def one-pair-2   "1D 5S 1S 4S 7H")
+  (def two-pair-1   "1D 1S 7D 4S 7H")
+
+
+  (best-hands [one-pair-1 nothing-1 one-pair-2])
+
+  (best-hands [one-pair-1 nothing-1 one-pair-2 two-pair-1])
+  (best-hands ["4D 5S 6S 8D 3C"
+               "2S 4C 7S 9H 10H"
+               "5D 2S 6S 2D 5C"
+               "3S 4S 5D 6H JH"
+               "4D 4S 6S 8D 8C"])
+
   (best-hands ["4D 5S 6S 8D 3C"
                "2S 4C 7S 9H 10H"
                "5D 2S 6S 2D 5C"

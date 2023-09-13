@@ -105,3 +105,13 @@
       ;; one pair
       (p/compute-score-for-pair-hands [[5 :c] [5 :d] [3 :a] [2 :b]])  (p/compute-score-for-pair-hands [[1 :a] [3 :b] [6 :c] [6 :d]])
       (p/compute-score-for-pair-hands [[1 :c] [5 :d] [3 :a] [3 :b]])  (p/compute-score-for-pair-hands [[1 :a] [5 :b] [6 :c] [6 :d]]))))
+
+
+(deftest pair-count-test
+  (testing "count how many pairs in a hand"
+    (are [x y] (= x y)
+      0 (p/pair-count [[1 :a] [2 :b] [3 :c] [4 :d]])
+      1 (p/pair-count [[1 :a] [2 :b] [3 :c] [1 :d]])
+      1 (p/pair-count [[3 :a] [2 :b] [3 :c] [1 :d]])
+      2 (p/pair-count [[3 :a] [1 :b] [3 :c] [1 :d]])
+      2 (p/pair-count [[3 :a] [5 :b] [3 :c] [5 :d]])))) 
