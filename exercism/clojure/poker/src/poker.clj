@@ -317,7 +317,9 @@
 
       (->> hands
            (map second)
-           rank-fn ;; FIXME: : NO, should keep score and returns possibly more than one hand on draw
+           (map (juxt rank-fn identity))
+           (sort-by first <)
+           (partition-by first)
            (first)
            ))))
 
