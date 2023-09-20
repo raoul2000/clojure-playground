@@ -1,0 +1,21 @@
+{:paths ["src" "resources"]
+ :deps {org.clojure/clojure {:mvn/version "1.10.3"}
+        enlive/enlive              {:mvn/version "1.1.6"}}
+ :aliases
+ {:dev {:extra-paths ["dev"]
+        :extra-deps {djblue/portal               {:mvn/version "0.19.0"}
+                     integrant/repl              {:mvn/version "0.3.3"}}}
+  :run-m {:main-opts ["-m" "main.scrap-me"]}
+  :run-x {:ns-default main.scrap-me
+          :exec-fn greet
+          :exec-args {:name "Clojure"}}
+  :build {:deps {io.github.seancorfield/build-clj
+                 {:git/tag "v0.6.3" :git/sha "9b8e09b"
+                  ;; since we're building an app uberjar, we do not
+                  ;; need deps-deploy for clojars.org deployment:
+                  :deps/root "slim"}}
+          :ns-default build}
+  :test {:extra-paths ["test"]
+         :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
+                      io.github.cognitect-labs/test-runner
+                      {:git/tag "v0.5.0" :git/sha "48c3c67"}}}}}
