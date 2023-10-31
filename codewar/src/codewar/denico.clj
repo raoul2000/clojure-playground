@@ -32,7 +32,8 @@
 
 ;; the numeric key is created from a string key
 
-(defn create-numeric-key [k]
+(defn create-numeric-key 
+  [^String k]
   (let [sorted-letters (mapv identity (sort k))
         letter-pos-map (reduce-kv (fn [m idx letter]
                                     (assoc m letter idx))
@@ -118,8 +119,8 @@
        (mapv flatten)))
 
 (defn re-order [numeric-key cols-grid]
-  (reduce (fn [acc pos]
-            (conj acc (get cols-grid pos))) [] numeric-key))
+  (reduce (fn [acc num-key-value]
+            (conj acc (get cols-grid num-key-value))) [] numeric-key))
 
 (defn grid->str [cols-grid]
   (let [char-seq (loop [parts cols-grid
@@ -128,7 +129,7 @@
                      result
                      (recur (map rest parts)
                             (into result (map first parts)))))]
-    (apply str char-seq)))
+    (s/trim (apply str char-seq))))
 
 (defn denico [k message]
   (if (= 1 (count k))
@@ -137,8 +138,7 @@
       (->> message
            (str->grid (count nkey))
            (re-order nkey)
-           (grid->str)
-           (s/trim)))))
+           (grid->str)))))
 
 (comment
 
