@@ -1,4 +1,5 @@
-(ns codewar.denico)
+(ns codewar.denico
+  (:require [clojure.string :as s]))
 
 ;; https://www.codewars.com/kata/596f610441372ee0de00006e/train/clojure
 
@@ -47,31 +48,22 @@
 
 
 (comment
-  (def k "crazy")
-  (def m "cseerntiofarmit on  ")
+  (def k "ba")
+  (def m "2143658709")
 
-;; to store the grid we'll be using a vector where each item is a column, 
-;; and a column is a list of letters.
-;; The number of column is the size of the key
+  ;; To store the grid we'll be using a vector where each item is a 
+  ;; column (seq of letters). 
+  ;; There is as many columns as characters in the key 
 
   (def col-count (count k))
 
-  ;; the number of lines is length of msg modulo col-count
-  (def line-count (quot (count m) col-count))
-
-  ;; using 'partition' we can get all lines
+  ;; using 'partition' we can get the list of lines
   (def lines (partition col-count col-count m))
 
   ;; we will assume that length of message to decode is multiple of col-count, so no
   ;; extra padding is required for 'partition'
 
-  ;; ok we have lines, but we want to store column, because the columns will be
-  ;; re-ordered following num-key, not to lines.
-
-  ;; We want to turn a list of lines :
-  ;; ( (:a :b :c) (:d :e :f) (:g :h :i))
-  ;; into a lit of columns
-  ;; ( (:a :d :g) (:b :e :h) (:c :f :i))
+  ;; By applying 'partition' several times on successive rest of m ...
 
   (partition 1 col-count m)
   (partition 1 col-count (rest m))
@@ -85,65 +77,75 @@
          (map #(partition 1 col-count %))
          (mapv flatten)))
 
-  (def cols (msg->cols "cseerntiofarmit on  "))
+  (def cols (msg->cols m))
 
   ;; we have now a vector where each item is a column of letters
-  ;; We must re-order these column following the num-key previously computed
+  ;; We must re-order these column following the num-key
 
-  (def num-key '(2 3 1 5 4))
 
-  ;; the col 2 (index = 1) should come first
-  ;; ... then the col (index = 2) should follow
-  ;; etc...
+  ;; Let's create the num key :
+
+  (def num-key (create-numeric-key k))
+
+  ;; and now re-order the list of columns following numeric key values 
+  ;; considered as indexes
 
   (def new-order-cols (reduce (fn [acc pos]
-                                (conj acc (get cols (dec pos))) ;; dec because num-key is 1 based index (and not zero)
-                                )[] num-key))
+                                (conj acc (get cols pos))) [] num-key))
   new-order-cols
 
   ;; Now we have a list of re-ordered cols and we want to turn them
-  ;; back into a list of lines
+  ;; back into a list of lines and then concat them to get the string
 
-  ;; let's see what a grid looks like when turned into a string
-  (defn grid->str [v]
-    (apply str (flatten v)))
-  
-  (grid->str new-order-cols)
+  ;; take the first char of each col and concat them
+  (def char-seq (loop [parts new-order-cols
+                       result []]
+                  (if (empty? (first parts))
+                    result
+                    (recur (map rest parts)
+                           (into result (map first parts))))))
 
+  (s/trim (apply str char-seq))
 
-  (->> (grid->str new-order-cols)
-       (msg->cols)
-       #_(grid->str)
-       )
-  ;;
-  )
-
-(defn str->grid [col-count s])
-
-(comment
-
-  (def s1 (partition 5 5 "cseerntiofarmit on  "))
-
-  (loop [parts s1
-         grid (take (count (first s1)) (repeat []))]
-    (if (empty? (first parts))
-      grid
-      (recur (map rest s1)
-             ())))
 
   ;;
   )
+
+(defn str->grid [col-count s]
+  (->> (iterate rest s)
+       (take col-count)
+       (map #(partition 1 col-count %))
+       (mapv flatten)))
+
+(defn re-order [numeric-key cols-grid]
+  (reduce (fn [acc pos]
+            (conj acc (get cols-grid pos))) [] numeric-key))
+
+(defn grid->str [cols-grid]
+  (let [char-seq (loop [parts cols-grid
+                        result []]
+                   (if (empty? (first parts))
+                     result
+                     (recur (map rest parts)
+                            (into result (map first parts)))))]
+    (apply str char-seq)))
+
 (defn denico [k message]
   (if (= 1 (count k))
-    m
+    message
     (let [nkey (create-numeric-key k)]
       (->> message
-           (str->to-grid (count nkey))
+           (str->grid (count nkey))
            (re-order nkey)
-           (grid->str (count nkey))))))
+           (grid->str)
+           (s/trim)))))
 
 (comment
 
   (denico "crazy" "cseerntiofarmit on  ")
+  (denico "abc" "abcd")
+  (denico "ba" "2143658709")
+  (denico "a" "message")
+  (denico "key" "eky")
   ;;
   )
