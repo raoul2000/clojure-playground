@@ -21,26 +21,14 @@
                   :else                                  highest)))
             [first-card] remain-cards)))
 
-(comment
-  (highest-cards "JA")
-  (highest-cards "JA 2B QC")
-  ;;
-  )
-
 (defn highest-card-score [hand]
   (->> hand
        highest-cards
        ffirst
        int))
 
-(comment
-  (highest-card-score "2Z 4F JZ")
-  (highest-card-score "JZ")
-  ;;
-  )
-
 (defn score-by-card [hand]
-  (->> hand
+  (->> (s/split hand  #" ")
        (map #(int (first %)))
        (apply +)))
 
@@ -52,12 +40,9 @@
       (< h1-highest-card-score h2-highest-card-score)  1
       :else                                            0)))
 
-(comment
-  (sort-by identity compare-card-score ["3a 2b" "1a 1e"])
-  (sort-by identity compare-card-score ["3a 2b" "2a 1e" "2x 3h"])
-  ;;
-  )
 
+(defn sort-by-card-score [hands]
+  (into [] (sort-by identity compare-card-score hands)))
 
 (defn best-hands-by-card [hands]
   (reduce (fn [winners hand]
@@ -69,13 +54,37 @@
                 :else                       winners))) [(first hands)] (rest hands)))
 
 (defn best-hands [hands]
-  (best-hands-by-card hands))
+  (->> hands
+       best-hands-by-card
+       sort-by-card-score
+       (partition-by score-by-card)
+       first))
 
 (comment
+  ;; keep tie
+
+
+  (partition-by score-by-card ["1A" "1V" "2E" "7T"])
+
+  (defn keep-high-card-tie [sorted-hands]
+    (filter #(= (score-by-card (first sorted-hands))
+                (score-by-card %)) sorted-hands))
+
+  (def s-hands ["3S 5H 6S 8D 7H"
+                "2S 5D 6D 8C 7S"])
+  (map #(score-by-card %) s-hands)
+  (score-by-card "3S 5H 6S 8D 7H")
+  (keep-high-card-tie ["3S 5H 6S 8D 7H"
+                       "2S 5D 6D 8C 7S"])
+
+  (best-hands ["3S 5H 6S 8D 7H"
+               "2S 5D 6D 8C 7S"])
+
   (best-hands ["4D 5S 6S 8D 3C"
                "2S 4C 7S 9H 10H"
                "3S 4S 5D 6H JH"
                "3H 4H 5C 6C JD"])
+
   (best-hands ["4D 5S 6S 8D 3C"
                "2S 4C 7S 9H 10H"
                "3S 4S 5D 6H JH"])
@@ -89,6 +98,38 @@
   (sort ["4D 5S 6S 8D 3C"
          "2S 4C 7S 9H 10H"
          "3S 4S 5D 6H JH"])
+
+  ;;
+  )
+
+(comment
+  ;; highest score for card only hand
+
+  (defn card-value-2 [s]
+    (let [[_ value ] (re-matches #"^(.+).$" s)] 
+      (case value
+        "K"  13
+        "Q"  12
+        "J"  11
+        "A"  1
+        (Integer/parseInt value))))
+  
+  (card-value-2 "1A")
+  (card-value-2 "JA")
+  
+
+  (defn card-score [card]
+    (case (first card)
+      \1))
+  (case \J
+    \J 11
+    \Q 12
+    \K 13)
+
+  (#{\J \Q \K} \J)
+  (first "AB")
+  (def MAX_1 (+ (int \K)))
+
 
   ;;
   )
