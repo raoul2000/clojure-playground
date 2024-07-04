@@ -48,4 +48,32 @@
     (is (= false (p/straight? "2X 3B JX 4X 5E")))
     (is (= true  (p/straight? "4R AE 3T 2E 5T")))))
 
+(deftest flush?-test
+  (testing "hand is flush"
+    (is (= false (p/flush? "1A 10B 9A 8A 7A")))
+    (is (= true  (p/flush? "1A 10A 9A 8A 7A")))))
+
+(deftest full-house?-test
+  (testing "hand is full house"
+    (is (= false (p/full-house? "2A 4A 8A 9X 7X")))
+    (is (= false (p/full-house? "2A 2B 10X 10Z 7Q")))
+    (is (= true  (p/full-house? "2A 2B 10X 10Z 2Q")))
+    (is (= true  (p/full-house? "JA KB JX KZ KQ")))))
+
+(deftest four-of-a-kind?-test
+  (testing "hand is four of a kind"
+    (is (= false (p/four-of-a-kind? "2A 3B 6B JB 3A")))
+    (is (= true  (p/four-of-a-kind? "2A 2B 2X 2C 3A")))))
+
+(deftest straight-flush?-test
+  (testing "hand is straight flush"
+    (is (= false (p/straight-flush? "2A 3B 6B JB 3A")))
+    (is (= false (p/straight-flush? "4R AE 3T 2E 5T"))
+        "a straight is not a straight flush")
+    (is (= false (p/straight-flush? "1A 10A 9A 8A 7A"))
+        "a flush is nopt a straight flush")
+    (is (= true  (p/straight-flush? "JA 10A 9A 8A 7A"))))) 
+
+
+
 
