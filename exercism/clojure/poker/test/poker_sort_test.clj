@@ -4,9 +4,9 @@
 
 (deftest card-value-test
   (are [value card] (= value (p/card-value card true))
-    1 "AX"
-    2 "2X"
-    9 "9X"
+    1  "AX"
+    2  "2X"
+    9  "9X"
     10 "10Z"
     11 "JA"
     12 "QX"
@@ -14,12 +14,19 @@
   ;; ACE ends
   (are [value card] (= value (p/card-value card false))
     14 "AX"
-    2 "2X"
-    9 "9X"
+    2  "2X"
+    9  "9X"
     10 "10Z"
     11 "JA"
     12 "QX"
     13 "KX"))
+
+(deftest hand-card-values-test
+  (testing "sorted hand card values"
+    (is (= '(3 5 8 12) (p/hand-card-values "5Z 8U QR 3E" true)))
+    (is (= '(5 5 5  5) (p/hand-card-values "5Z 5U 5R 5E" true)))
+    (is (= '(1 2 3  4) (p/hand-card-values "2X 3E 4Y AX" true)))
+    (is (= '(2 3 4 14) (p/hand-card-values "4X 3E 2Y AX" false)))))
 
 (deftest one-pair?-test
   (testing "hand contains one pair only"
@@ -72,8 +79,13 @@
         "a straight is not a straight flush")
     (is (= false (p/straight-flush? "1A 10A 9A 8A 7A"))
         "a flush is nopt a straight flush")
-    (is (= true  (p/straight-flush? "JA 10A 9A 8A 7A"))))) 
+    (is (= true  (p/straight-flush? "JA 10A 9A 8A 7A")))))
 
-
+((deftest sort-by-rank-test
+   (testing "sort hands by rank"
+     (is (= '([:one-pair  1 "2S 4H 6S 4D JH"] 
+              [:high-card 0 "4S 5H 6C 8D KH"])
+            (p/sort-by-rank ["2S 4H 6S 4D JH" 
+                             "4S 5H 6C 8D KH"])) "one-pair-beats-high-card"))))
 
 
