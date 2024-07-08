@@ -120,20 +120,49 @@
 
 ;; high cards : assign score to each hand and get the highest (sort is not enough)
 
-(defn tie-high-card [hands]
+(defn tie-high-card 
+  "Given a coll of hands, all with high-card, returns the coll of winner
+   hands."
+  [hands]
   (->> hands
        (map (fn [hand]
-              (vector (apply + (hand-card-values hand true)) hand)))
-       (sort-by first >)
-       (partition-by first)
-       first
-       (map second)
-       ))
+              (vector  (into [] (reverse (hand-card-values hand true))) hand)))
+       (reduce (fn [[winner :as all-winners] hand]
+                 (if (seq winner)
+                   (case (compare (first winner) (first hand))
+                     0   (conj all-winners hand)
+                     -1  [hand]
+                     1   all-winners)
+                   (vector hand))) [])
+       (map second)))
 
 (comment
   (tie-high-card ["4D 5S 6S 8D 3C"
                   "2S 4C 7S 9H 10H"
                   "3S 4S 5D 6H JH"])
+
+  (->> (tie-high-card ["4D 5S 6S 8D 3C"
+                       "2S 4C 7S 9H 10H"
+                       "3X 4X 5X 6T JE"
+                       "3S 4S 5D 6H JH"])
+
+       (reduce (fn [[winner :as all-winners] hand]
+                 (if (seq winner)
+                   (case (compare (first winner) (first hand))
+                     0   (conj all-winners hand)
+                     -1  [hand]
+                     1   all-winners)
+                   (vector hand))) [])
+       (map second))
+
+  (reduce (fn [[winner :as all] hand]
+            (if (seq winner)
+              (case (compare winner hand)
+                0   (conj all hand)
+                -1  [hand]
+                1   all)
+              (vector hand))) [] [[10 5 8] [10 5 7] [10 5 8]])
+
   (apply + (map-indexed (fn [idx v]
                           (* v (inc idx))) [4 6 9 10]))
   ;;
