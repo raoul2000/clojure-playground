@@ -120,106 +120,50 @@
 
 ;; high cards : assign score to each hand and get the highest (sort is not enough)
 
-(defn tie-high-card 
+(defn scored-hand-reducer
+  [[winner :as all-winners] hand]
+  {:pre [(or (nil? winner)
+             (vector? (first winner)))
+         (vector? hand)]}
+  (if (seq winner)
+    (case (compare (first winner) (first hand))
+      0   (conj all-winners hand)
+      -1  [hand]
+      1   all-winners)
+    (vector hand)))
+
+(defn high-card-hand->scored-hand
+  "Given a high card hand, returns a pair where the first item is a sorted list of numbers corresponding
+   to card values, and the second item is the hand itself."
+  ([hand] 
+   (high-card-hand->scored-hand hand true))
+  ([hand ace-rank-low]
+   [(into [] (reverse (hand-card-values hand ace-rank-low)))
+    hand]))
+
+(defn tie-high-card
   "Given a coll of hands, all with high-card, returns the coll of winner
    hands."
   [hands]
   (->> hands
-       (map (fn [hand]
-              (vector  (into [] (reverse (hand-card-values hand true))) hand)))
-       (reduce (fn [[winner :as all-winners] hand]
-                 (if (seq winner)
-                   (case (compare (first winner) (first hand))
-                     0   (conj all-winners hand)
-                     -1  [hand]
-                     1   all-winners)
-                   (vector hand))) [])
+       (map high-card-hand->scored-hand )
+       (reduce scored-hand-reducer [])
        (map second)))
 
-(comment
-  (tie-high-card ["4D 5S 6S 8D 3C"
-                  "2S 4C 7S 9H 10H"
-                  "3S 4S 5D 6H JH"])
-
-  (->> (tie-high-card ["4D 5S 6S 8D 3C"
-                       "2S 4C 7S 9H 10H"
-                       "3X 4X 5X 6T JE"
-                       "3S 4S 5D 6H JH"])
-
-       (reduce (fn [[winner :as all-winners] hand]
-                 (if (seq winner)
-                   (case (compare (first winner) (first hand))
-                     0   (conj all-winners hand)
-                     -1  [hand]
-                     1   all-winners)
-                   (vector hand))) [])
-       (map second))
-
-  (reduce (fn [[winner :as all] hand]
-            (if (seq winner)
-              (case (compare winner hand)
-                0   (conj all hand)
-                -1  [hand]
-                1   all)
-              (vector hand))) [] [[10 5 8] [10 5 7] [10 5 8]])
-
-  (apply + (map-indexed (fn [idx v]
-                          (* v (inc idx))) [4 6 9 10]))
-  ;;
-  )
-
-
-
-
-
-
-
-
-
-
-(defn compare-card-values [h1 h2]
-  (compare (apply vector h1) (apply vector h2)))
-
-(defn sort-high-cards [hands]
-  (->> hands
-       (map #(reverse (hand-card-values % true))) ;; ace-rank-low 
-       (map #(apply vector %))
-
-       #_(sort-by compare-card-values)))
+(defn tie-one-pair [hands])
 
 (comment
-  (sort '([16 5 4 3 2] [16 5 4 3 2] [11 5 4 3 2]))
-  (sort-by identity compare [[1 4] [1 3] [1 6]])
-  (sort-by identity  '([1 4] [1 3] [1 6]))
 
-  (sort-by #(into [] %) '('(1 4) '(1 3) '(1 6)))
-  (sort-by last '('(1 4) '(1 3) '(1 6)))
+  (def c (partition-by second (frequencies (hand-card-values "2Z 3R 5T 7R 7U" true))))
 
 
-  (sort-by #(apply vector %) compare-card-values '('(6 5 4 3 2) '(7 5 4 3 2) '(11 5 4 3 2)))
-  (compare-card-values '(7 5 4 3 2) '(7 5 4 3 3))
+  (def e (map (fn [p]
+                (map (fn [[card-value cnt]]
+                       (if (= 1 cnt)
+                         card-value
+                         (* 100 card-value))) p)) c))
 
-  (compare (apply vector '(1 2 3))  (apply vector '(1 2 3)))
-
-  (sort-high-cards ["2A 3B 4C 5D 6T"
-                    "2A 3B 4C 5D 7T"
-                    "2A 3B 4C 5D JT"])
-  (defn high-card [h1 h2])
-  (map vector [1 2 3] [1 2 4])
-
-
-  (reduce (fn [acc [c1 c2]]
-            (cond
-              (> c1 c2) (reduced 1)
-              (< c1 c2) (reduced -1)
-              :else acc)) 0 '([1 1] [2 2] [4 3]))
-
-  (map #(apply - %)  '([1 1] [2 2] [4 3]))
-  (first (drop-while zero? [0 0]))
-
-  (sort-by high-card ["2A 3B 4C 5D 6T"
-                      "2A 3B 4C 5D 7T"
-                      "2A 3B 4C 5D JT"])
+  (sort > (flatten e))
 
   ;;
   )

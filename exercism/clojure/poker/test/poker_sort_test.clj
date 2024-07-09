@@ -81,11 +81,54 @@
         "a flush is nopt a straight flush")
     (is (= true  (p/straight-flush? "JA 10A 9A 8A 7A")))))
 
-((deftest sort-by-rank-test
-   (testing "sort hands by rank"
-     (is (= '([:one-pair  1 "2S 4H 6S 4D JH"] 
-              [:high-card 0 "4S 5H 6C 8D KH"])
-            (p/sort-by-rank ["2S 4H 6S 4D JH" 
-                             "4S 5H 6C 8D KH"])) "one-pair-beats-high-card"))))
+
+(deftest sort-by-rank-test
+  (testing "sort hands by rank"
+    (is (= '([:one-pair  1 "2S 4H 6S 4D JH"]
+             [:high-card 0 "4S 5H 6C 8D KH"])
+           (p/sort-by-rank ["2S 4H 6S 4D JH"
+                            "4S 5H 6C 8D KH"])) "one-pair-beats-high-card")))
+
+
+(deftest hand-score-reducer-test
+  (testing "card values reducer"
+    (is (=  [[[8 6 4] "4A 8R 6E"]]
+            (p/hand-score-reducer [] [[8 6 4] "4A 8R 6E"]))
+        "one item is reduced to itself")
+
+    (is (=  [[[4 6 8] "4A 8R 6E"] [[4 6 8] "4A 8R 6E"]]
+            (p/hand-score-reducer [[[4 6 8] "4A 8R 6E"]] [[4 6 8] "4A 8R 6E"]))
+        "item with same values are added to result")
+
+    (is (=  [[[4 6 8] "4A 8R 6E"]]
+            (p/hand-score-reducer [[[4 6 7] "4A 8R 6E"]] [[4 6 8] "4A 8R 6E"]))
+        "item lower than result is skipped")
+
+    (is (=  [[[4 6 8] "4A 8R 6E"]]
+            (p/hand-score-reducer [[[4 6 7] "4A 8R 6E"]
+                                   [[4 6 7] "4A 8R 6E"]] [[4 6 8] "4A 8R 6E"]))
+        "item lower than result is skipped")))
+
+
+(deftest tie-high-card-test
+  (testing "select winner among high cards hands"
+    (is (= ["3S 4S 5D 6H JH"]
+           (p/tie-high-card ["4D 5S 6S 8D 3C"
+                             "2S 4C 7S 9H 10H"
+                             "3S 4S 5D 6H JH"]))
+        "highest-card-out-of-all-hands-wins")
+
+    (is (= ["3S 4S 5D 6H JH"
+            "3H 4H 5C 6C JD"]
+           (p/tie-high-card ["4D 5S 6S 8D 3C"
+                             "2S 4C 7S 9H 10H"
+                             "3S 4S 5D 6H JH"
+                             "3H 4H 5C 6C JD"]))
+        "a-tie-has-multiple-winners")
+
+    (is (= ["3S 5H 6S 8D 7H"]
+           (p/tie-high-card ["3S 5H 6S 8D 7H"
+                             "2S 5D 6D 8C 7S"]))
+        "multiple-hands-with-the-same-high-cards-tie-compares-next-highest-ranked-down-to-last-card"))) 
 
 
