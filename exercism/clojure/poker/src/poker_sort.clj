@@ -135,7 +135,7 @@
 (defn high-card-hand->scored-hand
   "Given a high card hand, returns a pair where the first item is a sorted list of numbers corresponding
    to card values, and the second item is the hand itself."
-  ([hand] 
+  ([hand]
    (high-card-hand->scored-hand hand true))
   ([hand ace-rank-low]
    [(into [] (reverse (hand-card-values hand ace-rank-low)))
@@ -146,15 +146,46 @@
    hands."
   [hands]
   (->> hands
-       (map high-card-hand->scored-hand )
+       (map high-card-hand->scored-hand)
        (reduce scored-hand-reducer [])
        (map second)))
+
+
+(defn one-pair-hand->scored-hand [hand]
+  (->> (hand-card-values hand true)
+       frequencies
+       ;; group by card occurence count
+       ;; 'second' is occurence count (here 2 is expected)
+       (partition-by second)
+       ;; flatten 1 level depth
+       (mapcat identity)
+       (map (fn [[card-value cnt]]
+              (if (= 1 cnt)
+                card-value
+                (* 100 card-value))))
+       (sort >)))
+
+(comment
+  
+  (one-pair-hand->scored-hand "2Z 3R 5T 7R 7U")
+  ;;
+  )
 
 (defn tie-one-pair [hands])
 
 (comment
 
   (def c (partition-by second (frequencies (hand-card-values "2Z 3R 5T 7R 7U" true))))
+
+  (def c2 (mapcat identity c))
+
+
+  (def c3 (sort > (map (fn [[card-value cnt]]
+                         (if (= 1 cnt)
+                           card-value
+                           (* 100 card-value))) c2)))
+  c3
+
 
 
   (def e (map (fn [p]

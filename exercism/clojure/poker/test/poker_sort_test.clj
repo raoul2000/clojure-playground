@@ -93,19 +93,19 @@
 (deftest hand-score-reducer-test
   (testing "card values reducer"
     (is (=  [[[8 6 4] "4A 8R 6E"]]
-            (p/hand-score-reducer [] [[8 6 4] "4A 8R 6E"]))
+            (p/scored-hand-reducer [] [[8 6 4] "4A 8R 6E"]))
         "one item is reduced to itself")
 
     (is (=  [[[4 6 8] "4A 8R 6E"] [[4 6 8] "4A 8R 6E"]]
-            (p/hand-score-reducer [[[4 6 8] "4A 8R 6E"]] [[4 6 8] "4A 8R 6E"]))
+            (p/scored-hand-reducer [[[4 6 8] "4A 8R 6E"]] [[4 6 8] "4A 8R 6E"]))
         "item with same values are added to result")
 
     (is (=  [[[4 6 8] "4A 8R 6E"]]
-            (p/hand-score-reducer [[[4 6 7] "4A 8R 6E"]] [[4 6 8] "4A 8R 6E"]))
+            (p/scored-hand-reducer [[[4 6 7] "4A 8R 6E"]] [[4 6 8] "4A 8R 6E"]))
         "item lower than result is skipped")
 
     (is (=  [[[4 6 8] "4A 8R 6E"]]
-            (p/hand-score-reducer [[[4 6 7] "4A 8R 6E"]
+            (p/scored-hand-reducer [[[4 6 7] "4A 8R 6E"]
                                    [[4 6 7] "4A 8R 6E"]] [[4 6 8] "4A 8R 6E"]))
         "item lower than result is skipped")))
 
