@@ -1,5 +1,6 @@
 (ns poker-sort
-  (:require [clojure.string :as s]))
+  (:require [clojure.string :as s]
+            [poker-sort :as p]))
 
 ;; This is an attempt to solve the Poker exercism by defining a sort order
 ;; on all hands
@@ -86,13 +87,25 @@
        (map #(conj (hand-rank-score %) %))
        (sort-by second >)))
 
-(defn highest-hands-by-rank [hands]
+(defn highest-hands-by-rank
+  "Given a list of poker hands, returns a vector where the first item is the highest
+   ranks found, and the second is a coll of hands of this ranks."
+  [hands]
   (->> hands
        (sort-by-rank)
-       (partition-by first)))
+       ;; partition by rank
+       (partition-by first)
+       ;; only consider the first one
+       first
+       ((juxt ffirst (partial map last)))))
 
 (comment
 
+  (highest-hands-by-rank ["2A 3B 6B JB 3A" ;; high card
+                          "JA 10A 9A 8A 7A"
+                          "JA 10A 9A 8A 7A"
+                          "2A 2B 2X 2C 3A"
+                          "8A 3B 6B JB 3A"])
   (sort-by-rank ["2A 3B 6B JB 3A" ;; high card
                  "JA 10A 9A 8A 7A"
                  "JA 10A 9A 8A 7A"
@@ -105,12 +118,13 @@
                                                "2A 2B 2X 2C 3A"
                                                "8A 3B 6B JB 3A"]))  ;; high card
   (def r1 '([:straight-flush 8 "JA 10A 9A 8A 7A"]
-            [:straight-flush 8 "JA 10A 9A 8A 7A"]
+            #_[:straight-flush 8 "JA 10A 9A 8A 7A"]
             [:four-of-a-kind 7 "2A 2B 2X 2C 3A"]
             [:one-pair 1 "2A 3B 6B JB 3A"]
             [:one-pair 1 "8A 3B 6B JB 3A"]))
 
-  (->> (first (partition-by first r1)))
+  ((juxt ffirst (partial map last)) (first (partition-by first r1)))
+  (last [1 2])
 
   ;;
   )
@@ -151,50 +165,52 @@
        (map second)))
 
 
-(defn one-pair-hand->scored-hand [hand]
-  (->> (hand-card-values hand true)
-       frequencies
+(defn one-pair-hand->scored-hand
+  "Given a **one pair**  hand, returns a pair where the first item is a sorted list of numbers corresponding
+     to card values, and the second item is the hand itself."
+  [hand]
+  [(->> (hand-card-values hand true)
+        frequencies
        ;; group by card occurence count
        ;; 'second' is occurence count (here 2 is expected)
-       (partition-by second)
+        (partition-by second)
        ;; flatten 1 level depth
-       (mapcat identity)
-       (map (fn [[card-value cnt]]
-              (if (= 1 cnt)
-                card-value
-                (* 100 card-value))))
-       (sort >)))
+        (mapcat identity)
+        (map (fn [[card-value cnt]]
+               (if (= 1 cnt)
+                 card-value
+                 (* 100 card-value))))
+        (sort >)
+        (into []))
+   hand])
+
+(defn tie-one-pair [hands]
+  (->> hands
+       (map one-pair-hand->scored-hand)
+       (reduce scored-hand-reducer [])
+       (map second)))
 
 (comment
-  
+  (tie-one-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y"])
+  (tie-one-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y"])
+
+  (tie-one-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y" "2Z 4T 6F KF 6Y"])
+
   (one-pair-hand->scored-hand "2Z 3R 5T 7R 7U")
   ;;
   )
 
-(defn tie-one-pair [hands])
+(defn best-hands [hands]
+  (let [[highest-rank hands] (p/highest-hands-by-rank hands)]
+    (if (= 1 (count hands))
+      hands
+      (case highest-rank
+        :high-card (tie-high-card hands)
+        :one-pair  (tie-one-pair  hands)
+        "not implemented"))))
 
 (comment
-
-  (def c (partition-by second (frequencies (hand-card-values "2Z 3R 5T 7R 7U" true))))
-
-  (def c2 (mapcat identity c))
-
-
-  (def c3 (sort > (map (fn [[card-value cnt]]
-                         (if (= 1 cnt)
-                           card-value
-                           (* 100 card-value))) c2)))
-  c3
-
-
-
-  (def e (map (fn [p]
-                (map (fn [[card-value cnt]]
-                       (if (= 1 cnt)
-                         card-value
-                         (* 100 card-value))) p)) c))
-
-  (sort > (flatten e))
-
+  (best-hands ["2A 5B 6T 7U 10I" "2A 5B 6T 7U 9I"])
   ;;
   )
+
