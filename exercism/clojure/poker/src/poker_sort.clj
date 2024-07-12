@@ -165,8 +165,8 @@
        (map second)))
 
 
-(defn one-pair-hand->scored-hand
-  "Given a **one pair**  hand, returns a pair where the first item is a sorted list of numbers corresponding
+(defn pair-hand->scored-hand
+  "Given a **one or two pair** hand, returns a pair where the first item is a sorted list of numbers corresponding
      to card values, and the second item is the hand itself."
   [hand]
   [(->> (hand-card-values hand true)
@@ -184,19 +184,30 @@
         (into []))
    hand])
 
-(defn tie-one-pair [hands]
+(defn tie-pair
+  "Given a coll of hands, all with one or two pairs, returns the coll of winner
+  hands."
+  [hands]
   (->> hands
-       (map one-pair-hand->scored-hand)
+       (map pair-hand->scored-hand)
        (reduce scored-hand-reducer [])
        (map second)))
 
 (comment
-  (tie-one-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y"])
-  (tie-one-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y"])
 
-  (tie-one-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y" "2Z 4T 6F KF 6Y"])
 
-  (one-pair-hand->scored-hand "2Z 3R 5T 7R 7U")
+  (tie-pair ["2Z 4T 6F 2F 6Y" "2Z 9T 6F 9F 6Y"])
+
+
+  (tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y"])
+
+
+
+  (tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y"])
+
+  (tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y" "2Z 4T 6F KF 6Y"])
+
+  (pair-hand->scored-hand "2Z 3R 5T 7R 7U")
   ;;
   )
 
@@ -206,7 +217,8 @@
       hands
       (case highest-rank
         :high-card (tie-high-card hands)
-        :one-pair  (tie-one-pair  hands)
+        :one-pair  (tie-pair  hands)
+        :two-pair  (tie-pair  hands)
         "not implemented"))))
 
 (comment

@@ -178,22 +178,33 @@
                              "2S 5D 6D 8C 7S"]))
         "multiple-hands-with-the-same-high-cards-tie-compares-next-highest-ranked-down-to-last-card")))
 
-(deftest one-pair-hand->scored-hand-test
+(deftest pair-hand->scored-hand-test
   (testing "create scored pair"
     (is (= [[600 7 3 2] "3E 6Y 2E 7U 6U"]
-           (p/one-pair-hand->scored-hand "3E 6Y 2E 7U 6U")))
+           (p/pair-hand->scored-hand "3E 6Y 2E 7U 6U")))
     (is (= [[1300 7 6 5] "KE 6Y KE 7U 5U"]
-           (p/one-pair-hand->scored-hand "KE 6Y KE 7U 5U")))))
+           (p/pair-hand->scored-hand "KE 6Y KE 7U 5U")))
+    (is (= [[1300 600 5] "KE 6Y KE 6U 5U"]
+           (p/pair-hand->scored-hand "KE 6Y KE 6U 5U"))
+        "works also on 2 pairs hand")))
 
 
-(deftest tie-one-pair-test
+(deftest tie-pair-test
   (testing "select among one pair hands"
     (is (= ["2Z 4T 6F 9F 6Y"]
-           (p/tie-one-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y"])))
+           (p/tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y"])))
     (is (= ["2Z 4T 6F KF 6Y"]
-           (p/tie-one-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y"])))
+           (p/tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y"])))
     (is (= ["2Z 4T 6F KF 6Y" "2X 4X 6O KU 6H"]
-           (p/tie-one-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y" "2X 4X 6O KU 6H"]))
+           (p/tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y" "2X 4X 6O KU 6H"]))
+        "many winners")
+    ;; two pairs
+    (is (= ["2Z 9T 6F 9F 6Y"]
+           (p/tie-pair ["2Z 4T 6F 2F 6Y" "2Z 9T 6F 9F 6Y"])))
+    (is (= ["5Z 9T 6F 9F 6Y"]
+           (p/tie-pair ["2Z 4T 3F 2F 3Y" "2Z 9T 6F 9F 6Y" "5Z 9T 6F 9F 6Y"])))
+    (is (= ["5T 9T 6F 9F 6Y" "5Z 9T 6F 9F 6Y"]
+           (p/tie-pair ["2Z 4T 3F 2F 3Y" "5T 9T 6F 9F 6Y" "5Z 9T 6F 9F 6Y"]))
         "many winners")))
 
 
@@ -246,3 +257,13 @@
   (is (f ["2S 8H 2D 8D 3H"
           "4S 5H 4C 8S 5D"]
          ["2S 8H 2D 8D 3H"])))
+
+(deftest both-hands-have-two-pairs-with-the-same-highest-ranked-pair-tie-goes-to-low-pair
+  (is (f ["2S QS 2C QD JH"
+          "JD QH JS 8D QC"]
+         ["JD QH JS 8D QC"])))
+
+(deftest both-hands-have-two-identically-ranked-pairs-tie-goes-to-remaining-card-kicker
+  (is (f ["JD QH JS 8D QC"
+          "JS QS JC 2D QD"]
+         ["JD QH JS 8D QC"])))
