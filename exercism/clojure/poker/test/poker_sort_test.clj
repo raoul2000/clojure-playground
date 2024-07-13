@@ -283,3 +283,53 @@
   (is (f ["2S 2H 2C 8D JH"
           "4S AH AS 8C AD"]
          ["4S AH AS 8C AD"])))
+
+(deftest with-multiple-decks-two-players-can-have-same-three-of-a-kind-ties-go-to-highest-remaining-cards
+  (is (f ["4S AH AS 7C AD"
+          "4S AH AS 8C AD"]
+         ["4S AH AS 8C AD"])))
+
+(deftest a-straight-beats-three-of-a-kind
+  (is (f ["4S 5H 4C 8D 4H"
+          "3S 4D 2S 6D 5C"]
+         ["3S 4D 2S 6D 5C"])))
+
+(deftest aces-can-end-a-straight-10-J-Q-K-A
+  (is (f ["4S 5H 4C 8D 4H"
+          "10D JH QS KD AC"]
+         ["10D JH QS KD AC"])))
+
+(deftest aces-can-start-a-straight-A-2-3-4-5
+  (is (f ["4S 5H 4C 8D 4H"
+          "4D AH 3S 2D 5C"]
+         ["4D AH 3S 2D 5C"])))
+
+(deftest both-hands-with-a-straight-tie-goes-to-highest-ranked-card
+  (is (f ["4S 6C 7S 8D 5H"
+          "5S 7H 8S 9D 6H"]
+         ["5S 7H 8S 9D 6H"])))
+
+(deftest even-though-an-ace-is-usually-high-a-5-high-straight-is-the-lowest-scoring-straight
+  (is (f ["2H 3C 4D 5D 6H"
+          "4S AH 3S 2D 5H"]
+         ["2H 3C 4D 5D 6H"])))
+
+(deftest flush-beats-a-straight
+  (is (f ["4C 6H 7D 8D 5H"
+          "2S 4S 5S 6S 7S"]
+         ["2S 4S 5S 6S 7S"])))
+
+(deftest both-hands-have-a-flush-tie-goes-to-high-card-down-to-the-last-one-if-necessary
+  (is (f ["4H 7H 8H 9H 6H"
+          "2S 4S 5S 6S 7S"]
+         ["4H 7H 8H 9H 6H"])))
+
+(deftest full-house-beats-a-flush
+  (is (f ["3H 6H 7H 8H 5H"
+          "4S 5H 4C 5D 4H"]
+         ["4S 5H 4C 5D 4H"])))
+
+(deftest both-hands-have-a-full-house-tie-goes-to-highest-ranked-triplet
+  (is (f ["4H 4S 4D 9S 9D"
+          "5H 5S 5D 8S 8D"]
+         ["5H 5S 5D 8S 8D"])))

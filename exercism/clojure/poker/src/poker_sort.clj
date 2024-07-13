@@ -168,21 +168,23 @@
 (defn pair-hand->scored-hand
   "Given a **one or two pair** hand, returns a pair where the first item is a sorted list of numbers corresponding
      to card values, and the second item is the hand itself."
-  [hand]
-  [(->> (hand-card-values hand true)
-        frequencies
+  ([hand]
+   (pair-hand->scored-hand false hand))
+  ([ace-rank-low hand]
+   [(->> (hand-card-values hand ace-rank-low)
+         frequencies
        ;; group by card occurence count
        ;; 'second' is occurence count (here 2 is expected)
-        (partition-by second)
+         (partition-by second)
        ;; flatten 1 level depth
-        (mapcat identity)
-        (map (fn [[card-value cnt]]
-               (if (= 1 cnt)
-                 card-value
-                 (* 100  card-value))))
-        (sort >)
-        (into []))
-   hand])
+         (mapcat identity)
+         (map (fn [[card-value cnt]]
+                (if (= 1 cnt)
+                  card-value
+                  (* 100  card-value))))
+         (sort >)
+         (into []))
+    hand]))
 
 ;; TODO: function below could be refactored to handle scored hand convertion for :
 ;; - high cards
@@ -216,8 +218,12 @@
    hand])
 
 (comment
-  (pair-hand->scored-hand "3E 6Y 2E 7U 8U")
-  (pair-hand->scored-hand "KE KY 2E 7U 6U")
+  
+  (pair-hand->scored-hand "KE KY 6E 7U 6U")
+  (pair-hand->scored-hand "KE KY 2E AU AU")
+  (pair-hand->scored-hand false "KE KY 2E AU AU")
+
+
   (pair-hand->scored-hand "AE AY AE 7U 6U")
   (pair-hand->scored-hand "AE AY AE 7U 7U")
   (pair-hand->scored-hand "AE AY AE AU 7U")
@@ -233,7 +239,10 @@
        (reduce scored-hand-reducer [])
        (map second)))
 
-
+(comment
+  (tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y"])
+  ;;
+  )
 
 (def three-of-a-kind-hand->scored-hand pair-hand->scored-hand)
 (def tie-three-of-a-kind tie-pair)
@@ -265,18 +274,24 @@
 ;; main function -----------------------------------------------------
 
 (defn best-hands [hands]
-  (let [[highest-rank hands] (p/highest-hands-by-rank hands)]
+  (let [[highest-rank hands] (highest-hands-by-rank hands)]
     (if (= 1 (count hands))
       hands
       (case highest-rank
-        :high-card (tie-high-card hands)
-        :one-pair  (tie-pair  hands)
-        :two-pair  (tie-pair  hands)
+        :high-card        (tie-high-card hands)
+        :one-pair         (tie-pair  hands)
+        :two-pair         (tie-pair  hands)
         :three-of-a-kind  (tie-three-of-a-kind  hands)
+        :straight         (tie-high-card hands)
+        :flush            (tie-high-card hands)
+        :full-house       (tie-high-card hands)
         "not implemented"))))
 
 (comment
-  (best-hands ["2A 5B 6T 7U 10I" "2A 5B 6T 7U 9I"])
+  (best-hands ["4S 6C 7S 8D 5H"
+               "5S 7H 8S 9D 6H"])
+  (highest-hands-by-rank ["4S 5H 4C 8D 4H"
+                          "3S 4D 2S 6D 5C"])
   ;;
   )
 
