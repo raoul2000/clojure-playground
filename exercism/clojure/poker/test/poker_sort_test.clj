@@ -186,7 +186,13 @@
            (p/pair-hand->scored-hand "KE 6Y KE 7U 5U")))
     (is (= [[1300 600 5] "KE 6Y KE 6U 5U"]
            (p/pair-hand->scored-hand "KE 6Y KE 6U 5U"))
-        "works also on 2 pairs hand")))
+        "works also on 2 pairs hand")
+
+    ;; also works for three-of-a-kind
+    (is (= [[600 3 2] "3E 6Y 2E 6U 6U"]
+           (p/pair-hand->scored-hand "3E 6Y 2E 6U 6U")))
+    (is (= [[1300 7 6] "KE 6Y KE 7U KU"]
+           (p/pair-hand->scored-hand "KE 6Y KE 7U KU")))))
 
 
 (deftest tie-pair-test
@@ -267,3 +273,13 @@
   (is (f ["JD QH JS 8D QC"
           "JS QS JC 2D QD"]
          ["JD QH JS 8D QC"])))
+
+(deftest three-of-a-kind-beats-two-pair
+  (is (f ["2S 8H 2H 8D JH"
+          "4S 5H 4C 8S 4H"]
+         ["4S 5H 4C 8S 4H"])))
+
+(deftest both-hands-have-three-of-a-kind-tie-goes-to-highest-ranked-triplet
+  (is (f ["2S 2H 2C 8D JH"
+          "4S AH AS 8C AD"]
+         ["4S AH AS 8C AD"])))

@@ -179,10 +179,50 @@
         (map (fn [[card-value cnt]]
                (if (= 1 cnt)
                  card-value
-                 (* 100 card-value))))
+                 (* 100  card-value))))
         (sort >)
         (into []))
    hand])
+
+;; TODO: function below could be refactored to handle scored hand convertion for :
+;; - high cards
+;; - one pair
+;; - two pairs
+;; - three of a kind 
+;; - full house
+;; - four of a kind
+;; - five of a kind (not supported right now)
+;; In fact it could maybe used to sort them before rank sort at step 1
+
+
+(defn pair-hand->scored-hand-new
+  "Given a **one or two pair** hand, returns a pair where the first item is a sorted list of numbers corresponding
+     to card values, and the second item is the hand itself."
+  [hand]
+  [(->> (hand-card-values hand true)
+        frequencies
+       ;; group by card occurence count
+       ;; 'second' is occurence count (here 2 is expected)
+        (partition-by second)
+       ;; flatten 1 level depth
+        (mapcat identity)
+        (map (fn [[card-value cnt]]
+               (if (= 1 cnt)
+                 card-value
+                 ;; coef on fequencies (cnt)
+                 (* (Math/pow 100 cnt)  card-value))))
+        (sort >)
+        (into []))
+   hand])
+
+(comment
+  (pair-hand->scored-hand "3E 6Y 2E 7U 8U")
+  (pair-hand->scored-hand "KE KY 2E 7U 6U")
+  (pair-hand->scored-hand "AE AY AE 7U 6U")
+  (pair-hand->scored-hand "AE AY AE 7U 7U")
+  (pair-hand->scored-hand "AE AY AE AU 7U")
+  ;;
+  )
 
 (defn tie-pair
   "Given a coll of hands, all with one or two pairs, returns the coll of winner
@@ -193,23 +233,36 @@
        (reduce scored-hand-reducer [])
        (map second)))
 
+
+
+(def three-of-a-kind-hand->scored-hand pair-hand->scored-hand)
+(def tie-three-of-a-kind tie-pair)
+
 (comment
+  (three-of-a-kind-hand->scored-hand "4S AH AS 8C AD")
+  (->> ["2S 2H 2C 8D JH"
+        "4S AH AS 8C AD"]
+       (map pair-hand->scored-hand)
+       #_(reduce scored-hand-reducer [])
+       #_(map second))
 
-
-  (tie-pair ["2Z 4T 6F 2F 6Y" "2Z 9T 6F 9F 6Y"])
-
-
-  (tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y"])
-
-
-
-  (tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y"])
-
-  (tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y" "2Z 4T 6F KF 6Y"])
-
-  (pair-hand->scored-hand "2Z 3R 5T 7R 7U")
   ;;
   )
+
+(comment
+  (->> (hand-card-values "4S AH AS 8C AD" true)
+       frequencies
+       (partition-by second)
+       (mapcat identity)
+       (map (fn [[card-value cnt]]
+              (if (= 1 cnt)
+                card-value
+                (* 100 card-value))))
+       (sort >)
+       (into []))
+  ;;
+  )
+;; main function -----------------------------------------------------
 
 (defn best-hands [hands]
   (let [[highest-rank hands] (p/highest-hands-by-rank hands)]
@@ -219,6 +272,7 @@
         :high-card (tie-high-card hands)
         :one-pair  (tie-pair  hands)
         :two-pair  (tie-pair  hands)
+        :three-of-a-kind  (tie-three-of-a-kind  hands)
         "not implemented"))))
 
 (comment
