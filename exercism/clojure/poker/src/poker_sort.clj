@@ -1,6 +1,5 @@
 (ns poker-sort
-  (:require [clojure.string :as s]
-            [poker-sort :as p]))
+  (:require [clojure.string :as s]))
 
 ;; This is an attempt to solve the Poker exercism by defining a sort order
 ;; on all hands
@@ -99,36 +98,6 @@
        first
        ((juxt ffirst (partial map last)))))
 
-(comment
-
-  (highest-hands-by-rank ["2A 3B 6B JB 3A" ;; high card
-                          "JA 10A 9A 8A 7A"
-                          "JA 10A 9A 8A 7A"
-                          "2A 2B 2X 2C 3A"
-                          "8A 3B 6B JB 3A"])
-  (sort-by-rank ["2A 3B 6B JB 3A" ;; high card
-                 "JA 10A 9A 8A 7A"
-                 "JA 10A 9A 8A 7A"
-                 "2A 2B 2X 2C 3A"
-                 "8A 3B 6B JB 3A"])
-  (sort-by second >
-           (map #(conj (hand-rank-score %) %) ["2A 3B 6B JB 3A" ;; high card
-                                               "JA 10A 9A 8A 7A"
-                                               "JA 10A 9A 8A 7A"
-                                               "2A 2B 2X 2C 3A"
-                                               "8A 3B 6B JB 3A"]))  ;; high card
-  (def r1 '([:straight-flush 8 "JA 10A 9A 8A 7A"]
-            #_[:straight-flush 8 "JA 10A 9A 8A 7A"]
-            [:four-of-a-kind 7 "2A 2B 2X 2C 3A"]
-            [:one-pair 1 "2A 3B 6B JB 3A"]
-            [:one-pair 1 "8A 3B 6B JB 3A"]))
-
-  ((juxt ffirst (partial map last)) (first (partition-by first r1)))
-  (last [1 2])
-
-  ;;
-  )
-
 ;; tie hands ----------------------------------------------------------
 ;; finding the winner depends on hand rank
 
@@ -181,54 +150,11 @@
          (map (fn [[card-value cnt]]
                 (if (= 1 cnt)
                   card-value
+                  #_(* (Math/pow 10 cnt)  card-value)
                   (* 100  card-value))))
          (sort >)
          (into []))
     hand]))
-
-;; TODO: function below could be refactored to handle scored hand convertion for :
-;; - high cards
-;; - one pair
-;; - two pairs
-;; - three of a kind 
-;; - full house
-;; - four of a kind
-;; - five of a kind (not supported right now)
-;; In fact it could maybe used to sort them before rank sort at step 1
-
-
-(defn pair-hand->scored-hand-new
-  "Given a **one or two pair** hand, returns a pair where the first item is a sorted list of numbers corresponding
-     to card values, and the second item is the hand itself."
-  [hand]
-  [(->> (hand-card-values hand true)
-        frequencies
-       ;; group by card occurence count
-       ;; 'second' is occurence count (here 2 is expected)
-        (partition-by second)
-       ;; flatten 1 level depth
-        (mapcat identity)
-        (map (fn [[card-value cnt]]
-               (if (= 1 cnt)
-                 card-value
-                 ;; coef on fequencies (cnt)
-                 (* (Math/pow 100 cnt)  card-value))))
-        (sort >)
-        (into []))
-   hand])
-
-(comment
-  
-  (pair-hand->scored-hand "KE KY 6E 7U 6U")
-  (pair-hand->scored-hand "KE KY 2E AU AU")
-  (pair-hand->scored-hand false "KE KY 2E AU AU")
-
-
-  (pair-hand->scored-hand "AE AY AE 7U 6U")
-  (pair-hand->scored-hand "AE AY AE 7U 7U")
-  (pair-hand->scored-hand "AE AY AE AU 7U")
-  ;;
-  )
 
 (defn tie-pair
   "Given a coll of hands, all with one or two pairs, returns the coll of winner
@@ -239,38 +165,33 @@
        (reduce scored-hand-reducer [])
        (map second)))
 
-(comment
-  (tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y"])
-  ;;
-  )
 
-(def three-of-a-kind-hand->scored-hand pair-hand->scored-hand)
-(def tie-three-of-a-kind tie-pair)
+(defn full-house-hand->scored-hand
+  "Given a **one or two pair** hand, returns a pair where the first item is a sorted list of numbers corresponding
+     to card values, and the second item is the hand itself."
+  ([hand]
+   (full-house-hand->scored-hand false hand))
+  ([ace-rank-low hand]
+   [(->> (hand-card-values hand ace-rank-low)
+         frequencies
+       ;; group by card occurence count
+       ;; 'second' is occurence count (here 2 is expected)
+         (partition-by second)
+       ;; flatten 1 level depth
+         (mapcat identity)
+         (map (fn [[card-value cnt]]
+                (+ (* 1000 (dec cnt)) card-value)))
+         (sort >)
+         (into []))
+    hand]))
 
-(comment
-  (three-of-a-kind-hand->scored-hand "4S AH AS 8C AD")
-  (->> ["2S 2H 2C 8D JH"
-        "4S AH AS 8C AD"]
-       (map pair-hand->scored-hand)
-       #_(reduce scored-hand-reducer [])
-       #_(map second))
+(defn tie-full-house-card [hands]
+  (->> hands
+       (map full-house-hand->scored-hand)
+       (reduce scored-hand-reducer [])
+       (map second)))
 
-  ;;
-  )
 
-(comment
-  (->> (hand-card-values "4S AH AS 8C AD" true)
-       frequencies
-       (partition-by second)
-       (mapcat identity)
-       (map (fn [[card-value cnt]]
-              (if (= 1 cnt)
-                card-value
-                (* 100 card-value))))
-       (sort >)
-       (into []))
-  ;;
-  )
 ;; main function -----------------------------------------------------
 
 (defn best-hands [hands]
@@ -281,13 +202,33 @@
         :high-card        (tie-high-card hands)
         :one-pair         (tie-pair  hands)
         :two-pair         (tie-pair  hands)
-        :three-of-a-kind  (tie-three-of-a-kind  hands)
+        :three-of-a-kind  (tie-pair  hands)
         :straight         (tie-high-card hands)
         :flush            (tie-high-card hands)
-        :full-house       (tie-high-card hands)
+        :full-house       (tie-full-house-card hands)
+        :four-of-a-kind   (tie-full-house-card hands)
+        :straight-flush   (tie-full-house-card hands)
         "not implemented"))))
 
+
 (comment
+  (def h1 ["4H 4S 4D 9S 9D"
+           "5H 5S 5D 8S 8D"])
+  (def h2 ["2S 2H 2C 8D 2D"
+           "4S 5H 5S 5D 5C"])
+  (def h3 ["4H 6H 7H 8H 5H"
+          "5S 7S 8S 9S 6S"])
+  (best-hands h3)
+  (highest-hands-by-rank h1)
+
+
+
+  (tie-high-card h1)
+
+
+
+  (map pair-hand->scored-hand ["4H 4S 4D 9S 9D"
+                               "5H 5S 5D 8S 8D"])
   (best-hands ["4S 6C 7S 8D 5H"
                "5S 7H 8S 9D 6H"])
   (highest-hands-by-rank ["4S 5H 4C 8D 4H"

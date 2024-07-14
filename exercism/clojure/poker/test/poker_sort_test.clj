@@ -333,3 +333,34 @@
   (is (f ["4H 4S 4D 9S 9D"
           "5H 5S 5D 8S 8D"]
          ["5H 5S 5D 8S 8D"])))
+
+
+(deftest with-multiple-decks-both-hands-have-a-full-house-with-the-same-triplet-tie-goes-to-the-pair
+  (is (f ["5H 5S 5D 9S 9D"
+          "5H 5S 5D 8S 8D"]
+         ["5H 5S 5D 9S 9D"])))
+
+(deftest four-of-a-kind-beats-a-full-house
+  (is (f ["4S 5H 4D 5D 4H"
+          "3S 3H 2S 3D 3C"]
+         ["3S 3H 2S 3D 3C"])))
+
+(deftest both-hands-have-four-of-a-kind-tie-goes-to-high-quad
+  (is (f ["2S 2H 2C 8D 2D"
+          "4S 5H 5S 5D 5C"]
+         ["4S 5H 5S 5D 5C"])))
+
+(deftest with-multiple-decks-both-hands-with-identical-four-of-a-kind-tie-determined-by-kicker
+  (is (f ["3S 3H 2S 3D 3C"
+          "3S 3H 4S 3D 3C"]
+         ["3S 3H 4S 3D 3C"])))
+
+(deftest straight-flush-beats-four-of-a-kind
+  (is (f ["4S 5H 5S 5D 5C"
+          "7S 8S 9S 6S 10S"]
+         ["7S 8S 9S 6S 10S"])))
+
+(deftest both-hands-have-straight-flush-tie-goes-to-highest-ranked-card
+  (is (f ["4H 6H 7H 8H 5H"
+          "5S 7S 8S 9S 6S"]
+         ["5S 7S 8S 9S 6S"])))
