@@ -180,18 +180,18 @@
 
 (deftest pair-hand->scored-hand-test
   (testing "create scored pair"
-    (is (= [[600 7 3 2] "3E 6Y 2E 7U 6U"]
+    (is (= [[1006 7 3 2] "3E 6Y 2E 7U 6U"]
            (p/pair-hand->scored-hand "3E 6Y 2E 7U 6U")))
-    (is (= [[1300 7 6 5] "KE 6Y KE 7U 5U"]
+    (is (= [[1013 7 6 5] "KE 6Y KE 7U 5U"]
            (p/pair-hand->scored-hand "KE 6Y KE 7U 5U")))
-    (is (= [[1300 600 5] "KE 6Y KE 6U 5U"]
+    (is (= [[1013 1006 5] "KE 6Y KE 6U 5U"]
            (p/pair-hand->scored-hand "KE 6Y KE 6U 5U"))
         "works also on 2 pairs hand")
 
     ;; also works for three-of-a-kind
-    (is (= [[600 3 2] "3E 6Y 2E 6U 6U"]
+    (is (= [[2006 3 2] "3E 6Y 2E 6U 6U"]
            (p/pair-hand->scored-hand "3E 6Y 2E 6U 6U")))
-    (is (= [[1300 7 6] "KE 6Y KE 7U KU"]
+    (is (= [[2013 7 6] "KE 6Y KE 7U KU"]
            (p/pair-hand->scored-hand "KE 6Y KE 7U KU")))))
 
 

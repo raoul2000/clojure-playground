@@ -1,8 +1,8 @@
 (ns poker-sort
   (:require [clojure.string :as s]))
 
-;; This is an attempt to solve the Poker exercism by defining a sort order
-;; on all hands
+;; first we want to assign a rank to each hand, and keep only
+;; the highest hand(s)
 
 (defn card-value
   "Given a single card, returns its value as a number."
@@ -23,14 +23,33 @@
        (map #(card-value % ace-rank-low))
        sort))
 
-(def high-card? (constantly true))
+(defn n-cards-with-same-val
+  "Given a hand, return a coll of pairs where the first item is a card value 
+   with *n* occurences in the hand, and the second item is *n*.
 
-(defn n-cards-with-same-val [hand n]
+   Returns an empty coll if not found.
+   
+   Example:
+
+   ```clojure
+   (n-cards-with-same-val \"2A 5B 6T 9U 9I\" 2)
+   => ([\"9\" 2]) ;; only one pair
+
+   (n-cards-with-same-val \"2A 2B 6T 9U 9I\" 2)
+   => ([\"2\" 2] [\"9\" 2]) ;; two pairs
+
+   (n-cards-with-same-val \"2A 2B 6T 2U 9I\" 3)
+   => ([\"2\" 3]) ;; three of a kind
+   ```
+
+   "
+  [^String hand n]
   (->> (s/split hand #" ")
        (map #(re-matches #"^(.+).$" %))
        (map second)
        frequencies
        (filter #(= n (second %)))))
+
 
 (defn one-pair? [^String hand]
   (= 1 (count (n-cards-with-same-val hand 2))))
@@ -79,7 +98,7 @@
     (three-of-a-kind? hand)  [:three-of-a-kind 3]
     (two-pair?        hand)  [:two-pair        2]
     (one-pair?        hand)  [:one-pair        1]
-    (high-card?       hand)  [:high-card       0]))
+    :else                    [:high-card       0]))
 
 (defn sort-by-rank [hands]
   (->> hands
@@ -87,7 +106,7 @@
        (sort-by second >)))
 
 (defn highest-hands-by-rank
-  "Given a list of poker hands, returns a vector where the first item is the highest
+  "Given a list of  hands, returns a vector where the first item is the highest
    ranks found, and the second is a coll of hands of this ranks."
   [hands]
   (->> hands
@@ -99,78 +118,14 @@
        ((juxt ffirst (partial map last)))))
 
 ;; tie hands ----------------------------------------------------------
-;; finding the winner depends on hand rank
+;; In case more than one hand has highest rank, we must find the one with
+;; highest "value"
 
-;; high cards : assign score to each hand and get the highest (sort is not enough)
-
-(defn scored-hand-reducer
-  [[winner :as all-winners] hand]
-  {:pre [(or (nil? winner)
-             (vector? (first winner)))
-         (vector? hand)]}
-  (if (seq winner)
-    (case (compare (first winner) (first hand))
-      0   (conj all-winners hand)
-      -1  [hand]
-      1   all-winners)
-    (vector hand)))
-
-(defn high-card-hand->scored-hand
-  "Given a high card hand, returns a pair where the first item is a sorted list of numbers corresponding
-   to card values, and the second item is the hand itself."
+(defn hand->scored-hand
+  "Given a hand, returns a pair where the first item is a sorted list of numbers  corresponding
+    to card values, and the second item is the hand itself."
   ([hand]
-   (high-card-hand->scored-hand hand true))
-  ([hand ace-rank-low]
-   [(into [] (reverse (hand-card-values hand ace-rank-low)))
-    hand]))
-
-(defn tie-high-card
-  "Given a coll of hands, all with high-card, returns the coll of winner
-   hands."
-  [hands]
-  (->> hands
-       (map high-card-hand->scored-hand)
-       (reduce scored-hand-reducer [])
-       (map second)))
-
-
-(defn pair-hand->scored-hand
-  "Given a **one or two pair** hand, returns a pair where the first item is a sorted list of numbers corresponding
-     to card values, and the second item is the hand itself."
-  ([hand]
-   (pair-hand->scored-hand false hand))
-  ([ace-rank-low hand]
-   [(->> (hand-card-values hand ace-rank-low)
-         frequencies
-       ;; group by card occurence count
-       ;; 'second' is occurence count (here 2 is expected)
-         (partition-by second)
-       ;; flatten 1 level depth
-         (mapcat identity)
-         (map (fn [[card-value cnt]]
-                (if (= 1 cnt)
-                  card-value
-                  #_(* (Math/pow 10 cnt)  card-value)
-                  (* 100  card-value))))
-         (sort >)
-         (into []))
-    hand]))
-
-(defn tie-pair
-  "Given a coll of hands, all with one or two pairs, returns the coll of winner
-  hands."
-  [hands]
-  (->> hands
-       (map pair-hand->scored-hand)
-       (reduce scored-hand-reducer [])
-       (map second)))
-
-
-(defn full-house-hand->scored-hand
-  "Given a **one or two pair** hand, returns a pair where the first item is a sorted list of numbers corresponding
-     to card values, and the second item is the hand itself."
-  ([hand]
-   (full-house-hand->scored-hand false hand))
+   (hand->scored-hand false hand))
   ([ace-rank-low hand]
    [(->> (hand-card-values hand ace-rank-low)
          frequencies
@@ -185,12 +140,28 @@
          (into []))
     hand]))
 
-(defn tie-full-house-card [hands]
-  (->> hands
-       (map full-house-hand->scored-hand)
-       (reduce scored-hand-reducer [])
-       (map second)))
+(defn scored-hand-reducer
+  [[winner :as all-winners] hand]
+  {:pre [(or (nil? winner)
+             (vector? (first winner)))
+         (vector? hand)]}
+  (if (seq winner)
+    (case (compare (first winner) (first hand))
+      0   (conj all-winners hand)
+      -1  [hand]
+      1   all-winners)
+    (vector hand)))
 
+(defn tie-hands
+  "Given a coll of hands, all of the same rank, returns the coll of winner
+  hands."
+  ([hands]
+   (tie-hands hands false))
+  ([hands ace-rank-low]
+   (->> hands
+        (map (partial hand->scored-hand ace-rank-low))
+        (reduce scored-hand-reducer [])
+        (map second))))
 
 ;; main function -----------------------------------------------------
 
@@ -199,40 +170,13 @@
     (if (= 1 (count hands))
       hands
       (case highest-rank
-        :high-card        (tie-high-card hands)
-        :one-pair         (tie-pair  hands)
-        :two-pair         (tie-pair  hands)
-        :three-of-a-kind  (tie-pair  hands)
-        :straight         (tie-high-card hands)
-        :flush            (tie-high-card hands)
-        :full-house       (tie-full-house-card hands)
-        :four-of-a-kind   (tie-full-house-card hands)
-        :straight-flush   (tie-full-house-card hands)
+        :high-card        (tie-hands hands)
+        :one-pair         (tie-hands hands)
+        :two-pair         (tie-hands hands)
+        :three-of-a-kind  (tie-hands hands)
+        :straight         (tie-hands hands true)
+        :flush            (tie-hands hands)
+        :full-house       (tie-hands hands)
+        :four-of-a-kind   (tie-hands hands)
+        :straight-flush   (tie-hands hands)
         "not implemented"))))
-
-
-(comment
-  (def h1 ["4H 4S 4D 9S 9D"
-           "5H 5S 5D 8S 8D"])
-  (def h2 ["2S 2H 2C 8D 2D"
-           "4S 5H 5S 5D 5C"])
-  (def h3 ["4H 6H 7H 8H 5H"
-          "5S 7S 8S 9S 6S"])
-  (best-hands h3)
-  (highest-hands-by-rank h1)
-
-
-
-  (tie-high-card h1)
-
-
-
-  (map pair-hand->scored-hand ["4H 4S 4D 9S 9D"
-                               "5H 5S 5D 8S 8D"])
-  (best-hands ["4S 6C 7S 8D 5H"
-               "5S 7H 8S 9D 6H"])
-  (highest-hands-by-rank ["4S 5H 4C 8D 4H"
-                          "3S 4D 2S 6D 5C"])
-  ;;
-  )
-
