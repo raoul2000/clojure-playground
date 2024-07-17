@@ -1,4 +1,4 @@
-(ns human-readable-2)
+(ns codewar.human-readable-2)
 
 ;; https://www.codewars.com/kata/52742f58faf5485cae000b9a/train/clojure
 
