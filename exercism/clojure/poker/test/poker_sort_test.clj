@@ -83,54 +83,54 @@
 
 (deftest sort-by-rank-test
   (testing "sort hands by rank"
-    (is (= '([:one-pair  1 "2S 4H 6S 4D JH"]
-             [:high-card 0 "4S 5H 6C 8D KH"])
-           (p/sort-by-rank ["2S 4H 6S 4D JH"
+    (is (= '([:one-pair  7 "2S 4H 6S 4D JH"]
+             [:high-card 8 "4S 5H 6C 8D KH"])
+           (p/sort-by-category ["2S 4H 6S 4D JH"
                             "4S 5H 6C 8D KH"])) "one-pair-beats-high-card")))
 
 (deftest highest-hands-by-rank-test
   (testing "return highest rank and related hands"
     (is (= [:high-card '("2A 5B 6T 7U 8I" "2A 5B 6T 7U 9I")]
-           (p/highest-hands-by-rank ["2A 5B 6T 7U 8I" "2A 5B 6T 7U 9I"])))
+           (p/highest-hands-by-category ["2A 5B 6T 7U 8I" "2A 5B 6T 7U 9I"])))
     (is (= [:one-pair '("7U 4T 3Y 7I JY")]
-           (p/highest-hands-by-rank ["2A 5B 6T 7U 8I" "2A 5B 6T 7U 9I" "7U 4T 3Y 7I JY"])))
+           (p/highest-hands-by-category ["2A 5B 6T 7U 8I" "2A 5B 6T 7U 9I" "7U 4T 3Y 7I JY"])))
     (is (= [:one-pair '("2A 5B 6T 8U 8I" "7U 4T 3Y 7I JY")]
-           (p/highest-hands-by-rank ["2A 5B 6T 8U 8I" "2A 5B 6T 7U 9I" "7U 4T 3Y 7I JY"])))
+           (p/highest-hands-by-category ["2A 5B 6T 8U 8I" "2A 5B 6T 7U 9I" "7U 4T 3Y 7I JY"])))
     (is (= [:two-pair '("2A 5B 2T 8U 8I")]
-           (p/highest-hands-by-rank ["2A 5B 2T 8U 8I" "2A 5B 6T 7U 9I" "7U 4T 3Y 7I JY"])))
+           (p/highest-hands-by-category ["2A 5B 2T 8U 8I" "2A 5B 6T 7U 9I" "7U 4T 3Y 7I JY"])))
     (is (= [:two-pair '("2A 5B 2T 8U 8I" "7U 4T JY 7I JY")]
-           (p/highest-hands-by-rank ["2A 5B 2T 8U 8I" "2A 5B 6T 7U 9I" "7U 4T JY 7I JY"])))
+           (p/highest-hands-by-category ["2A 5B 2T 8U 8I" "2A 5B 6T 7U 9I" "7U 4T JY 7I JY"])))
     (is (= [:three-of-a-kind '("7U 4T JY JI JY")]
-           (p/highest-hands-by-rank ["2A 5B 2T 8U 8I" "2A 5B 6T 7U 9I" "7U 4T JY JI JY"])))
+           (p/highest-hands-by-category ["2A 5B 2T 8U 8I" "2A 5B 6T 7U 9I" "7U 4T JY JI JY"])))
     (is (= [:three-of-a-kind '("2A 5B 8T 8U 8I" "7U 4T JY JI JY")]
-           (p/highest-hands-by-rank ["2A 5B 8T 8U 8I" "2A 5B 6T 7U 9I" "7U 4T JY JI JY"])))
+           (p/highest-hands-by-category ["2A 5B 8T 8U 8I" "2A 5B 6T 7U 9I" "7U 4T JY JI JY"])))
     (is (= [:straight '("2Z 4T 5U 3T 6I")]
-           (p/highest-hands-by-rank ["2Z 4T 5U 3T 6I" "2A 2B 2T 7U 8I"])))
+           (p/highest-hands-by-category ["2Z 4T 5U 3T 6I" "2A 2B 2T 7U 8I"])))
     (is (= [:straight '("2Z 4T 5U 3T 6I" "AA 2B 4T 5U 3I")]
-           (p/highest-hands-by-rank ["2Z 4T 5U 3T 6I" "2A 2B 2T 7U 8I" "AA 2B 4T 5U 3I"]))
+           (p/highest-hands-by-category ["2Z 4T 5U 3T 6I" "2A 2B 2T 7U 8I" "AA 2B 4T 5U 3I"]))
         "straight with ace rank low")
     (is (= [:straight '("AT QT KT J2 10T")]
-           (p/highest-hands-by-rank ["QZ 4T 5U 3T 6I" "2A 2B 2T 7U 8I" "AT QT KT J2 10T"]))
+           (p/highest-hands-by-category ["QZ 4T 5U 3T 6I" "2A 2B 2T 7U 8I" "AT QT KT J2 10T"]))
         "straight with ace rank high")
     (is (= [:flush '("2Z 4Z KZ 7Z 6Z")]
-           (p/highest-hands-by-rank ["2Z 4Z KZ 7Z 6Z" "2A 2B 2T 7U 8I"])))
+           (p/highest-hands-by-category ["2Z 4Z KZ 7Z 6Z" "2A 2B 2T 7U 8I"])))
     (is (= [:flush '("2Z 4Z KZ 7Z 6Z")]
-           (p/highest-hands-by-rank ["2Z 4Z KZ 7Z 6Z" "2A 2B 2T 7U 8I" "AT QT KT J2 10T"])))
+           (p/highest-hands-by-category ["2Z 4Z KZ 7Z 6Z" "2A 2B 2T 7U 8I" "AT QT KT J2 10T"])))
     (is (= [:flush '("2Z 4Z KZ 7Z 6Z" "2A 4A 5A 7A 8A")]
-           (p/highest-hands-by-rank ["2Z 4Z KZ 7Z 6Z" "2A 4A 5A 7A 8A" "AT QT KT J2 10T"])))
+           (p/highest-hands-by-category ["2Z 4Z KZ 7Z 6Z" "2A 4A 5A 7A 8A" "AT QT KT J2 10T"])))
     (is (= [:full-house '("AT JI AT AF JT")]
-           (p/highest-hands-by-rank ["2Z 4Z KZ 7Z 6Z" "2A 4A 5A 7A 8A" "AT JI AT AF JT"])))
+           (p/highest-hands-by-category ["2Z 4Z KZ 7Z 6Z" "2A 4A 5A 7A 8A" "AT JI AT AF JT"])))
     (is (= [:full-house '("2A 2A 2T 7H 7I" "AT JI AT AF JT")]
-           (p/highest-hands-by-rank ["2Z 4Z KZ 7Z 6Z" "2A 2A 2T 7H 7I" "AT JI AT AF JT"])))
+           (p/highest-hands-by-category ["2Z 4Z KZ 7Z 6Z" "2A 2A 2T 7H 7I" "AT JI AT AF JT"])))
     (is (= [:four-of-a-kind '("2Z 2Z 2Z 2T 6Z")]
-           (p/highest-hands-by-rank ["2Z 2Z 2Z 2T 6Z" "2A 2A 2T 7H 7I" "AT JI AT AF JT"])))
+           (p/highest-hands-by-category ["2Z 2Z 2Z 2T 6Z" "2A 2A 2T 7H 7I" "AT JI AT AF JT"])))
     (is (= [:four-of-a-kind '("2Z 2Z 2Z 2T 6Z" "AT AI AT AF JT")]
-           (p/highest-hands-by-rank ["2Z 2Z 2Z 2T 6Z" "2A 2A 2T 7H 7I" "AT AI AT AF JT"])))
+           (p/highest-hands-by-category ["2Z 2Z 2Z 2T 6Z" "2A 2A 2T 7H 7I" "AT AI AT AF JT"])))
     (is (= [:straight-flush '("2Z 4Z 5Z 3Z 6Z")]
-           (p/highest-hands-by-rank ["2Z 4Z 5Z 3Z 6Z" "2A 2B 2T 7U 8I" "AA 2B 4T 5U 3I"]))
+           (p/highest-hands-by-category ["2Z 4Z 5Z 3Z 6Z" "2A 2B 2T 7U 8I" "AA 2B 4T 5U 3I"]))
         "straight flush with ace rank low")
     (is (= [:straight-flush '("AT QT KT JT 10T")]
-           (p/highest-hands-by-rank ["QZ 4T 5U 3T 6I" "2A 2B 2T 7U 8I" "AT QT KT JT 10T"]))
+           (p/highest-hands-by-category ["QZ 4T 5U 3T 6I" "2A 2B 2T 7U 8I" "AT QT KT JT 10T"]))
         "straight flush with ace rank high")))
 
 
@@ -160,57 +160,57 @@
 (deftest tie-high-card-test
   (testing "select winner among high cards hands"
     (is (= ["3S 4S 5D 6H JH"]
-           (p/tie-high-card ["4D 5S 6S 8D 3C"
+           (p/tie-hands ["4D 5S 6S 8D 3C"
                              "2S 4C 7S 9H 10H"
                              "3S 4S 5D 6H JH"]))
         "highest-card-out-of-all-hands-wins")
 
     (is (= ["3S 4S 5D 6H JH"
             "3H 4H 5C 6C JD"]
-           (p/tie-high-card ["4D 5S 6S 8D 3C"
+           (p/tie-hands ["4D 5S 6S 8D 3C"
                              "2S 4C 7S 9H 10H"
                              "3S 4S 5D 6H JH"
                              "3H 4H 5C 6C JD"]))
         "a-tie-has-multiple-winners")
 
     (is (= ["3S 5H 6S 8D 7H"]
-           (p/tie-high-card ["3S 5H 6S 8D 7H"
+           (p/tie-hands ["3S 5H 6S 8D 7H"
                              "2S 5D 6D 8C 7S"]))
         "multiple-hands-with-the-same-high-cards-tie-compares-next-highest-ranked-down-to-last-card")))
 
-(deftest pair-hand->scored-hand-test
+(deftest hand->scored-hand-test
   (testing "create scored pair"
     (is (= [[1006 7 3 2] "3E 6Y 2E 7U 6U"]
-           (p/pair-hand->scored-hand "3E 6Y 2E 7U 6U")))
+           (p/hand->scored-hand "3E 6Y 2E 7U 6U")))
     (is (= [[1013 7 6 5] "KE 6Y KE 7U 5U"]
-           (p/pair-hand->scored-hand "KE 6Y KE 7U 5U")))
+           (p/hand->scored-hand "KE 6Y KE 7U 5U")))
     (is (= [[1013 1006 5] "KE 6Y KE 6U 5U"]
-           (p/pair-hand->scored-hand "KE 6Y KE 6U 5U"))
+           (p/hand->scored-hand "KE 6Y KE 6U 5U"))
         "works also on 2 pairs hand")
 
     ;; also works for three-of-a-kind
     (is (= [[2006 3 2] "3E 6Y 2E 6U 6U"]
-           (p/pair-hand->scored-hand "3E 6Y 2E 6U 6U")))
+           (p/hand->scored-hand "3E 6Y 2E 6U 6U")))
     (is (= [[2013 7 6] "KE 6Y KE 7U KU"]
-           (p/pair-hand->scored-hand "KE 6Y KE 7U KU")))))
+           (p/hand->scored-hand "KE 6Y KE 7U KU")))))
 
 
 (deftest tie-pair-test
   (testing "select among one pair hands"
     (is (= ["2Z 4T 6F 9F 6Y"]
-           (p/tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y"])))
+           (p/tie-hands ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y"])))
     (is (= ["2Z 4T 6F KF 6Y"]
-           (p/tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y"])))
+           (p/tie-hands ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y"])))
     (is (= ["2Z 4T 6F KF 6Y" "2X 4X 6O KU 6H"]
-           (p/tie-pair ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y" "2X 4X 6O KU 6H"]))
+           (p/tie-hands ["2Z 4T 3F 2F 6Y" "2Z 4T 6F 9F 6Y" "2Z 4T 6F KF 6Y" "2X 4X 6O KU 6H"]))
         "many winners")
     ;; two pairs
     (is (= ["2Z 9T 6F 9F 6Y"]
-           (p/tie-pair ["2Z 4T 6F 2F 6Y" "2Z 9T 6F 9F 6Y"])))
+           (p/tie-hands ["2Z 4T 6F 2F 6Y" "2Z 9T 6F 9F 6Y"])))
     (is (= ["5Z 9T 6F 9F 6Y"]
-           (p/tie-pair ["2Z 4T 3F 2F 3Y" "2Z 9T 6F 9F 6Y" "5Z 9T 6F 9F 6Y"])))
+           (p/tie-hands ["2Z 4T 3F 2F 3Y" "2Z 9T 6F 9F 6Y" "5Z 9T 6F 9F 6Y"])))
     (is (= ["5T 9T 6F 9F 6Y" "5Z 9T 6F 9F 6Y"]
-           (p/tie-pair ["2Z 4T 3F 2F 3Y" "5T 9T 6F 9F 6Y" "5Z 9T 6F 9F 6Y"]))
+           (p/tie-hands ["2Z 4T 3F 2F 3Y" "5T 9T 6F 9F 6Y" "5Z 9T 6F 9F 6Y"]))
         "many winners")))
 
 
