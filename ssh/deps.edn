@@ -2,7 +2,8 @@
 
  :deps {org.clojure/clojure    {:mvn/version "1.11.3"}
         clj-ssh/clj-ssh        {:mvn/version "0.5.14"}
-        org.clojure/tools.cli  {:mvn/version "1.0.206"}}
+        org.clojure/tools.cli  {:mvn/version "1.0.206"}
+        aero/aero              {:mvn/version "1.1.6"}}
 
  :aliases  {:run-m {:main-opts ["-m" "core"]}
 
