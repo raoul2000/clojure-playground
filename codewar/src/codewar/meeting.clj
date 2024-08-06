@@ -23,10 +23,6 @@
   (def list1 "Alexis:Wahl;John:Bell;Victoria:Schwarz;Abba:Dorny;Grace:Meta;Ann:Arno;Madison:STAN;Alex:Cornwell;Lewis:Kern;Megan:Stan;Alex:Korn")
   (def list2 "John:Gates;Michael:Wahl;Megan:Bell;Paul:Dorries;James:Dorny;Lewis:Steve;Alex:Meta;Elizabeth:Russel;Anna:Korn;Ann:Kern;Amber:Cornwell")
 
-
-  (def list3 "bb:cc;zz:ee;bb:aa")
-
-
   (meeting list2)
   (meeting "Robert:Russel;Haley:Russell")
   (meeting "DDD:BBB;AAA:BBB")
@@ -38,7 +34,5 @@
 
 
   (sort-by #(apply str %) l2)
-
-
   ;;
   )
