@@ -3,6 +3,10 @@
             [clojure.string :as s])
   (:gen-class))
 
+;; see https://github.com/clj-commons/clj-yaml/blob/master/doc/01-user-guide.adoc#quick-start
+
+
+
 (defn greet
   "Callable entry point to the application."
   [data]
@@ -42,6 +46,7 @@
           "  cool"])
   (yaml/parse-string (s/join "\n" f))
 
+  
   (yaml/parse-string "example: >-\n  string\n  other \"quotes string\"\n\n")
   (yaml/parse-string "example: >\n  string\n  other \"quotes string\"\n\n")
   (yaml/parse-string "example: >+\n  string\n  other \"quotes string\"\n\n")
@@ -77,5 +82,17 @@
 
 
 
+  ;;
+  )
+
+(comment
+  
+  (yaml/parse-string "!Base12 10" :unknown-tag-fn :value)
+
+  (yaml/parse-string "!Base12 10"
+                     :unknown-tag-fn (fn [{:keys [tag value]}]
+                                       (if (= "!Base12" tag)
+                                         (Integer/parseInt value 12)
+                                         value)))
   ;;
   )
