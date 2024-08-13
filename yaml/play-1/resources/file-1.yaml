@@ -1,0 +1,11 @@
+name: bob
+program : |-
+  line 1;
+  line 2;
+  if (true == 1) {
+    console.log("hello")
+    if( 1 = 2) {
+      console.log("not good")
+    }}
+  }
+exec: true
