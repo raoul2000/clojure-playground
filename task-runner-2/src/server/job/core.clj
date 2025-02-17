@@ -2,6 +2,10 @@
   (:require [clj-http.client :as client]))
 
 (def job-counter (atom 0))
+
+;; jobs list map
+;; - key : job id
+;; - value : job params map
 (def jobs (atom {}))
 
 (defn send-request [success-handler error-handler]
@@ -30,12 +34,16 @@
           (Thread/sleep 1000)
           (recur (get-in @jobs [id :stop])))))))
 
+(defn get-job-by-id [id]
+  (if-let [job (get @jobs id)]
+    job
+    (throw (ex-info "job not found" {:id id}))))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn create-job []
-  (let [id (str "job-" (swap! job-counter inc))
-        newJob {:id id
-                :thread (Thread. (job-runner send-request id) (str "bob-" id))
+  (let [id     (str "job-" (java.util.UUID/randomUUID))
+        newJob {:id      id
+                :thread  (Thread. (job-runner send-request id) (str "thread-" id))
                 :stop    false
                 :success 0
                 :error   0}]
@@ -45,28 +53,31 @@
         (dissoc :stop))))
 
 (defn list-jobs []
-  (map (fn [[id job]]
+  (map (fn [[_id job]]
          (-> job
              (dissoc :thread)
              (dissoc :stop)
              (assoc  :state (str (.getState (:thread job)))))) @jobs))
 
 (defn start-job [id]
-  (-> @jobs
-      (get-in [id :thread])
-      (.start)))
+  (-> (get-job-by-id id)
+      (:thread)
+      (.start))
+  true)
 
 (defn stop-job [id]
-  (swap! jobs assoc-in [id :stop] true))
+  (get-job-by-id id)
+  (swap! jobs assoc-in [id :stop] true)
+  true)
 
 (defn suspend-job [id]
-  (-> @jobs
-      (get-in [id :thread])
+  (-> (get-job-by-id id)
+      (:thread)
       (.suspend)))
 
 (defn resume-job [id]
-  (-> @jobs
-      (get-in [id :thread])
+  (-> (get-job-by-id id)
+      (:thread)
       (.resume)))
 
 (comment

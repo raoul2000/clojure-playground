@@ -9,3 +9,8 @@
                      (str "hello " name)
                      (str "hello stranger")))))
 
+(defn say-bye [req]
+  (tap> req)
+  (resp/response {:resp "bye bye"
+                  :req  (:body req)}))
+
