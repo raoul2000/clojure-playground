@@ -34,11 +34,18 @@
           (Thread/sleep 1000)
           (recur (get-in @jobs [id :stop])))))))
 
+
 (defn get-job-by-id [id]
   (if-let [job (get @jobs id)]
     job
     (throw (ex-info "job not found" {:id id}))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn job-exists? [id]
+  (boolean (get @jobs id)))
+
+
 
 (defn create-job []
   (let [id     (str "job-" (java.util.UUID/randomUUID))

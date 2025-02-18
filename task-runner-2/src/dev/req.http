@@ -1,12 +1,20 @@
+@port=3001
+@baseUrl=http://localhost:3001
 
-GET http://localhost:3000/hello
+@jobId=job-2d73804e-fdc9-4a7f-8e06-fef74020e7d9
+###
+
+GET {{baseUrl}}/hello
 
 ###
-GET http://localhost:3000/bye
+GET {{baseUrl}}/bye
+
+###
+POST {{baseUrl}}/throw
 
 
 ###
-POST http://localhost:3000/bye
+POST {{baseUrl}}/bye
 content-type: application/json
 
 {
@@ -15,19 +23,19 @@ content-type: application/json
 }
 
 ### 
-GET http://localhost:3000/job/create
+GET {{baseUrl}}/job/create
 
 ###
-GET http://localhost:3000/job/list
+GET {{baseUrl}}/job/list
 
 ###
-GET http://localhost:3000/job/start?id=job-e5bb8b6e-45a5-455a-a9db-83c023ae8e78sss
+GET {{baseUrl}}/job/start?id={{jobId}}
 
 ###
-GET http://localhost:3000/job/stop?id=job-e5bb8b6e-45a5-455a-a9db-83c023ae8e78
+GET {{baseUrl}}/job/stop?id={{jobId}}
 ###
-GET http://localhost:3000/job/suspend?id=job-4
+GET {{baseUrl}}/job/suspend?id={{jobId}}
 ###
-GET http://localhost:3000/job/resume?id=job-4
+GET {{baseUrl}}/job/resume?id={{jobId}}
 
 

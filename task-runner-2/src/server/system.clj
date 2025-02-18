@@ -8,7 +8,7 @@
 (def config
   {:handler/run-app {:db "dummyDB"}
    :adapter/jetty   {:handler (ig/ref :handler/run-app)
-                     :port    3000}})
+                     :port    3001}})
 
 (defmethod ig/init-key :handler/run-app [_ {:keys [db]}]
   (handler/app db))
